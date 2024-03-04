@@ -1,8 +1,6 @@
-import typing
-
-from typing import Optional, Dict, Tuple, Literal, Union, List
-from ._enums import Format
-from rendervous.rendering._gmath import *
+from typing import Optional, Dict, Tuple, Literal, Union, List, TypeVar, Hashable
+from ._enums import *
+from ._gmath import *
 import math
 import numpy as np
 import ctypes
@@ -60,7 +58,7 @@ __DTYPE_TO_STR__ = {
 #         object.__setattr__(self, key, value)
 
 
-__frozen_type_T = typing.TypeVar('FrozenType')
+__frozen_type_T = TypeVar('FrozenType')
 
 def freezable_type(t: __frozen_type_T) -> __frozen_type_T:
     def new_call(cls, *args, **kwargs):
@@ -362,7 +360,7 @@ class Layout:
 
     @staticmethod
     def _build_layout_compact(type):
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, 1)
         if isinstance(type, GTensorMeta):
@@ -396,7 +394,7 @@ class Layout:
     def _build_layout_scalar(type):
         if type == int or type == float:
             return Layout._create_scalar_layout(type, 4, 4)
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, size)
         if isinstance(type, GTensorMeta):
@@ -436,7 +434,7 @@ class Layout:
     def _build_layout_std430(type):
         if type == int or type == float:
             return Layout._create_scalar_layout(type, 4, 4)
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, size)
         if isinstance(type, GTensorMeta):
@@ -517,7 +515,7 @@ class Layout:
 
     @staticmethod
     def is_scalar_type(type):
-        return isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__
+        return isinstance(type, Hashable) and type in Layout.__TYPE_SIZES__
 
     __FORMAT_TO_TORCH_INFO__ = {
         Format.NONE: (1, torch.uint8),

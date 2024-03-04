@@ -1,6 +1,5 @@
 import os
 import threading
-import copy
 import weakref
 from typing import Callable, Any
 import time
