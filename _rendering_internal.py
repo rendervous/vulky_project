@@ -12,10 +12,10 @@ except:
 
 import torch
 
-from rendervous.rendering.backend._enums import *
-from rendervous.rendering.backend._common import *
-from rendervous.rendering.backend._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
-from rendervous.rendering.backend._vulkan_internal import \
+from ._enums import *
+from ._common import *
+from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
+from ._vulkan_internal import \
     ResourceWrapper, \
     DeviceWrapper, \
     ShaderHandlerWrapper, \
@@ -1976,7 +1976,7 @@ def Extends(class_):
 
 import functools
 
-__check_active_T = typing.TypeVar('CheckActiveType')
+__check_active_T = TypeVar('CheckActiveType')
 
 def _check_active_device(f: __check_active_T) -> __check_active_T:
     @functools.wraps(f)
