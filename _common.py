@@ -1,9 +1,10 @@
 from typing import Optional, Dict, Tuple, Literal, Union, List, TypeVar, Hashable
-from ._enums import *
-from ._gmath import *
+import torch
 import math
 import numpy as np
 import ctypes
+from ._gmath import *
+from ._enums import *
 
 
 ## TYPES SAME AS TORCH
@@ -45,20 +46,8 @@ __DTYPE_TO_STR__ = {
     }
 
 
-# class Freezable(object):
-#     def __init__(self):
-#         self.__frozen = False
-#
-#     def _freeze(self):
-#         self.__frozen = True
-#
-#     def __setattr__(self, key, value):
-#         if self.__frozen:
-#             raise Exception('This object can not be longer modified')
-#         object.__setattr__(self, key, value)
-
-
 __frozen_type_T = TypeVar('FrozenType')
+
 
 def freezable_type(t: __frozen_type_T) -> __frozen_type_T:
     def new_call(cls, *args, **kwargs):
@@ -574,7 +563,7 @@ class StructuredTensor(object):
         return element_layout.declaration(matrix_tensor[..., 0:matrix_type.tensor_shape[1]])
 
     @staticmethod
-    def create_compatible_tensor(element_layout, *structure_shape: int, device: Union[torch.device, str, None] = None):
+    def create_compatible_tensor(element_layout: 'Layout', *structure_shape: int, device: Union[torch.device, str, None] = None):
         required_alignment = element_layout.alignment
         if required_alignment <= 1:
             nbytes = 1

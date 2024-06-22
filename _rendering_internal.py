@@ -53,7 +53,7 @@ def compile_shader_source(code, stage, include_dirs):
         raise RuntimeError(f"Cannot compile {numbered_code}")
     with open(f'{stage}.spv', 'rb') as f:
         binary_output = f.read(-1)
-    print(code)
+    # print(code)
     print(f'[INFO] Compiled code for {stage}')
     return binary_output
 
@@ -2125,9 +2125,10 @@ def image_3D(image_format: Format, width: int, height: int, depth: int, mips : i
 
 
 def external_sync():
+    """
+    Must be used if a tensor bound to a pipeline depends on some external computation, e.g. CUDA.
+    """
     syncronize_external_computation()
-    # for _, a in __ACTIVE_DEVICE__.w_device.memory_manager.allocators.items():
-    #     a.sync_cpu()
 
 
 @_check_active_device
@@ -2266,10 +2267,16 @@ def vertex_buffer(count: int, element_description: Union[type, torch.dtype, Layo
 
 @_check_active_device
 def triangle_collection() -> TriangleCollection:
+    """
+    Creates a collection to store triangle meshes for ray-cast
+    """
     return __ACTIVE_DEVICE__.create_triangle_collection()
 
 @_check_active_device
 def aabb_collection() -> AABBCollection:
+    """
+    Creates a collection to store boxes for ray-cast
+    """
     return __ACTIVE_DEVICE__.create_aabb_collection()
 
 @_check_active_device
@@ -2351,8 +2358,15 @@ def allow_cross_threading():
 
 @_check_active_device
 def set_debug_name(name: str):
+    """
+    Sets the name for the next resource to be created.
+    """
     __ACTIVE_DEVICE__.set_debug_name(name)
 
 @_check_active_device
 def wrap_gpu(t: Any, mode: Literal['in', 'out', 'inout'] = 'in') -> GPUPtr:
+    """
+    Wraps an object to be accessible from/to the GPU depending on the mode.
+    Returned object can be assigned to fields of type int64_t and use as reference buffers.
+    """
     return __ACTIVE_DEVICE__.wrap_gpu(t, mode)
