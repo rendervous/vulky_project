@@ -4,6 +4,9 @@ import weakref
 from typing import Callable, Any
 import time
 
+from vulky._vulkan_internal import DescriptorSetCollectionWrapper
+from vulky._vulkan_internal import DescriptorSetWrapper
+
 try:
     import imgui
     __GUI_AVAILABLE__ = True
@@ -14,15 +17,19 @@ import torch
 
 from ._enums import *
 from ._common import *
+from ._obj import load_obj
 from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
 from ._vulkan_internal import \
     ResourceWrapper, \
     DeviceWrapper, \
     ShaderHandlerWrapper, \
-    PipelineBindingWrapper, \
+    PipelineWrapper, \
+    DescriptorSetCollectionWrapper, \
+    DescriptorSetWrapper, \
     ShaderStageWrapper, \
     CommandBufferWrapper, \
-    SamplerWrapper, \
+    SamplerWrapper as Sampler, \
+    FrameBufferWrapper as FrameBuffer, \
     WindowWrapper, \
     syncronize_external_computation
 
@@ -34,7 +41,7 @@ def compile_shader_source(code, stage, include_dirs):
         p = subprocess.Popen(
             os.path.expandvars(
                 '%VULKAN_SDK%/Bin/glslangValidator.exe --stdin -r -Os -V --target-env vulkan1.2 ').replace("\\", "/")
-            + f'-S {stage} {idirs}', stdin=subprocess.PIPE
+            + f'-S {stage} {idirs}', stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
         outs, errs = p.communicate(code.encode('utf-8'))
     else:  # Assuming Linux
@@ -50,6 +57,8 @@ def compile_shader_source(code, stage, include_dirs):
     perr = p.wait()
     if perr != 0:
         numbered_code = '\n'.join(f"{i+1}\t\t{l}" for i,l in enumerate(code.split('\n')))
+        print("[ERROR] Compilation failed")
+        print(outs)
         raise RuntimeError(f"Cannot compile {numbered_code}")
     with open(f'{stage}.spv', 'rb') as f:
         binary_output = f.read(-1)
@@ -797,21 +806,67 @@ class RTProgram:
         self.__map_w_table_tensor[offset:offset + self.shader_handle_stride] = torch.frombuffer(shader_group.handle, dtype=torch.uint8)
 
 
-class Pipeline:
-    def __init__(self, w_pipeline: PipelineBindingWrapper):
-        self.w_pipeline = w_pipeline
+class DescriptorSet:
+    def __init__(self, w_ds: 'DescriptorSetWrapper', layout_reference_names: Dict[str, Tuple[int, int]]):
+        self.w_ds = w_ds
+        self.layout_reference_name = layout_reference_names
 
-    def __setup__(self):
-        pass
+    def update(self, **bindings: Union['Resource', List['Resource'], Tuple['Resource', 'Sampler']]):
+        """
+        Updates the descriptors for bindings in the descriptor set.
+        Notice that grouping bindings updates in a single call might lead to better performance.
+        >>> pipeline : Pipeline = ...
+        >>> pipeline.layout(set=0, binding=0, transforms=DescriptorType.UNIFORM_BUFFER)
+        >>> pipeline.layout(set=0, binding=1, environment=DescriptorType.SAMPLED_IMAGE)
+        >>> ...
+        >>> pipeline.close()
+        >>> dss = pipeline.create_descriptor_set_collection(set=0, count=1)
+        >>> ds = dss[0]  # peek the only descriptor set in the collection
+        >>> ds.update(  # write resources descriptors to the slots named within pipeline.layout
+        >>>     transforms=my_transforms_buffer,
+        >>>     environment=my_environment_image
+        >>> )
+        """
+        def convert_to_wrapped(r: Union['Resource', List['Resource'], Tuple['Resource', 'Sampler']]):
+            if r is None:
+                return r
+            if isinstance(r, tuple):
+                return (convert_to_wrapped(r[0]), r[1])  # sampler element in the tuple is already the wrapper version
+            if isinstance(r, list):
+                return [convert_to_wrapped(a) for a in r]
+            return r.w_resource
+        to_update = {}
+        for k, v in bindings.items():
+            assert k in self.layout_reference_name
+            set, binding = self.layout_reference_name[k]
+            assert set == self.w_ds.set
+            to_update[binding] = convert_to_wrapped(v)
+        self.w_ds.update(to_update)
+
+
+class DescriptorSetCollection:
+    def __init__(self, w_dsc: 'DescriptorSetCollectionWrapper', layout_reference_names: Dict[str, Tuple[int, int]]):
+        self.w_dsc = w_dsc
+        self.layout_reference_names = layout_reference_names
+
+    def __len__(self):
+        return len(self.w_dsc.desc_sets_wrappers)
+
+    def __getitem__(self, item):
+        return DescriptorSet(self.w_dsc.desc_sets_wrappers[item], self.layout_reference_names)
+
+
+
+class Pipeline:
+    def __init__(self, w_pipeline: PipelineWrapper):
+        self.w_pipeline = w_pipeline
+        self.layout_reference_names = {}  # maps name to layout (set, binding)
 
     def is_closed(self):
         return self.w_pipeline.initialized
 
     def close(self):
-        self.w_pipeline._build_objects()
-
-    def descriptor_set(self, set_slot: int):
-        self.w_pipeline.descriptor_set(set_slot)
+        self.w_pipeline._build()
 
     class _ShaderStageContext:
 
@@ -827,62 +882,48 @@ class Pipeline:
             self.pipeline.w_pipeline.pop_active_stages()
 
     def shader_stages(self, *shader_stages: ShaderStage):
+        """
+        Activates temporarily a set of shader stages.
+        To be used in a context scope. e.g.,
+        >>> pipeline: Pipeline = ...
+        >>> # here pipeline has all stages active
+        >>> with pipeline.shader_stages(ShaderStage.VERTEX, ShaderStage.FRAGMENT):
+        >>> ... # settings requiring only VS and FS stages active
+        >>> # here pipeline has all stages active again
+        """
         assert len(shader_stages) > 0, 'At least one shader stage should be active'
         return Pipeline._ShaderStageContext(self, *shader_stages)
 
-    def _bind_resource(self, slot: int, count: int, resolver, descriptor_type: DescriptorType):
-        self.w_pipeline.binding(
-            slot=slot,
-            descriptor_type=descriptor_type,
-            count=count,
-            resolver=resolver
-        )
-
-    @staticmethod
-    def _fix_resolver(resolver, convert_to_array):
-        if isinstance(resolver, list):
-            return lambda: resolver
-        if not hasattr(resolver, '__call__'):
-            return lambda: [resolver]
-        if convert_to_array:
-            return lambda: [resolver()]
-        return resolver
-
-    def bind_uniform(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.UNIFORM_BUFFER)
-
-    def bind_uniform_array(self, slot: int, count: int, resolver):
-        self._bind_resource(slot, count, Pipeline._fix_resolver(resolver, False), DescriptorType.UNIFORM_BUFFER)
-
-    def bind_storage_buffer(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.STORAGE_BUFFER)
-
-    def bind_storage_buffer_array(self, slot: int, count: int, resolver):
-        self._bind_resource(slot, count, Pipeline._fix_resolver(resolver, False), DescriptorType.STORAGE_BUFFER)
-
-    def bind_texture_combined(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.COMBINED_IMAGE)
-
-    def bind_texture_combined_array(self, slot: int, count: int, resolver):
-        self._bind_resource(slot, count, Pipeline._fix_resolver(resolver, False), DescriptorType.COMBINED_IMAGE)
-
-    def bind_texture(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.SAMPLED_IMAGE)
-
-    def bind_texture_array(self, slot: int, count: int, resolver):
-        self._bind_resource(slot, count, Pipeline._fix_resolver(resolver, False), DescriptorType.SAMPLED_IMAGE)
-
-    def bind_storage_image(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.STORAGE_IMAGE)
-
-    def bind_storage_image_array(self, slot: int, count: int, resolver):
-        self._bind_resource(slot, count, Pipeline._fix_resolver(resolver, False), DescriptorType.STORAGE_IMAGE)
-
-    def bind_scene_ads(self, slot: int, resolver):
-        self._bind_resource(slot, 1, Pipeline._fix_resolver(resolver, True), DescriptorType.SCENE_ADS)
-
-    def bind_constants(self, offset: int, layout: Layout):
-        self.w_pipeline.add_constant_range(offset, layout)
+    def layout(self,
+               set: int,
+               binding: int,
+               array_size: Optional[int] = None,
+               is_variable: bool = False,
+               **bind_declaration):
+        """
+        Declares a part of the pipeline layout.
+        set: specify the set number this bind belongs to.
+        binding: specify the binding slot.
+        array_size: Number of resources bound as an array.
+        is_variable: If true, the bound array is not fixed although count is used as upper bound.
+        bind_declaration: A single key-value pair indicating the reference name and the descriptor type,
+        Example:
+        >>> pipeline: Pipeline = ...
+        >>> pipeline.layout(set=0, binding=0, camera_transforms=DescriptorType.UNIFORM_BUFFER)
+        >>> pipeline.layout(set=1, binding=0, model_transform=DescriptorType.UNIFORM_BUFFER)
+        >>> pipeline.layout(set=1, binding=1, array_size=10, model_textures=DescriptorType.SAMPLED_IMAGE)
+        """
+        assert len(bind_declaration) == 1, 'One and only one bind declaration must be provided.'
+        k, v = next(iter(bind_declaration.items()))
+        if is_variable:
+            assert array_size is not None, 'Only arrays can be unbound size. In that case, array_size must be specified as upper bound.'
+        else:
+            if array_size is None:
+                array_size = 1  # used as count for single descriptors
+        assert isinstance(v, DescriptorType)
+        assert k not in self.layout_reference_names, f'The name {k} is already used in the pipeline layout'
+        self.layout_reference_names[k] = (set, binding)
+        self.w_pipeline.layout(set=set, binding=binding, descriptor_type=v, count=array_size, is_variable=is_variable)
 
     def load_shader(self, path, *specialization, main_function = 'main'):
         return self.w_pipeline.load_shader(ShaderStageWrapper.from_file(
@@ -921,23 +962,55 @@ class Pipeline:
 
         return shader_id
 
-    # def load_fragment_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_FRAGMENT_BIT, path, main_function, *specialization)
-    #
-    # def load_vertex_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_VERTEX_BIT, path, main_function, *specialization)
-    #
-    # def load_compute_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_COMPUTE_BIT, path, main_function, specialization)
-    #
-    # def load_rt_generation_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_RAYGEN_BIT_KHR, path, main_function, specialization)
-    #
-    # def load_rt_closest_hit_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR, path, main_function, specialization)
-    #
-    # def load_rt_miss_shader(self, path: str, *specialization, main_function='main'):
-    #     return self.load_shader(vk.VK_SHADER_STAGE_MISS_BIT_KHR, path, main_function, specialization)
+    def create_descriptor_set_collection(self, set: int, count: int):
+        return DescriptorSetCollection(
+            self.w_pipeline.create_descriptor_set_collection(set, count, variable_size=count),
+            self.layout_reference_names
+        )
+
+
+class GraphicsPipeline(Pipeline):
+    def __init__(self, w_pipeline: PipelineWrapper):
+        super().__init__(w_pipeline)
+        self.attach_reference_names = {}  # maps name to attach slot
+        self.vertex_reference_names = {}  # maps name to vertex attributes
+        self.vertex_bindings = {}  # maps bindings to dict[attribute_name, offset]
+
+    def attach(self, slot: int, **attach_declaration: Format):
+        assert len(attach_declaration) == 1
+        k, v = next(iter(attach_declaration.items()))
+        assert k not in self.attach_reference_names
+        assert isinstance(v, Format), 'Attachment declaration must be a Format'
+        self.w_pipeline.attach(slot, format=v)
+        self.attach_reference_names[k] = slot
+
+    def vertex(self, location: int, **attribute_declaration):
+        assert len(attribute_declaration) == 1
+        k, v = next(iter(attribute_declaration.items()))
+        assert k not in self.vertex_reference_names
+        assert isinstance(v, Format), 'Vertex attribute declaration must be a Format'
+        self.w_pipeline.vertex(location, v)
+        self.vertex_reference_names[k] = (location, v)
+
+    def vertex_binding(self, binding: int, stride: int, **attribute_offset_map):
+        assert binding not in self.vertex_bindings, 'Vertex-buffer binding slot already set'
+        assert all(k in self.vertex_reference_names for k in attribute_offset_map), 'Vertex-buffer binding refers to a vertex attribute has not declared.'
+        self.vertex_bindings[binding] = attribute_offset_map
+        self.w_pipeline.vertex_binding(binding, stride, {
+            self.vertex_reference_names[k][0]: offset for k, offset in attribute_offset_map.items()
+        })
+
+    def create_framebuffer(self, width: int, height: int, layers: int = 1, **bindings: Union['Image', None]) -> FrameBuffer:
+        max_slot = -1 if len(self.attach_reference_names)==0 else max(self.attach_reference_names.values())
+        attachments = [None]*(max_slot + 1)
+        for k,v in bindings.items():
+            attachments[self.attach_reference_names[k]] = None if v is None else v.w_resource
+        return self.w_pipeline.create_framebuffer(width, height, layers, attachments)
+
+
+class RaytracingPipeline(Pipeline):
+    def __init__(self, w_pipeline: PipelineWrapper):
+        super().__init__(w_pipeline)
 
     def create_rt_hit_group(self, closest_hit: int = None, any_hit: int = None, intersection: int = None):
         return self.w_pipeline.create_hit_group(closest_hit, any_hit, intersection)
@@ -1003,6 +1076,12 @@ class CommandManager:
         self.w_cmdList.flush_and_wait()
         # self.device.safe_dispatch_function(lambda: self.w_cmdList.flush_and_wait())
 
+    def use(self, image: Image, image_usage: ImageUsage):
+        self.w_cmdList.use_image_as(image.w_resource, image_usage)
+
+    def image_barrier(self, image: Image, image_usage: ImageUsage):
+        self.w_cmdList.transition_image_layout(image.w_resource, image_usage)
+
 
 class CopyManager(CommandManager):
     def __init__(self, device, w_cmdList: CommandBufferWrapper):
@@ -1035,6 +1114,9 @@ class ComputeManager(CopyManager):
     def clear_color(self, image: Image, color):
         self.w_cmdList.clear_color(image.w_resource, color)
 
+    def clear_depth_stencil(self, image: Image, depth: float = 1.0, stencil: int = 0):
+        self.w_cmdList.clear_depth_stencil(image.w_resource, depth, stencil)
+
     def clear_buffer(self, buffer: Buffer, value: int = 0):
         self.w_cmdList.clear_buffer(buffer.w_resource, value)
 
@@ -1042,6 +1124,9 @@ class ComputeManager(CopyManager):
         if not pipeline.is_closed():
             raise Exception("Error, can not set a pipeline has not been closed.")
         self.w_cmdList.set_pipeline(pipeline=pipeline.w_pipeline)
+
+    def bind(self, ds: DescriptorSet):
+        self.w_cmdList.bind(w_ds = ds.w_ds)
 
     def update_sets(self, *sets):
         for s in sets:
@@ -1066,6 +1151,10 @@ class ComputeManager(CopyManager):
 class GraphicsManager(ComputeManager):
     def __init__(self, device, w_cmdList: CommandBufferWrapper):
         super().__init__(device, w_cmdList)
+        self.current_framebuffer = None
+
+    def set_framebuffer(self, framebuffer: FrameBuffer):
+        self.w_cmdList.set_framebuffer(framebuffer)
 
     @classmethod
     def get_queue_required(cls) -> int:
@@ -1073,6 +1162,21 @@ class GraphicsManager(ComputeManager):
 
     def blit_image(self, src_image: Image, dst_image: Image, filter: Filter = Filter.POINT):
         self.w_cmdList.blit_image(src_image.w_resource, dst_image.w_resource, filter)
+
+    def dispatch_primitives(self, vertices: int, instances: int = 1, vertex_start: int = 0, instance_start: int = 0):
+        self.w_cmdList.dispatch_primitives(
+            vertices, instances, vertex_start, instance_start
+        )
+
+    def dispatch_indexed_primitives(self, indices: int, instances: int = 1, first_index: int = 0, vertex_offset: int = 0, first_instance: int = 0):
+        self.w_cmdList.dispatch_indexed_primitives(
+            indices, instances, first_index, vertex_offset, first_instance
+        )
+    def bind_vertex_buffer(self, binding: int, vertex_buffer: Buffer):
+        self.w_cmdList.bind_vertex_buffer(binding, vertex_buffer.w_resource)
+
+    def bind_index_buffer(self, index_buffer: Buffer):
+        self.w_cmdList.bind_index_buffer(index_buffer.w_resource)
 
 
 class RaytracingManager(GraphicsManager):
@@ -1462,16 +1566,16 @@ class Window:
             backbuffer = self.device.create_image(image_type=ImageType.TEXTURE_2D, is_cube=False, image_format=Format.VEC4, width=width, height=height,
                                      depth=1, mips=1, layers=1, usage=ImageUsage.STORAGE)
             opengl_backbuffer = self.device.w_device.create_opengl_texture_from_vk(backbuffer.w_resource.resource_data)
-            tensor_data_uniform = object_buffer(Layout.create_structure(mode='std430',
-                tensor_data=torch.int64,
-                width=int,
-                height=int,
-                components=int,
-                type=int
-            ))
-            color_map_data = object_buffer(Layout.create_structure(mode='std430',
-                map_colors=[17, vec4]
-            ))
+            tensor_data_uniform = object_buffer(Layout.from_structure(mode='std430',
+                                                                      tensor_data=torch.int64,
+                                                                      width=int,
+                                                                      height=int,
+                                                                      components=int,
+                                                                      type=int
+                                                                      ))
+            color_map_data = object_buffer(Layout.from_structure(mode='std430',
+                                                                 map_colors=[17, vec4]
+                                                                 ))
 
             pipeline = pipeline_compute()
             pipeline.load_shader_from_source("""
@@ -1751,14 +1855,14 @@ class DeviceManager:
     def create_structured_buffer(self, count: int, element_description: Union[type, torch.dtype, Layout, List, Dict],
                       usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
         if not isinstance(element_description, Layout):
-            element_description = Layout.create(element_description)
+            element_description = Layout.from_description(LayoutAlignment.SCALAR, element_description)
         size = element_description.aligned_size * count
         return StructuredBuffer(self, self.w_device.create_buffer(size, usage, memory), element_description)
 
     def create_object_buffer(self, element_description: Union[type, torch.dtype, Layout, List, Dict],
                              usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU):
         if not isinstance(element_description, Layout):
-            element_description = Layout.create(element_description)
+            element_description = Layout.from_description(element_description)
         size = element_description.aligned_size
         return ObjectBuffer(self, self.w_device.create_buffer(size, usage, memory), element_description)
 
@@ -1799,7 +1903,7 @@ class DeviceManager:
         return ADS(self, ads, handle, scratch_size, info, ranges, instance_buffer)
 
     def create_instance_buffer(self, instances: int, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
-        instance_layout = Layout.create_instance_layout()
+        instance_layout = Layout.from_instance()
         b = self.create_structured_buffer(instances, element_description=instance_layout, usage=BufferUsage.RAYTRACING_RESOURCE, memory=memory).clear()
         # Load default values for b
         with b.map('in', clear=True) as t:
@@ -1826,7 +1930,7 @@ class DeviceManager:
                        max_LOD: float = 0.0,
                        border_color: BorderColor = BorderColor.TRANSPARENT_BLACK_FLOAT,
                        use_unnormalized_coordinates: bool = False
-                       ) -> SamplerWrapper:
+                       ) -> Sampler:
         return self.w_device.create_sampler(mag_filter, min_filter, mipmap_mode,
                                             address_U, address_V, address_W,
                                             mip_LOD_bias, 1 if enable_anisotropy else 0,
@@ -1840,11 +1944,11 @@ class DeviceManager:
             pipeline_type=PipelineType.COMPUTE))
 
     def create_graphics_pipeline(self):
-        return Pipeline(self.w_device.create_pipeline(
+        return GraphicsPipeline(self.w_device.create_pipeline(
             pipeline_type=PipelineType.GRAPHICS))
 
     def create_raytracing_pipeline(self):
-        return Pipeline(self.w_device.create_pipeline(
+        return RaytracingPipeline(self.w_device.create_pipeline(
             pipeline_type=PipelineType.RAYTRACING))
 
     def create_window(self, width: int, height: int, format: Format) -> Window:
@@ -2021,14 +2125,14 @@ def tensor_copy(t: torch.Tensor) -> ViewTensor:
     return vk_t
 
 @_check_active_device
-def pipeline_raytracing() -> Pipeline:
+def pipeline_raytracing() -> RaytracingPipeline:
     """
     Creates a Pipeline to manage the setup of a raytracing pipeline, resources, include and other attributes.
     """
     return __ACTIVE_DEVICE__.create_raytracing_pipeline()
 
 @_check_active_device
-def pipeline_graphics() -> Pipeline:
+def pipeline_graphics() -> GraphicsPipeline:
     """
     Creates a Pipeline to manage the setup of a graphics pipeline, resources, include and other attributes.
     """
@@ -2057,7 +2161,7 @@ def sampler(mag_filter: Filter = Filter.POINT,
             max_LOD: float = 0.0,
             border_color: BorderColor = BorderColor.TRANSPARENT_BLACK_FLOAT,
             use_unnormalized_coordinates: bool = False
-            ) -> SamplerWrapper:
+            ) -> Sampler:
     """
     Creates a sampler that can be used to bind texture objects.
     """
@@ -2080,7 +2184,7 @@ def sampler_linear(address_U: AddressMode = AddressMode.REPEAT,
                   max_LOD: float = 1000.0,
                   border_color: BorderColor = BorderColor.TRANSPARENT_BLACK_FLOAT,
                   use_unnormalized_coordinates: bool = False
-                  ) -> SamplerWrapper:
+                  ) -> Sampler:
     """
     Creates a linear sampler that can be used to bind texture objects.
     """
@@ -2092,36 +2196,36 @@ def sampler_linear(address_U: AddressMode = AddressMode.REPEAT,
 
 @_check_active_device
 def image_1D(image_format: Format, width: int, mips=None, layers=1,
-                     usage: ImageUsage = ImageUsage.SAMPLED) -> Image:
+                     usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
     Creates a one-dimensional image object on the GPU. If mips is None, then the maximum possible value is used.
     """
     if mips is None:
         mips = int(math.log(width, 2)) + 1
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_1D, False, image_format,
-                             width, 1, 1, mips, layers, usage, MemoryLocation.GPU)
+                             width, 1, 1, mips, layers, usage, memory=memory)
 
 @_check_active_device
 def image_2D(image_format: Format, width: int, height: int, mips=None, layers=1,
-                     usage: ImageUsage = ImageUsage.SAMPLED) -> Image:
+                     usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
     Creates a two-dimensional image object on the GPU. If mips is None, then the maximum possible value is used.
     """
     if mips is None:
         mips = int(math.log(max(width, height), 2)) + 1
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, image_format,
-                             width, height, 1, mips, layers, usage, MemoryLocation.GPU)
+                             width, height, 1, mips, layers, usage, memory=memory)
 
 @_check_active_device
 def image_3D(image_format: Format, width: int, height: int, depth: int, mips : int = None, layers : int = 1,
-                     usage: ImageUsage = ImageUsage.SAMPLED) -> Image:
+                     usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
     Creates a three-dimensional image object on the GPU. If mips is None, then the maximum possible value is used.
     """
     if mips is None:
         mips = int(math.log(max(width, height, depth), 2)) + 1
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_3D, False, image_format,
-                             width, height, depth, mips, layers, usage, MemoryLocation.GPU)
+                             width, height, depth, mips, layers, usage, memory=memory)
 
 
 def external_sync():
@@ -2151,11 +2255,11 @@ def render_target(image_format: Format, width: int, height: int) -> Image:
                              width, height, 1, 1, 1, ImageUsage.RENDER_TARGET, MemoryLocation.GPU)
 
 @_check_active_device
-def depth_stencil(image_format: Format, width: int, height: int) -> Image:
+def depth_stencil(width: int, height: int) -> Image:
     """
     Creates a two-dimensional image object on the GPU to be used as depth stencil buffer.
     """
-    return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, image_format,
+    return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, Format.DEPTH_STENCIL,
                              width, height, 1, 1, 1, ImageUsage.DEPTH_STENCIL, MemoryLocation.GPU)
 
 @_check_active_device
@@ -2200,12 +2304,12 @@ def buffer_like(t: Union[torch.Tensor, Resource], memory: MemoryLocation) -> Buf
     return __ACTIVE_DEVICE__.create_buffer_like(t, memory)
 
 @_check_active_device
-def object_buffer(element_description: Layout, usage: BufferUsage = BufferUsage.UNIFORM, memory: MemoryLocation = MemoryLocation.CPU) -> ObjectBuffer:
+def object_buffer(layout: Layout, usage: BufferUsage = BufferUsage.UNIFORM, memory: MemoryLocation = MemoryLocation.CPU) -> ObjectBuffer:
     """
     Creates a buffer for a uniform store. Uniform CPU data can be updated (cpu version) accessing to the fields.
     To finally update the resource (in case is allocated on the gpu) use flush_cpu().
     """
-    return __ACTIVE_DEVICE__.create_object_buffer(element_description=element_description, usage = usage, memory = memory)
+    return __ACTIVE_DEVICE__.create_object_buffer(element_description=layout, usage = usage, memory = memory)
 
 @_check_active_device
 def structured_buffer(count: int, element_description: Union[type, torch.dtype, Layout, Dict, List],
@@ -2226,7 +2330,7 @@ def index_buffer(count: int,
     can be updated (cpu version).
     To finally update the resource (in case is allocated on the gpu) use flush_cpu().
     """
-    return __ACTIVE_DEVICE__.create_structured_buffer(count, element_description=Layout.create(torch.int32), usage = BufferUsage.INDEX, memory = memory)
+    return __ACTIVE_DEVICE__.create_structured_buffer(count, element_description=Layout.from_description(LayoutAlignment.SCALAR, torch.int32), usage = BufferUsage.INDEX, memory = memory)
 
 @_check_active_device
 def vertex_buffer(count: int, element_description: Union[type, torch.dtype, Layout, Dict, List],
@@ -2370,3 +2474,5 @@ def wrap_gpu(t: Any, mode: Literal['in', 'out', 'inout'] = 'in') -> GPUPtr:
     Returned object can be assigned to fields of type int64_t and use as reference buffers.
     """
     return __ACTIVE_DEVICE__.wrap_gpu(t, mode)
+
+

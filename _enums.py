@@ -146,6 +146,7 @@ class Format(IntEnum):
     UVEC3 = 17
     UVEC4 = 18
     PRESENTER = 19
+    DEPTH_STENCIL = 20
 
 
 class ImageType(IntEnum):
@@ -217,6 +218,11 @@ class ShaderStage(IntEnum):
     """
     Shader stage for a callable shader in a ray-tracing pipeline.  
     """
+    GEOMETRY = 10,
+    """
+    Shader stage for geometry process in a rasterization pipeline.
+    """
+
 
 
 class Filter(IntEnum):

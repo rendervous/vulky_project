@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import math
 from typing import Any, Union, Optional
@@ -50,8 +51,12 @@ def tensor_to_gtensor_if_possible(t: torch.Tensor, dimension: int) -> Union[torc
     if dimension == 0 or dimension > 2:
         return t.as_subclass(torch.Tensor)  # Remove any attached gtensor class could be using
     if dimension == 1:
+        if t.shape[-1] <= 1 or t.shape[-1] > 4:
+            return t
         return tensor_to_vec(t)
     if dimension == 2:
+        if t.shape[-1] <= 1 or t.shape[-1] > 4 or t.shape[-2] <= 1 or t.shape[-2] > 4:
+            return t
         return tensor_to_mat(t)
     raise Exception('?')
 
@@ -227,11 +232,11 @@ class _GTensorBase(torch.Tensor, metaclass=GTensorMeta):
         return cls(torch.diag(torch.full(cls.tensor_shape[0:1], 1, dtype=cls.tensor_dtype)))
 
     @classmethod
-    def zero(cls):
+    def zero(cls, *shape: int, device: torch.device = torch.device('cpu')):
         """
         Creates a zero matrix.
         """
-        return cls(torch.zeros(cls.tensor_shape, dtype=cls.tensor_dtype))
+        return cls(torch.zeros(*shape, *cls.tensor_shape, dtype=cls.tensor_dtype, device=device))
 
     @classmethod
     def one(cls):
@@ -260,8 +265,8 @@ class _GTensorBase(torch.Tensor, metaclass=GTensorMeta):
             for tensor in args:
                 if isinstance(tensor, _GTensorBase) and tensor.is_batch:
                     current_batch_dimension = len(tensor.shape[:tensor.batch_dimension])
-                    if batch_shape is None:
-                        batch_shape = current_batch_dimension
+                    if batch_dimension is None:
+                        batch_dimension = current_batch_dimension
                     else:
                         assert batch_dimension == current_batch_dimension, "Can not operate two graphic tensors with different batch dimensions"
             if batch_dimension is None:
@@ -285,6 +290,8 @@ class _GTensorBase(torch.Tensor, metaclass=GTensorMeta):
     def __setitem__(self, item, value):
         last_indexes = [*item] if isinstance(item, tuple) else [item]
         full_index = [slice(None)]*self.batch_dimension + last_indexes
+        if not (np.isscalar(value) or torch.is_tensor(value)):
+            value = torch.from_numpy(np.asarray(value))
         super(_GTensorBase, self).__setitem__(full_index, value)
 
     def __iter__(self):
@@ -358,10 +365,10 @@ class mat2(_GTensorBase):
 
 class mat3(_GTensorBase):
     @staticmethod
-    def rotation(axis: Union[torch.Tensor, vec3], angle: torch.Tensor) -> torch.Tensor:
+    def rotation(axis: Union[torch.Tensor, vec3], angle: Union[float, torch.Tensor]) -> 'mat3':
         axis, angle = broadcast_args_to_max_batch(
             (axis, (3,)),
-            (angle, ()),
+            (angle, (1,)),
         )
         cos_theta = torch.cos(angle)
         sin_theta = torch.sin(angle)
@@ -384,6 +391,18 @@ class mat3(_GTensorBase):
             ], dim=-1
         )
         return mat3(m.view(*axis.shape[:-1], 3, 3))
+
+    @staticmethod
+    def quaternion_rotation(q: Union[torch.Tensor, vec4]) -> 'mat3':
+        raise NotImplemented()
+
+    @staticmethod
+    def euler_rotation(yaw: Union[torch.Tensor, float], pitch: Union[torch.Tensor, float], roll: Union[torch.Tensor, float]) -> 'mat3':
+        raise NotImplemented()
+
+    @staticmethod
+    def scale(s: Union[float, torch.Tensor, vec3]) -> 'mat3':
+        raise NotImplemented()
 
 
 class mat3x4(_GTensorBase):
@@ -416,7 +435,7 @@ class mat4x3(_GTensorBase):
         offset, axis, angle, scale = broadcast_args_to_max_batch(
             (offset, (3,)),
             (axis, (3,)),
-            (angle, ()),
+            (angle, (1,)),
             (scale, (3,))
         )
         ux = axis[..., 0:1]
@@ -446,11 +465,11 @@ class mat4x3(_GTensorBase):
                 uz * uy * (1 - cos_theta) + ux * sin_theta,
                 cos_theta + uz ** 2 * (1 - cos_theta),
 
-                offset.repeat(len(ux), 1)
+                offset
             ], dim=-1
         ).view(*offset.shape[:-1], 4, 3)
         T = s @ m
-        return T
+        return mat4x3(T)
 
     @staticmethod
     def composite(internal: Optional[Union['mat4x3', torch.Tensor]], external: Optional[Union['mat4x3', torch.Tensor]]) -> 'mat4x3':
@@ -486,15 +505,65 @@ class mat4(_GTensorBase):
         exp_ori = torch.cat([ori, torch.ones(*xaxis.shape[:-1], 1).to(dev)], dim=-1).unsqueeze(-2)
         return mat4(torch.cat([exp_xaxis, exp_yaxis, exp_zaxis, exp_ori], dim=-2))
 
+    @staticmethod
+    def look_at(ori: vec3, target: vec3, up: vec3):
+        ori, target, up = broadcast_args_to_max_batch(
+            (ori, (3,)),
+            (target, (3,)),
+            (up, (3,))
+        )
+        zaxis = vec3.normalize(target - ori)
+        xaxis = vec3.normalize(vec3.cross(up, zaxis))
+        yaxis = vec3.cross(zaxis, xaxis)
+        tx = -vec3.dot(xaxis, ori)
+        ty = -vec3.dot(yaxis, ori)
+        tz = -vec3.dot(zaxis, ori)
+        zeros = torch.zeros_like(tx)
+        ones = torch.ones_like(tx)
+        return mat4(torch.cat([
+            xaxis, tx,
+            yaxis, ty,
+            zaxis, tz,
+            zeros, zeros, zeros, ones
+                   ], dim=-1).view(*ori.shape[:-1], 4,4).transpose(dim0=-1, dim1=-2))
+
+    @staticmethod
+    def perspective(
+            fov: Union[float, torch.Tensor]=np.pi/4,
+            aspect: Union[float, torch.Tensor]=1.0,
+            znear: Union[float, torch.Tensor] = 0.001,
+            zfar: Union[float, torch.Tensor] = 100):
+        all_floats = all(not isinstance(a, torch.Tensor) for a in [fov, aspect, znear, zfar])
+        if all_floats:
+            fov = torch.tensor([fov])
+        fov, aspect, znear, zfar = broadcast_args_to_max_batch(
+            (fov, (1,)),
+            (aspect, (1,)),
+            (znear, (1,)),
+            (zfar, (1,))
+        )
+
+        h = 1/torch.tan(fov*0.5)
+        w = h * aspect
+        zeros = torch.zeros_like(fov)
+        ones = torch.ones_like(fov)
+        P = torch.cat([
+            w, zeros, zeros, zeros,
+            zeros, h, zeros, zeros,
+            zeros, zeros, zfar/(zfar - znear), ones,
+            zeros, zeros, -znear*zfar/(zfar - znear), zeros
+        ], dim=-1).view(*fov.shape[:-1], 4, 4)
+        return mat4(P)
+
     def inverse(self):
         return mat4(torch.linalg.inv(self))
 
     @staticmethod
-    def trs(offset: vec3, axis: vec3, angle: Union[float, torch.Tensor], scale: vec3) -> 'mat4x3':
+    def trs(offset: vec3, axis: vec3, angle: Union[float, torch.Tensor], scale: vec3) -> 'mat4':
         offset, axis, angle, scale = broadcast_args_to_max_batch(
             (offset, (3,)),
             (axis, (3,)),
-            (angle, ()),
+            (angle, (1,)),
             (scale, (3,))
         )
         ux = axis[..., 0:1]
@@ -527,20 +596,22 @@ class mat4(_GTensorBase):
                 cos_theta + uz ** 2 * (1 - cos_theta),
                 zeros,
 
-                offset.repeat(len(ux), 1),
+                offset,
                 ones
             ], dim=-1
-        ).view(*offset.shape[:-1], 4, 3)
+        ).view(*offset.shape[:-1], 4, 4)
         T = s @ m
-        return T
+        return mat4(T)
+
+
 
 
 def broadcast_args_to_max_batch(*args):
     def valid_shape(t, shape):
         if isinstance(t, torch.Tensor):
-            return t.shape[:-len(shape)] == shape
+            return t.shape[-len(shape):] == shape
         return len(shape) == 0
-    devices = [a.device for a in args if isinstance(a, torch.Tensor)]
+    devices = [a.device for a, shape in args if isinstance(a, torch.Tensor)]
     assert len(devices) > 0, 'At least one tensor should be provided'
     assert all(d == devices[0] for d in devices), 'All tensors has to be in same device.'
     def scalar_to_tensor(t):
@@ -550,8 +621,8 @@ def broadcast_args_to_max_batch(*args):
         return t
     max_batch = None
     batch_dimension = None
+    args = [(scalar_to_tensor(t), shape) for t, shape in args]  # Convert all to tensor if necessary
     assert all(valid_shape(t, shape) for (t, shape) in args)
-    args = [scalar_to_tensor(t) for t in args]  # Convert all to tensor if necessary
     for (t,shape) in args:
         current_batch_dimension = len(t.shape) - len(shape)
         current_batch = list(t.shape[:-len(shape)])
@@ -568,7 +639,7 @@ def broadcast_args_to_max_batch(*args):
                         else:
                             assert max_batch[i] == d, 'Dimension of some argument missmatch same dimension in another'
     if max_batch is None:  # there is no argument batching
-        return args
+        return (t for t, _ in args)
     def to_max_batch(t, shape):
         if len(t.shape) == len(shape):  # no batching
             for d in range(batch_dimension):

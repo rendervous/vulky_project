@@ -304,6 +304,9 @@ class VulkanMemoryPage:
         return self.allocator.used_memory
 
     def free(self, offset: int):
+        if self.memory_as_tensor is None:  # resource already freed
+            print("[WARNING] A memory was disposed after device destroy, check there is no hanging tensors!")
+            return
         self.allocator.free(offset)
 
     @lazy_constant

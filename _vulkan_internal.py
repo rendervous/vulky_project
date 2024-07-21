@@ -1,10 +1,15 @@
 from enum import Enum
+
+import numpy as np
+from sympy.plotting.textplot import is_valid
+
 from ._vulkan_memory_allocator import *
 from ._enums import *
 from ._common import *
 import struct
 import gc
 import torch
+from typing import Callable, Union
 
 
 # Internal classes for the vulkan backend
@@ -59,9 +64,9 @@ __BUFFER_USAGE_2_VK__ = [
 __IMAGE_USAGE_2_VK__ = [
     0,
     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
     VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
     VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
 ]
@@ -95,7 +100,8 @@ __FORMAT_2_VK__ = [
     VK_FORMAT_R32G32_UINT,
     VK_FORMAT_R32G32B32_UINT,
     VK_FORMAT_R32G32B32A32_UINT,
-    VK_FORMAT_R8G8B8A8_SRGB
+    VK_FORMAT_R8G8B8A8_SRGB,
+    VK_FORMAT_D24_UNORM_S8_UINT
 ]
 
 
@@ -116,7 +122,8 @@ __SHADER_STAGE_2_VK__ = [
     VK_SHADER_STAGE_MISS_BIT_KHR,
     VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
     VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
-    VK_SHADER_STAGE_CALLABLE_BIT_KHR
+    VK_SHADER_STAGE_CALLABLE_BIT_KHR,
+    VK_SHADER_STAGE_GEOMETRY_BIT,
 ]
 
 
@@ -278,6 +285,10 @@ _FORMAT_SIZES = {
     VK_FORMAT_B8G8R8A8_UINT: 4,
     VK_FORMAT_B8G8R8A8_SINT: 4,
     VK_FORMAT_B8G8R8A8_SRGB: 4,
+
+    VK_FORMAT_D32_SFLOAT: 4,
+    VK_FORMAT_D32_SFLOAT_S8_UINT: 5,
+    VK_FORMAT_D24_UNORM_S8_UINT: 4
 }
 
 
@@ -310,7 +321,7 @@ class ResourceData:
                  vk_resource,
                  w_memory,
                  is_buffer,
-                 initial_state
+                 desired_layout
                  ):
         super(ResourceData, self).__init__()
         self.w_device = w_device
@@ -319,8 +330,9 @@ class ResourceData:
         self.vk_memory_location = vk_memory_location
         self.vk_resource = vk_resource
         self.w_memory : VulkanMemory = w_memory
-        self.current_state = initial_state
+        self.desired_layout = desired_layout
         self.is_buffer = is_buffer
+        self.is_depth_stencil = not is_buffer and (vk_description.usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
         self.is_ads = False
         self.ads = None
         self.is_cpu = bool(vk_memory_location & (VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT))
@@ -438,9 +450,9 @@ class ResourceData:
         return self.cpu_footprints[mip*self.full_slice['array_count']].dim
 
     @staticmethod
-    def get_subresources(slice):
+    def get_subresources(slice, depth_stencil: bool = False):
         return VkImageSubresourceRange(
-            aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+            aspectMask=VK_IMAGE_ASPECT_COLOR_BIT if not depth_stencil else VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
             baseMipLevel=slice["mip_start"],
             levelCount=slice["mip_count"],
             baseArrayLayer=slice["array_start"],
@@ -448,18 +460,19 @@ class ResourceData:
         )
 
     @staticmethod
-    def get_subresource_layers(slice):
+    def get_subresource_layers(slice, is_depth: bool = False):
         return VkImageSubresourceLayers(
-            aspectMask=VK_IMAGE_ASPECT_COLOR_BIT,
+            aspectMask=VK_IMAGE_ASPECT_COLOR_BIT if not is_depth else VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
             mipLevel=slice["mip_start"],
             baseArrayLayer=slice["array_start"],
             layerCount=slice["array_count"]
         )
 
-    def add_barrier(self, vk_cmdList, slice, state: ResourceState):
-        srcAccessMask, srcStageMask, oldLayout = self.current_state
-        dstAccessMask, dstStageMask, newLayout = state
-
+    def add_barrier(self, vk_cmdList, slice, oldLayout, newLayout):
+        srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT
+        dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT
+        srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
+        dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT
         srcQueue = VK_QUEUE_FAMILY_IGNORED
         dstQueue = VK_QUEUE_FAMILY_IGNORED
 
@@ -485,11 +498,10 @@ class ResourceData:
                 newLayout=newLayout,
                 srcQueueFamilyIndex=srcQueue,
                 dstQueueFamilyIndex=dstQueue,
-                subresourceRange=ResourceData.get_subresources(slice)
+                subresourceRange=ResourceData.get_subresources(slice, self.is_depth_stencil)
             )
             vkCmdPipelineBarrier(vk_cmdList, srcStageMask, dstStageMask, 0,
                                  0, None, 0, None, 1, [barrier])
-        self.current_state = state
 
     @staticmethod
     def copy_from_to(vk_cmdList, src, src_slice, dst, dst_slice):
@@ -534,37 +546,37 @@ class ResourceData:
             return
         if src.is_buffer and not dst.is_buffer:
             regions = get_buffer_image_regions(src, src_slice, dst, dst_slice)
-            dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
-                vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
-                vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                vk_layout=VK_IMAGE_LAYOUT_GENERAL
-            ))
+            # dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
+            #     vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
+            #     vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            #     vk_layout=VK_IMAGE_LAYOUT_GENERAL
+            # ))
             vkCmdCopyBufferToImage(vk_cmdList, src.vk_resource, dst.vk_resource, VK_IMAGE_LAYOUT_GENERAL, len(regions),
                                    regions)
             return
         if not src.is_buffer and dst.is_buffer:
             regions = get_buffer_image_regions(dst, dst_slice, src, src_slice)
-            src.add_barrier(vk_cmdList, src_slice, ResourceState(
-                vk_access=VK_ACCESS_TRANSFER_READ_BIT,
-                vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                vk_layout=VK_IMAGE_LAYOUT_GENERAL
-            ))
+            # src.add_barrier(vk_cmdList, src_slice, ResourceState(
+            #     vk_access=VK_ACCESS_TRANSFER_READ_BIT,
+            #     vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            #     vk_layout=VK_IMAGE_LAYOUT_GENERAL
+            # ))
             vkCmdCopyImageToBuffer(vk_cmdList, src.vk_resource, VK_IMAGE_LAYOUT_GENERAL, dst.vk_resource, len(regions),
                                    regions)
 
             return
         if True:  # image to image
             regions = get_image_image_regions(src, src_slice, dst, dst_slice)
-            src.add_barrier(vk_cmdList, src_slice, ResourceState(
-                vk_access=VK_ACCESS_TRANSFER_READ_BIT,
-                vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                vk_layout=VK_IMAGE_LAYOUT_GENERAL
-            ))
-            dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
-                vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
-                vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-                vk_layout=VK_IMAGE_LAYOUT_GENERAL
-            ))
+            # src.add_barrier(vk_cmdList, src_slice, ResourceState(
+            #     vk_access=VK_ACCESS_TRANSFER_READ_BIT,
+            #     vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            #     vk_layout=VK_IMAGE_LAYOUT_GENERAL
+            # ))
+            # dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
+            #     vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
+            #     vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            #     vk_layout=VK_IMAGE_LAYOUT_GENERAL
+            # ))
             vkCmdCopyImage(vk_cmdList, src.vk_resource, VK_IMAGE_LAYOUT_GENERAL, dst.vk_resource, VK_IMAGE_LAYOUT_GENERAL, len(regions), regions)
 
     @staticmethod
@@ -580,11 +592,20 @@ class ResourceData:
     def initialize_image(w_device: 'DeviceWrapper', resource_data: 'ResourceData'):
         cmdList: CommandBufferWrapper = w_device.create_cmdList(QueueType.GRAPHICS)
         cmdList.begin()
-        resource_data.add_barrier(cmdList.vk_cmdList, resource_data.full_slice, ResourceState(
-            vk_access=VK_ACCESS_SHADER_READ_BIT,
-            vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            vk_layout=VK_IMAGE_LAYOUT_GENERAL
-        ))
+        if not resource_data.is_depth_stencil:
+            resource_data.add_barrier(
+                cmdList.vk_cmdList,
+                resource_data.full_slice,
+                oldLayout=VK_IMAGE_LAYOUT_UNDEFINED,
+                newLayout=resource_data.desired_layout
+            )
+        else:
+            resource_data.add_barrier(
+                cmdList.vk_cmdList,
+                resource_data.full_slice,
+                oldLayout=VK_IMAGE_LAYOUT_UNDEFINED,
+                newLayout=resource_data.desired_layout
+            )
         cmdList.end()
         cmdList.flush_and_wait()
 
@@ -602,15 +623,6 @@ class ResourceData:
     @staticmethod
     def blit_from_to(vk_cmdList, src, src_slice, dst, dst_slice, filter):
         filter = __FILTER_2_VK__[filter]
-        src.add_barrier(vk_cmdList, src_slice, ResourceState(
-            vk_access=VK_ACCESS_TRANSFER_READ_BIT,
-            vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            vk_layout=VK_IMAGE_LAYOUT_GENERAL))
-        dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
-            vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
-            vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            vk_layout=VK_IMAGE_LAYOUT_GENERAL))
-
         src_index = src_slice["array_start"] + src_slice["mip_start"] * \
                     src.full_slice["array_count"]
         src_footprint, _ = src.get_cpu_footprint_and_offset(src_index)
@@ -792,7 +804,10 @@ class ResourceWrapper:
         if isinstance(src, ResourceWrapper):
             return self._load_from_resource(w_device, src)
         if isinstance(src, list):
-            src = np.array(src, dtype=np.float32())
+            if (self.resource_data.vk_description.usage & VK_BUFFER_USAGE_INDEX_BUFFER_BIT) == VK_BUFFER_USAGE_INDEX_BUFFER_BIT:
+                src = np.array(src, dtype=np.int32())
+            else:
+                src = np.array(src, dtype=np.float32())
             src.setflags(write=True)
         if isinstance(src, torch.Tensor):
             return self._load_from_torch(w_device, src)
@@ -858,8 +873,20 @@ class ResourceWrapper:
         except:
             raise Exception('No supported save to type '+str(type(dst)))
 
-    def add_barrier(self, vk_cmdList, state: ResourceState):
-        self.resource_data.add_barrier(vk_cmdList, self.current_slice, state)
+    def add_barrier(self, vk_cmdList, oldLayout, newLayout):
+        self.resource_data.add_barrier(vk_cmdList, self.current_slice, oldLayout, newLayout)
+
+    @staticmethod
+    def buffer_null_descriptor():
+        return VkDescriptorBufferInfo(
+            buffer=None,
+            offset=0,
+            range=UINT64_MAX
+        )
+
+    @staticmethod
+    def image_null_descriptor():
+        return VkDescriptorImageInfo()
 
     @lazy_constant
     @mutable_method
@@ -883,7 +910,7 @@ class ResourceWrapper:
                         b=VK_COMPONENT_SWIZZLE_IDENTITY,
                         a=VK_COMPONENT_SWIZZLE_IDENTITY,
                     ),
-                    subresourceRange=ResourceData.get_subresources(self.current_slice)
+                    subresourceRange=ResourceData.get_subresources(self.current_slice, self.resource_data.is_depth_stencil)
                 ), None)
             self.resource_data.w_device.notify_view(self)
         return self.vk_view
@@ -911,8 +938,11 @@ class SamplerWrapper:
         self.w_device = w_device
         self.vk_sampler = vk_sampler
 
-    def __del__(self):
-        vkDestroySampler(self.w_device.vk_device, self.vk_sampler, None)
+    def _vk_destroy(self):
+        if self.w_device is not None:
+            vkDestroySampler(self.w_device.vk_device, self.vk_sampler, None)
+        self.vk_sampler = None
+        self.w_device = None
 
 
 @freezable_type
@@ -925,33 +955,199 @@ class ShaderHandlerWrapper:
         self.handle = handle
 
 
-class PipelineBindingWrapper:
-    def __init__(self, w_device: 'DeviceWrapper', pipeline_type):
+class DescriptorSetWrapper:
+    def __init__(self, w_device, set: int, descriptor_set_handle: int,
+                 descriptor_types: Dict[int, int]):
+        self.w_device = w_device
+        self.set = set
+        self.descriptor_set_handle = descriptor_set_handle
+        self.descriptor_types = descriptor_types
+
+    def _resolve_buffer_descriptor(self, buffer: Union[ResourceWrapper, None]):
+        if buffer is None:
+            # NULL DESCRIPTOR
+            return ResourceWrapper.buffer_null_descriptor()
+        return VkDescriptorBufferInfo(
+            buffer=buffer.resource_data.vk_resource,
+            offset=buffer.current_slice["offset"],
+            range=buffer.current_slice["size"]
+        )
+
+    def _resolve_image_descriptor(self, image: Union[ResourceWrapper, None], sampler: Union[SamplerWrapper, None]):
+        if image is None:
+            return ResourceWrapper.image_null_descriptor()
+        return VkDescriptorImageInfo(
+            sampler=sampler.vk_sampler if sampler is not None else None,
+            imageView=image.view,
+            imageLayout=VK_IMAGE_LAYOUT_GENERAL
+        )
+
+    def update(self, bindings: Dict[int, Union['ResourceWrapper', tuple['ResourceWrapper','SamplerWrapper'], List['ResourceWrapper'], List[Tuple['ResourceWrapper','SamplerWrapper']], None]]):
+        writes = []
+        for binding, resource in bindings.items():
+            if not isinstance(resource, list):
+                resource = [resource]
+            descriptor_type = self.descriptor_types[binding]
+            imageInfo = None
+            bufferInfo = None
+            next_ads = None
+            if descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                bufferInfo = [self._resolve_buffer_descriptor(r) for r in resource]
+            elif descriptor_type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE or descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                imageInfo = [self._resolve_image_descriptor(r, None) for r in resource]
+            elif descriptor_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+                imageInfo = [self._resolve_image_descriptor(r[0], r[1]) for r in resource]
+            elif descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                next_ads = VkWriteDescriptorSetAccelerationStructureKHR(
+                    accelerationStructureCount=len(resource),
+                    pAccelerationStructures=[VK_NULL_HANDLE if r is None else r.resource_data.ads for r in resource]
+                )
+            elif descriptor_type == VK_DESCRIPTOR_TYPE_SAMPLER:
+                imageInfo = [self._resolve_image_descriptor(None, r) for r in resource]
+            writes.append(VkWriteDescriptorSet(
+                pNext=next_ads,
+                dstSet=self.descriptor_set_handle,
+                dstBinding=binding,
+                dstArrayElement=0,
+                descriptorCount=len(resource) if next_ads is None else 0,
+                descriptorType=descriptor_type,
+                pBufferInfo=bufferInfo,
+                pImageInfo=imageInfo,
+                pTexelBufferView=None  # not supported yet.
+            ))
+        vkUpdateDescriptorSets(
+            self.w_device.vk_device,
+            pDescriptorWrites=writes,
+            descriptorWriteCount=len(writes),
+            descriptorCopyCount=0,
+            pDescriptorCopies=None
+        )
+
+
+class DescriptorSetCollectionWrapper:
+    """
+    Internally manage a descriptor pool, the resolvers and update descriptors
+    """
+    def __init__(self, w_device,
+                 pipeline: 'PipelineWrapper',
+                 set: int,  # set for the DescriptorSets will be constructed
+                 copies: int,  # max number of sets will be created
+                 variable_size_value: Optional[int] = None,
+                 ):
+        """
+        Initializes a descriptor manager.
+        """
+        self.w_device = w_device
+        self.set = set
+        self.descriptor_types = {}
+
+        # counting descriptors by type
+        counting_by_type = {
+            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: 1,
+            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: 1,
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: 1,
+            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: 1,
+            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: 1,
+            VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: 1,
+        }
+        for _, slot, vk_stage, vk_descriptor_type, count, is_variable_size in pipeline.layout_bindings_by_set[set]:
+            if is_variable_size:
+                assert variable_size_value is not None, 'If used a variable size descriptor, variable_size field should be set.'
+                count = variable_size_value
+            counting_by_type[vk_descriptor_type] += count
+            self.descriptor_types[slot] = vk_descriptor_type
+
+        self.descriptor_pool = vkCreateDescriptorPool(self.w_device.vk_device, VkDescriptorPoolCreateInfo(
+            maxSets=copies,
+            poolSizeCount=6,
+            pPoolSizes=[VkDescriptorPoolSize(t, c * copies) for t, c in counting_by_type.items()],
+            flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
+        ), pAllocator=None)
+
+        self.desc_sets = vkAllocateDescriptorSets(
+            w_device.vk_device,
+            VkDescriptorSetAllocateInfo(
+                descriptorPool=self.descriptor_pool,
+                descriptorSetCount=copies,
+                pSetLayouts=[pipeline.descriptor_set_layouts[set]]*copies
+            )
+        )
+
+        self.desc_sets_wrappers = [
+            DescriptorSetWrapper(
+                w_device=self.w_device,
+                set=self.set,
+                descriptor_set_handle=self.desc_sets[index],
+                descriptor_types=self.descriptor_types
+            ) for index in range(copies)
+        ]
+
+        self.copies = copies
+
+    def _vk_destroy(self):
+        vkDestroyDescriptorPool(self.w_device.vk_device, self.descriptor_pool, None)
+
+class FrameBufferWrapper:
+    def __init__(self,
+                 w_device: 'DeviceWrapper',
+                 pipeline: 'PipelineWrapper',
+                 images: List[Union['ResourceWrapper', None]],
+                 width: int,
+                 height: int,
+                 layers: int
+                 ):
+        self.w_device = w_device
+        self.render_pass = pipeline.render_pass
+        self.width = width
+        self.height = height
+        self.layers = layers
+        self.frame_buffer = vkCreateFramebuffer(
+            w_device.vk_device,
+            VkFramebufferCreateInfo(
+                renderPass=pipeline.render_pass,
+                pAttachments=[
+                    im.view if im is not None else VK_NULL_HANDLE for im in images
+                ],
+                width=width,
+                height=height,
+                layers=layers
+            ), None
+        )
+        self.images = images  # to keep images alive while frame buffer is alive
+
+    def _vk_destroy(self):
+        vkDestroyFramebuffer(self.w_device.vk_device, self.frame_buffer, None)
+
+
+class PipelineWrapper:
+    """
+    Manage operations related to pipelines. The pipeline wrapper is a helper class that allows to setup a pipeline,
+    create the underlying VkPipeline, VkPipelineLayout, and descriptor sets.
+    Also, manage shaders modules, render passes, and render state properties.
+    After closed, serves as factory for BindingManagers and FrameBuffers.
+    """
+    def __init__(self, w_device: 'DeviceWrapper', pipeline_type: int):
         self.w_device = w_device
         self.pipeline_type = pipeline_type
         assert self.pipeline_type != VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR or self.w_device.support_raytracing, 'Current system doesnt support RT'
-        self.descriptor_sets_description = [[], [], [], []]
-        self.active_set = 0
-        self.active_descriptor_set = self.descriptor_sets_description[0]  # by default activate global set
-        self.shaders = {}
+        self.shaders = {}  # Maps a shader stage with a loaded shader module.
         self.push_constants = { }  # map from stage to (offset, size, bytearray)
         self.push_constants_fields = { }  # map from constant field name to (offset, size, scalar_type)
-        self.rt_shaders = []  # shader stages
+        self.layout_bindings = []  # list of all bindings collected for the layout and the DescriptorSets
+        self.layout_bindings_by_set = { }  # maps from set to collected bindings for that set.
+        self.layout_bindings_by_slot = {}  # maps from (set, binding) to collected binding
+        self.attachments = []  # list of all bindings collected for the render pass and frame buffer
+        self.rt_shaders = []  # raytracing shaders (order matters and can repeat stage bound, final program will be realized afterwards).
         self.rt_groups = []  # groups for hits
         self.rt_group_handles = []  # handles computed for each group
         self.max_recursion_depth = 1
-        self.initialized = False
-        self.descriptor_set_layouts = []
-        self.descriptor_sets = None
-        self.descriptor_pool = None
-        self.pipeline_object = None
-        self.pipeline_layout = None
-        self.current_cmdList = None
-        self._single_shader_stage = None
+        self._single_shader_stage = None  # Gets a single shader stage that is active or None if several.
         if self.pipeline_type == VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO:
-            self.point = VK_PIPELINE_BIND_POINT_COMPUTE
-            self._single_shader_stage = ShaderStage.COMPUTE
-            self.__valid_stages = [VK_SHADER_STAGE_COMPUTE_BIT]
+            self.point = VK_PIPELINE_BIND_POINT_COMPUTE  # current pipeline point
+            self._single_shader_stage = ShaderStage.COMPUTE  # by default compute has active compute-stage
+            self.__valid_stages = [
+                VK_SHADER_STAGE_COMPUTE_BIT
+            ]
         elif self.pipeline_type == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
             self.point = VK_PIPELINE_BIND_POINT_GRAPHICS
             self.__valid_stages = [
@@ -972,27 +1168,16 @@ class PipelineBindingWrapper:
                 VK_SHADER_STAGE_CALLABLE_BIT_KHR
             ]
         self._saved_stages = []
+        self.active_stage = 0  # vulkan flag bit for active stages
         self._set_active_vk_stages(self.__valid_stages)
-
-    def _set_active_vk_stages(self, vk_stages: List[int]):
-        st = 0
-        for s in vk_stages:
-            st |= s
-        self.active_stage = st
-
-    def push_active_stages(self, *stages: ShaderStage):
-        self._saved_stages.append((self.active_stage, self._single_shader_stage))
-        if len(stages) > 1 or len(stages) == 0:
-            self._single_shader_stage = None
-        else:
-            self._single_shader_stage = stages[0]
-        self._set_active_vk_stages([__SHADER_STAGE_2_VK__[s] for s in stages])
-
-    def pop_active_stages(self):
-        self.active_stage, self._single_shader_stage = self._saved_stages.pop()
-
-    def get_single_active_shader_stage(self) -> ShaderStage:
-        return self._single_shader_stage
+        self.initialized = False  # will turn True after build objects.
+        self.descriptor_set_layouts = []  # Initialized when pipeline is built.
+        self.render_pass = None
+        self.descriptor_sets = []  # all descriptorsets created
+        self.framebuffers = []  # all framebuffer created
+        self.vertex_att_format = {}  # vertex_attribute map to format
+        self.vertex_binding_descriptions = []  # all vertex-buffer static bindings
+        self.vertex_att_descriptions = []  # all collected attribute descriptions
 
     def _vk_destroy(self):
         # Destroy desciptor sets
@@ -1000,7 +1185,14 @@ class PipelineBindingWrapper:
             return
         self.shaders = {}
         self.rt_shaders = []
-        vkDestroyDescriptorPool(self.w_device.vk_device, self.descriptor_pool, None)
+        for ds in self.descriptor_sets:
+            ds._vk_destroy()
+        self.descriptor_sets = []
+        for fb in self.framebuffers:
+            fb._vk_destroy()
+        if self.render_pass is not None:
+            vkDestroyRenderPass(self.w_device.vk_device, self.render_pass, None)
+        self.framebuffers = []
         # Destroy layouts
         [vkDestroyDescriptorSetLayout(self.w_device.vk_device, dl, None) for dl in self.descriptor_set_layouts]
         # Destroy pipeline layout
@@ -1010,35 +1202,75 @@ class PipelineBindingWrapper:
         if self.pipeline_object:
             vkDestroyPipeline(self.w_device.vk_device, self.pipeline_object, None)
             self.pipeline_object = None
-        self.descriptor_sets_description = [[], [], [], []]
-        self.active_set = 0
-        self.active_descriptor_set = None
         self.descriptor_set_layouts = []
-        self.descriptor_sets = None
-        self.descriptor_pool = None
         self.pipeline_object = None
         self.pipeline_layout = None
-        self.current_cmdList = None
+        self.render_pass = None
         self.w_device = None
 
     @trace_destroying
     def __del__(self):
         self._vk_destroy()
 
-    def descriptor_set(self, set_slot):
-        assert not self.initialized, "Error, can not continue pipeline setup after initialized"
-        self.active_set = set_slot
-        self.active_descriptor_set = self.descriptor_sets_description[set_slot]
+    def _set_active_vk_stages(self, vk_stages: List[int]):
+        st = 0
+        for s in vk_stages:
+            st |= s
+        self.active_stage = st
 
-    def binding(self, slot, descriptor_type: DescriptorType, count, resolver):
+    def push_active_stages(self, *stages: ShaderStage):
+        """
+        Pushes a set of stages to be active.
+        """
+        self._saved_stages.append((self.active_stage, self._single_shader_stage))
+        if len(stages) > 1 or len(stages) == 0:
+            self._single_shader_stage = None
+        else:
+            self._single_shader_stage = stages[0]
+        self._set_active_vk_stages([__SHADER_STAGE_2_VK__[s] for s in stages])
+
+    def pop_active_stages(self):
+        """
+        Pops the last stage set and restore previous.
+        """
+        self.active_stage, self._single_shader_stage = self._saved_stages.pop()
+
+    def get_single_active_shader_stage(self) -> ShaderStage:
+        """
+        Gets the active shader stage in case is active. None otherwise.
+        """
+        return self._single_shader_stage
+
+    def layout(self, set: int, binding: int, descriptor_type: DescriptorType, count: int, is_variable: bool = False):
         vk_descriptor_type = __DESCRIPTOR_TYPE_2_VK__[descriptor_type]
         assert not self.initialized, "Error, can not continue pipeline setup after initialized"
-        self.active_descriptor_set.append(
-            (slot, self.active_stage, vk_descriptor_type, count, resolver)
-        )
+        t = (set, binding, self.active_stage, vk_descriptor_type, count, is_variable)
+        self.layout_bindings.append(t)
+        self.layout_bindings_by_slot[(set, binding)] = t
+        if set not in self.layout_bindings_by_set:
+            self.layout_bindings_by_set[set] = []
+        self.layout_bindings_by_set[set].append(t)
+
+    def attach(self, slot: int, format: Format):
+        self.attachments.append((slot, format))
+
+    def vertex(self, location: int, format: Format):
+        assert location not in self.vertex_att_format, f'Vertex att at {location} bound twice'
+        self.vertex_att_format[location] = __FORMAT_2_VK__[format]
+
+    def vertex_binding(self, binding: int, stride: int, atts: Dict[int, int]):
+        self.vertex_binding_descriptions.append(VkVertexInputBindingDescription(binding=binding, stride=stride, inputRate=VK_VERTEX_INPUT_RATE_VERTEX))
+        for location, offset in atts.items():
+            self.vertex_att_descriptions.append(
+                VkVertexInputAttributeDescription(
+                    format=self.vertex_att_format[location],
+                    binding=binding,
+                    location=location,
+                    offset=offset
+                )
+            )
 
     def add_constant_range(self, offset: int, layout: Layout):
-        # TODO: Improve this to avoid using structured tensors... deprecating that strategy.
         assert layout.is_structure, 'Only structure layout allowed'
         assert self.active_stage not in self.push_constants, "Can not have more than one range of constants per stage"
         range_backbuffer = memoryview(np.ndarray(layout.aligned_size, dtype=np.uint8))
@@ -1091,55 +1323,31 @@ class PipelineBindingWrapper:
     def set_max_recursion(self, depth):
         self.max_recursion_depth = depth
 
-    def _build_objects(self):
-        assert not self.initialized, "Error, can not continue pipeline setup after initialized"
-        # Builds the descriptor sets layouts
-        descriptor_set_layout_bindings = [[], [], [], []]
-        descriptor_set_layout_bindings_bound = [[],[],[],[]]
-        counting_by_type = {
-            VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: 1,
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: 1,
-            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: 1,
-            VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: 1,
-            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: 1,
-            VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: 1,
-        }
-        var_count_info = []
-        for level in range(4):
-            has_variable_descriptor = False
-            for slot, vk_stage, vk_descriptor_type, count, resolver in self.descriptor_sets_description[level]:
-                effect_count = 100 if count == -1 else count
-                lb = VkDescriptorSetLayoutBinding(
-                    slot,
-                    vk_descriptor_type,
-                    effect_count, # for unbound descriptor set array
-                    vk_stage
-                )
-                # bound = VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT \
-                # bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT\
-                #     if count == -1 else \
-                #     VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT
-                bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT  \
-                    if count == -1 else \
-                    0
-                if count == -1:
-                    has_variable_descriptor = True
-                descriptor_set_layout_bindings[level].append(lb)
-                descriptor_set_layout_bindings_bound[level].append(bound)
-                counting_by_type[vk_descriptor_type] += effect_count
-            var_count_info.append(0 if not has_variable_descriptor else 100)
-        self.descriptor_pool = vkCreateDescriptorPool(self.w_device.vk_device, VkDescriptorPoolCreateInfo(
-            maxSets=4,
-            poolSizeCount=6,
-            pPoolSizes=[VkDescriptorPoolSize(t, c) for t, c in counting_by_type.items()],
-            flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
-        ), pAllocator=None)
+    def _build(self):
+        """
+        Builds pipeline permanent objects (VkPipelineLayout, VkPipeline, VkRenderPass) and prepares for
+        the creation of DescriptorSets and Framebuffers.
+        """
+        assert not self.initialized, "Error, can not re-build pipeline objects"
+        descriptor_set_layout_bindings = [[]]*8
+        descriptor_set_layout_bindings_bound_info = [[]]*8
+        for set, binding, vk_stage, vk_descriptor_type, count, is_variable in self.layout_bindings:
+            lb = VkDescriptorSetLayoutBinding(
+                binding,
+                vk_descriptor_type,
+                count, # for unbound descriptor set array
+                vk_stage
+            )
+            bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT if is_variable else 0
+            descriptor_set_layout_bindings[set].append(lb)
+            descriptor_set_layout_bindings_bound_info[set].append(bound)
 
-        self.descriptor_set_layouts = []
-        for level, lb in enumerate(descriptor_set_layout_bindings):
+        # Create DescriptorSet Layouts
+        self.descriptor_set_layouts = [VK_NULL_HANDLE]*8
+        for set, (lb, bound_info) in enumerate(zip(descriptor_set_layout_bindings, descriptor_set_layout_bindings_bound_info)):
             bound_info = VkDescriptorSetLayoutBindingFlagsCreateInfo(
-                pBindingFlags=descriptor_set_layout_bindings_bound[level],
-                bindingCount=len(descriptor_set_layout_bindings_bound[level])
+                pBindingFlags=bound_info,
+                bindingCount=len(bound_info)
             )
             dslci = VkDescriptorSetLayoutCreateInfo(
                 pNext = bound_info,
@@ -1147,23 +1355,71 @@ class PipelineBindingWrapper:
                 pBindings=lb,
                 flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
             )
-            self.descriptor_set_layouts.append(
-                vkCreateDescriptorSetLayout(self.w_device.vk_device,
-                                        dslci, None))
+            self.descriptor_set_layouts[set] = vkCreateDescriptorSetLayout(self.w_device.vk_device, dslci,None)
 
-        # Builds the descriptor sets (one group for each frame)
-        descriptor_set_layouts_per_frame = self.descriptor_set_layouts
+        # Create RenderPass
+        if self.pipeline_type == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
+            # analyzing attachments
+            atts = []
+            is_color = []  # each attachment identified with color flag
+            is_used = []  # each attachment identified with if used or not
+            depth_stencil_attached = False
+            for slot, format in self.attachments:
+                while slot >= len(atts):
+                    atts.append(Format.VEC4)
+                    is_color.append(True)  # by default
+                    is_used.append(False)
+                atts[slot] = format
+                current_is_color = format != Format.DEPTH_STENCIL
+                is_color[slot] = current_is_color
+                assert not depth_stencil_attached or current_is_color, 'Can not attach more than one depth-stencil image'
+                depth_stencil_attached |= not current_is_color
+                assert not is_used[slot], f'An image is already attached to the slot {slot}.'
+                is_used[slot] = True
 
-        var_count = VkDescriptorSetVariableDescriptorCountAllocateInfo(
-            descriptorSetCount=len(var_count_info),
-            pDescriptorCounts=var_count_info,
-        )
-        allocate_info = VkDescriptorSetAllocateInfo(
-            pNext = None, # var_count,
-            descriptorPool=self.descriptor_pool,
-            descriptorSetCount=len(descriptor_set_layouts_per_frame),
-            pSetLayouts=descriptor_set_layouts_per_frame)
-        self.descriptor_sets = vkAllocateDescriptorSets(self.w_device.vk_device, allocate_info)
+            att_descs = [
+                        VkAttachmentDescription(
+                            format=__FORMAT_2_VK__[a],
+                            samples=1,
+                            loadOp=VK_ATTACHMENT_LOAD_OP_LOAD,
+                            storeOp=VK_ATTACHMENT_STORE_OP_STORE,
+                            stencilLoadOp=VK_ATTACHMENT_LOAD_OP_LOAD,
+                            stencilStoreOp=VK_ATTACHMENT_STORE_OP_STORE,
+                            initialLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                            finalLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+                        ) for a, current_is_color in zip(atts, is_color)
+                    ]
+            color_atts = [
+                                VkAttachmentReference(
+                                    attachment=VK_ATTACHMENT_UNUSED if not current_is_used else i,
+                                    layout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                ) for i, (current_is_used, current_is_color) in enumerate(zip(is_used, is_color))
+                                if current_is_color
+                            ]
+            subpasses = [
+                        VkSubpassDescription(
+                            pipelineBindPoint=VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            colorAttachmentCount=len(color_atts),
+                            pColorAttachments=color_atts,
+                            pDepthStencilAttachment=None if not depth_stencil_attached else [
+                                VkAttachmentReference(
+                                    attachment=i,
+                                    layout=VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+                                ) for i, current_is_color in enumerate(is_color)
+                                if not current_is_color
+                            ][0]
+                        )
+                    ]
+
+            self.render_pass = vkCreateRenderPass(
+                self.w_device.vk_device,
+                VkRenderPassCreateInfo(
+                    attachmentCount=len(att_descs),
+                    pAttachments=att_descs,
+                    subpassCount=len(subpasses),
+                    pSubpasses=subpasses
+                ), None
+            )
 
         # Builds pipeline object
         push_constant_ranges = [VkPushConstantRange(
@@ -1172,7 +1428,7 @@ class PipelineBindingWrapper:
             stageFlags=stage
         ) for stage, (offset, size, data) in self.push_constants.items()]
         pipeline_layout_info = VkPipelineLayoutCreateInfo(
-            setLayoutCount=4,
+            setLayoutCount=8,
             pSetLayouts=self.descriptor_set_layouts,
             pushConstantRangeCount=len(push_constant_ranges),
             pPushConstantRanges=push_constant_ranges
@@ -1189,18 +1445,65 @@ class PipelineBindingWrapper:
                                                                     ].vk_stage_info
                                                                 )], None)[0]
         elif self.pipeline_type == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
-            pass
+
+            self.pipeline_object = vkCreateGraphicsPipelines(self.w_device.vk_device, VK_NULL_HANDLE, 1,
+                                                             [
+                                                                 VkGraphicsPipelineCreateInfo(
+                                                                     layout=self.pipeline_layout,
+                                                                     stageCount=len(self.shaders),
+                                                                     pStages=[s.vk_stage_info for s in
+                                                                              self.shaders.values()],
+                                                                     renderPass=self.render_pass,
+                                                                     pMultisampleState=VkPipelineMultisampleStateCreateInfo(
+                                                                        rasterizationSamples=1,
+                                                                     ),
+                                                                     pColorBlendState=VkPipelineColorBlendStateCreateInfo(
+                                                                         attachmentCount=len(color_atts),
+                                                                         pAttachments=[
+                                                                             VkPipelineColorBlendAttachmentState(
+                                                                                 blendEnable=False,
+                                                                                 colorWriteMask=VK_COLOR_COMPONENT_A_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_R_BIT
+                                                                             ) for c in color_atts
+                                                                         ]
+                                                                     ),
+                                                                     pVertexInputState=VkPipelineVertexInputStateCreateInfo(
+                                                                         flags=0,
+                                                                         pVertexAttributeDescriptions=self.vertex_att_descriptions,
+                                                                         pVertexBindingDescriptions=self.vertex_binding_descriptions
+                                                                     ),
+                                                                     pInputAssemblyState=VkPipelineInputAssemblyStateCreateInfo(
+                                                                         topology=VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+                                                                     ),
+                                                                     pDepthStencilState=VkPipelineDepthStencilStateCreateInfo(
+                                                                         depthTestEnable=True,
+                                                                         depthWriteEnable=True,
+                                                                         depthCompareOp=VK_COMPARE_OP_LESS
+                                                                     ),
+                                                                     pRasterizationState=VkPipelineRasterizationStateCreateInfo(
+                                                                         polygonMode=VK_POLYGON_MODE_FILL,
+                                                                         cullMode=VK_CULL_MODE_NONE,
+                                                                         frontFace=VK_FRONT_FACE_COUNTER_CLOCKWISE
+                                                                     ),
+                                                                     pViewportState=VkPipelineViewportStateCreateInfo(
+                                                                         viewportCount=1,
+                                                                         scissorCount=1,
+                                                                     ),
+                                                                     pDynamicState=VkPipelineDynamicStateCreateInfo(
+                                                                         pDynamicStates=[VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR]
+                                                                     )
+                                                                 )
+                                                             ], None)[0]
         elif self.pipeline_type == VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR:
             self.pipeline_object = self.w_device.vkCreateRayTracingPipelines(
                 self.w_device.vk_device, VK_NULL_HANDLE,
                 VK_NULL_HANDLE, 1, [VkRayTracingPipelineCreateInfoKHR(
-                                        layout=self.pipeline_layout,
-                                        stageCount=len(self.rt_shaders),
-                                        pStages=[s.vk_stage_info for s in self.rt_shaders],
-                                        groupCount=len(self.rt_groups),
-                                        pGroups=self.rt_groups,
-                                        maxPipelineRayRecursionDepth=self.max_recursion_depth
-                                    )], None)[0]
+                    layout=self.pipeline_layout,
+                    stageCount=len(self.rt_shaders),
+                    pStages=[s.vk_stage_info for s in self.rt_shaders],
+                    groupCount=len(self.rt_groups),
+                    pGroups=self.rt_groups,
+                    maxPipelineRayRecursionDepth=self.max_recursion_depth
+                )], None)[0]
             shader_handle_size = self.w_device.raytracing_properties.shaderGroupHandleSize
             all_handles = bytearray(shader_handle_size * len(self.rt_groups))
             self.w_device.vkGetRayTracingShaderGroupHandles(
@@ -1208,136 +1511,489 @@ class PipelineBindingWrapper:
                 self.pipeline_object,
                 0,
                 len(self.rt_groups),
-                len(self.rt_groups)*shader_handle_size,
+                len(self.rt_groups) * shader_handle_size,
                 ffi.from_buffer(all_handles)
             )
             for i, s in enumerate(self.rt_group_handles):
-                s._set_handle(all_handles[i*shader_handle_size:(i+1)*shader_handle_size])
+                s._set_handle(all_handles[i * shader_handle_size:(i + 1) * shader_handle_size])
 
-        for l in range(1):
-            self._update_level(l)
-
+        # Tag the pipeline as initialized
         self.initialized = True
 
-    def _set_at_cmdList(self, vk_cmdList, queue_index):
-        self.current_cmdList = vk_cmdList
-        self.current_queue_index = queue_index
-        vkCmdBindPipeline(vk_cmdList, self.point, self.pipeline_object)
-
-    def _solve_resolver_as_buffers(self, buffer: ResourceWrapper, vk_descriptor_type):
-        if buffer is None:
-            # NULL DESCRIPTOR
-            return VkDescriptorBufferInfo(
-                buffer=None,
-                offset=0,
-                range=UINT64_MAX
-            )
-        if vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
-            return None
-        else:
-            return VkDescriptorBufferInfo(
-                buffer=buffer.resource_data.vk_resource,
-                offset=buffer.current_slice["offset"],
-                range=buffer.current_slice["size"]
-            )
-
-    __SHADER_STAGE_2_PIPELINE_STAGE = {
-        VK_SHADER_STAGE_VERTEX_BIT: VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
-        VK_SHADER_STAGE_FRAGMENT_BIT: VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-        VK_SHADER_STAGE_GEOMETRY_BIT: VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
-        VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT: VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT,
-        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT,
-        VK_SHADER_STAGE_MESH_BIT_NV: VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV,
-        VK_SHADER_STAGE_COMPUTE_BIT: VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        VK_SHADER_STAGE_ANY_HIT_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-        VK_SHADER_STAGE_MISS_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-        VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-        VK_SHADER_STAGE_INTERSECTION_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-        VK_SHADER_STAGE_RAYGEN_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-        VK_SHADER_STAGE_CALLABLE_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-    }
-
-    def _solve_resolver_as_image(self, t, vk_descriptor_type, vk_shader_stage):
-
-        vk_stage = 0
-        for v in self.__valid_stages:
-            if (v & vk_shader_stage) != 0:
-                vk_stage |= PipelineBindingWrapper.__SHADER_STAGE_2_PIPELINE_STAGE[v]
-
-        if vk_descriptor_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            image, sampler = t
-        else:
-            image = t
-            sampler = None
-
-        if vk_descriptor_type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE or \
-           vk_descriptor_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-            vk_access = VK_ACCESS_SHADER_READ_BIT
-            vk_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        else:
-            if image.w_resource.is_readonly:
-                vk_access = VK_ACCESS_SHADER_READ_BIT
-            else:
-                vk_access = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT
-            vk_layout = VK_IMAGE_LAYOUT_GENERAL
-
-        # image.w_resource.add_barrier(self.current_cmdList, ResourceState(
-        #     vk_access=vk_access,
-        #     vk_layout=vk_layout,
-        #     vk_stage=vk_stage
-        # ))
-        return VkDescriptorImageInfo(
-            imageView=image.w_resource.view,
-            imageLayout=vk_layout,
-            sampler=None if sampler is None else sampler.vk_sampler
+    def create_descriptor_set_collection(self,
+                        set: int,
+                        count: int,
+                        variable_size: Optional[int] = None) -> DescriptorSetCollectionWrapper:
+        assert self.initialized
+        dsc = DescriptorSetCollectionWrapper(
+            self.w_device, self, set, count, variable_size_value=variable_size
         )
+        self.descriptor_sets.append(dsc)
+        return dsc
 
-    def _update_level(self, level):
-        descriptorWrites = []
-        for slot, vk_stage, vk_descriptor_type, count, resolver in self.descriptor_sets_description[level]:
-            is_buffer = vk_descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or \
-                        vk_descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or\
-                        vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR
-            next = None
-            if vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:  # set next pointer
-                resources = resolver()
-                next = VkWriteDescriptorSetAccelerationStructureKHR(
-                    accelerationStructureCount=len(resources),
-                    pAccelerationStructures=[VK_NULL_HANDLE if r is None else r.w_resource.resource_data.ads for r in resources]
-                )
-            if is_buffer:
-                descriptors = [self._solve_resolver_as_buffers(b.w_resource if b else None, vk_descriptor_type) for b in resolver()]
-            else:
-                descriptors = [self._solve_resolver_as_image(t, vk_descriptor_type, vk_stage) for t in resolver()]
-            dw = VkWriteDescriptorSet(
-                pNext=next,
-                dstSet=self.descriptor_sets[level],
-                dstBinding=slot,
-                descriptorType=vk_descriptor_type,
-                descriptorCount=len(descriptors),
-                pBufferInfo= descriptors if is_buffer and not next else None,
-                pImageInfo= descriptors if not is_buffer else None
-            )
-            descriptorWrites.append(dw)
-        vkUpdateDescriptorSets(
-            device=self.w_device.vk_device,
-            descriptorWriteCount=len(descriptorWrites),
-            pDescriptorWrites=descriptorWrites,
-            descriptorCopyCount=0,
-            pDescriptorCopies=None
-        )
+    def create_framebuffer(self, width: int, height: int, layers: int,
+                           images: List[Union['ResourceWrapper', None]]):
+        assert self.initialized
+        fb = FrameBufferWrapper(self.w_device, self, images, width, height, layers)
+        self.framebuffers.append(fb)
+        return fb
 
-    def _bind(self):
-        vkCmdBindDescriptorSets(
-            commandBuffer=self.current_cmdList,
-            pipelineBindPoint=self.point,
-            layout=self.pipeline_layout,
-            firstSet=0,
-            descriptorSetCount=4,
-            pDescriptorSets=self.descriptor_sets,
-            dynamicOffsetCount=0,
-            pDynamicOffsets=None
-        )
+
+
+
+# class PipelineBindingWrapper:
+#     def __init__(self, w_device: 'DeviceWrapper', pipeline_type):
+#         self.w_device = w_device
+#         self.pipeline_type = pipeline_type
+#         assert self.pipeline_type != VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR or self.w_device.support_raytracing, 'Current system doesnt support RT'
+#         self.shaders = {}
+#         self.push_constants = { }  # map from stage to (offset, size, bytearray)
+#         self.push_constants_fields = { }  # map from constant field name to (offset, size, scalar_type)
+#         self.rt_shaders = []  # shader stages
+#         self.rt_groups = []  # groups for hits
+#         self.rt_group_handles = []  # handles computed for each group
+#         self.max_recursion_depth = 1
+#         self.initialized = False
+#         self.layouts = []
+#         self.attachments = []
+#         self.descriptor_sets = None
+#         self.descriptor_pool = None
+#         self.pipeline_object = None
+#         self.pipeline_layout = None
+#         self.current_cmdList = None
+#         self._single_shader_stage = None
+#         if self.pipeline_type == VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO:
+#             self.point = VK_PIPELINE_BIND_POINT_COMPUTE
+#             self._single_shader_stage = ShaderStage.COMPUTE
+#             self.__valid_stages = [VK_SHADER_STAGE_COMPUTE_BIT]
+#         elif self.pipeline_type == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
+#             self.point = VK_PIPELINE_BIND_POINT_GRAPHICS
+#             self.__valid_stages = [
+#                 VK_SHADER_STAGE_VERTEX_BIT,
+#                 VK_SHADER_STAGE_FRAGMENT_BIT,
+#                 VK_SHADER_STAGE_GEOMETRY_BIT,
+#                 VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+#                 VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT
+#             ]
+#         else:
+#             self.point = VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR
+#             self.__valid_stages = [
+#                 VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+#                 VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR,
+#                 VK_SHADER_STAGE_ANY_HIT_BIT_KHR,
+#                 VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
+#                 VK_SHADER_STAGE_MISS_BIT_KHR,
+#                 VK_SHADER_STAGE_CALLABLE_BIT_KHR
+#             ]
+#         self._saved_stages = []
+#         self._set_active_vk_stages(self.__valid_stages)
+#         # RenderPass objects (Filled only if graphics pipeline)
+#
+#     def _set_active_vk_stages(self, vk_stages: List[int]):
+#         st = 0
+#         for s in vk_stages:
+#             st |= s
+#         self.active_stage = st
+#
+#     def push_active_stages(self, *stages: ShaderStage):
+#         self._saved_stages.append((self.active_stage, self._single_shader_stage))
+#         if len(stages) > 1 or len(stages) == 0:
+#             self._single_shader_stage = None
+#         else:
+#             self._single_shader_stage = stages[0]
+#         self._set_active_vk_stages([__SHADER_STAGE_2_VK__[s] for s in stages])
+#
+#     def pop_active_stages(self):
+#         self.active_stage, self._single_shader_stage = self._saved_stages.pop()
+#
+#     def get_single_active_shader_stage(self) -> ShaderStage:
+#         return self._single_shader_stage
+#
+#     def _vk_destroy(self):
+#         # Destroy desciptor sets
+#         if self.w_device is None:
+#             return
+#         self.shaders = {}
+#         self.rt_shaders = []
+#         vkDestroyDescriptorPool(self.w_device.vk_device, self.descriptor_pool, None)
+#         # Destroy layouts
+#         [vkDestroyDescriptorSetLayout(self.w_device.vk_device, dl, None) for dl in self.descriptor_set_layouts]
+#         # Destroy pipeline layout
+#         if self.pipeline_layout:
+#             vkDestroyPipelineLayout(self.w_device.vk_device, self.pipeline_layout, None)
+#         # Destroy pipeline object
+#         if self.pipeline_object:
+#             vkDestroyPipeline(self.w_device.vk_device, self.pipeline_object, None)
+#             self.pipeline_object = None
+#         self.descriptor_sets_description = [[], [], [], []]
+#         self.active_set = 0
+#         self.active_descriptor_set = None
+#         self.descriptor_set_layouts = []
+#         self.descriptor_sets = None
+#         self.descriptor_pool = None
+#         self.pipeline_object = None
+#         self.pipeline_layout = None
+#         self.current_cmdList = None
+#         self.w_device = None
+#
+#     @trace_destroying
+#     def __del__(self):
+#         self._vk_destroy()
+#
+#     def descriptor_set(self, set_slot):
+#         assert not self.initialized, "Error, can not continue pipeline setup after initialized"
+#         self.active_set = set_slot
+#         self.active_descriptor_set = self.descriptor_sets_description[set_slot]
+#
+#     def binding(self, slot, descriptor_type: DescriptorType, count, resolver):
+#         vk_descriptor_type = __DESCRIPTOR_TYPE_2_VK__[descriptor_type]
+#         assert not self.initialized, "Error, can not continue pipeline setup after initialized"
+#         self.active_descriptor_set.append(
+#             (slot, self.active_stage, vk_descriptor_type, count, resolver)
+#         )
+#
+#     def add_constant_range(self, offset: int, layout: Layout):
+#         assert layout.is_structure, 'Only structure layout allowed'
+#         assert self.active_stage not in self.push_constants, "Can not have more than one range of constants per stage"
+#         range_backbuffer = memoryview(np.ndarray(layout.aligned_size, dtype=np.uint8))
+#         self.push_constants[self.active_stage] = (offset, layout.aligned_size, range_backbuffer)
+#         for f, (offset, field_layout) in layout.fields_layout.items():
+#             self.push_constants_fields[f] = (offset, field_layout.aligned_size, self.active_stage, range_backbuffer[offset:offset+field_layout.aligned_size].cast(field_layout.scalar_format))
+#
+#     def load_shader(self, w_shader) -> int:
+#         assert not self.initialized, "Error, can not continue pipeline setup after initialized"
+#         assert any(self.active_stage == a for a in self.__valid_stages), 'Only one stage can be active to bind a shader'
+#         w_shader.vk_stage_info.stage = self.active_stage
+#         if self.pipeline_type == VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR:
+#             self.rt_shaders.append(w_shader)
+#             return len(self.rt_shaders)-1
+#         else:
+#             self.shaders[self.active_stage] = w_shader
+#             return len(self.shaders) - 1
+#
+#     def create_hit_group(self,
+#                          closest_hit_index: int = None,
+#                          any_hit_index: int = None,
+#                          intersection_index: int = None):
+#         type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR \
+#             if intersection_index is None \
+#             else VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_KHR
+#         self.rt_groups.append(VkRayTracingShaderGroupCreateInfoKHR(
+#             type=type,
+#             generalShader=VK_SHADER_UNUSED_KHR,
+#             closestHitShader=VK_SHADER_UNUSED_KHR if closest_hit_index is None else closest_hit_index,
+#             anyHitShader=VK_SHADER_UNUSED_KHR if any_hit_index is None else any_hit_index,
+#             intersectionShader=VK_SHADER_UNUSED_KHR if intersection_index is None else intersection_index
+#         ))
+#         s = ShaderHandlerWrapper()
+#         self.rt_group_handles.append(s)
+#         return s
+#
+#     def create_general_group(self, shader_index: int):
+#         type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR
+#         self.rt_groups.append(VkRayTracingShaderGroupCreateInfoKHR(
+#             type=type,
+#             generalShader=shader_index,
+#             closestHitShader=VK_SHADER_UNUSED_KHR,
+#             anyHitShader=VK_SHADER_UNUSED_KHR,
+#             intersectionShader=VK_SHADER_UNUSED_KHR
+#         ))
+#         s = ShaderHandlerWrapper()
+#         self.rt_group_handles.append(s)
+#         return s
+#
+#     def set_max_recursion(self, depth):
+#         self.max_recursion_depth = depth
+#
+#     def _build_objects(self):
+#         assert not self.initialized, "Error, can not continue pipeline setup after initialized"
+#         # Builds the descriptor sets layouts
+#         descriptor_set_layout_bindings = [[], [], [], []]
+#         descriptor_set_layout_bindings_bound = [[],[],[],[]]
+#         counting_by_type = {
+#             VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: 1,
+#             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: 1,
+#             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: 1,
+#             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE: 1,
+#             VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: 1,
+#             VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR: 1,
+#         }
+#         var_count_info = []
+#         for level in range(4):
+#             has_variable_descriptor = False
+#             for slot, vk_stage, vk_descriptor_type, count, resolver in self.descriptor_sets_description[level]:
+#                 effect_count = 100 if count == -1 else count
+#                 lb = VkDescriptorSetLayoutBinding(
+#                     slot,
+#                     vk_descriptor_type,
+#                     effect_count, # for unbound descriptor set array
+#                     vk_stage
+#                 )
+#                 # bound = VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT \
+#                 # bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT\
+#                 #     if count == -1 else \
+#                 #     VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT
+#                 bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT  \
+#                     if count == -1 else \
+#                     0
+#                 if count == -1:
+#                     has_variable_descriptor = True
+#                 descriptor_set_layout_bindings[level].append(lb)
+#                 descriptor_set_layout_bindings_bound[level].append(bound)
+#                 counting_by_type[vk_descriptor_type] += effect_count
+#             var_count_info.append(0 if not has_variable_descriptor else 100)
+#         self.descriptor_pool = vkCreateDescriptorPool(self.w_device.vk_device, VkDescriptorPoolCreateInfo(
+#             maxSets=4,
+#             poolSizeCount=6,
+#             pPoolSizes=[VkDescriptorPoolSize(t, c) for t, c in counting_by_type.items()],
+#             flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
+#         ), pAllocator=None)
+#
+#         self.descriptor_set_layouts = []
+#         for level, lb in enumerate(descriptor_set_layout_bindings):
+#             bound_info = VkDescriptorSetLayoutBindingFlagsCreateInfo(
+#                 pBindingFlags=descriptor_set_layout_bindings_bound[level],
+#                 bindingCount=len(descriptor_set_layout_bindings_bound[level])
+#             )
+#             dslci = VkDescriptorSetLayoutCreateInfo(
+#                 pNext = bound_info,
+#                 bindingCount=len(lb),
+#                 pBindings=lb,
+#                 flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
+#             )
+#             self.descriptor_set_layouts.append(
+#                 vkCreateDescriptorSetLayout(self.w_device.vk_device,
+#                                         dslci, None))
+#
+#         # Builds the descriptor sets (one group for each frame)
+#         descriptor_set_layouts_per_frame = self.descriptor_set_layouts
+#
+#         var_count = VkDescriptorSetVariableDescriptorCountAllocateInfo(
+#             descriptorSetCount=len(var_count_info),
+#             pDescriptorCounts=var_count_info,
+#         )
+#         allocate_info = VkDescriptorSetAllocateInfo(
+#             pNext = None, # var_count,
+#             descriptorPool=self.descriptor_pool,
+#             descriptorSetCount=len(descriptor_set_layouts_per_frame),
+#             pSetLayouts=descriptor_set_layouts_per_frame)
+#         self.descriptor_sets = vkAllocateDescriptorSets(self.w_device.vk_device, allocate_info)
+#
+#         # Builds pipeline object
+#         push_constant_ranges = [VkPushConstantRange(
+#             size=size,
+#             offset=offset,
+#             stageFlags=stage
+#         ) for stage, (offset, size, data) in self.push_constants.items()]
+#         pipeline_layout_info = VkPipelineLayoutCreateInfo(
+#             setLayoutCount=4,
+#             pSetLayouts=self.descriptor_set_layouts,
+#             pushConstantRangeCount=len(push_constant_ranges),
+#             pPushConstantRanges=push_constant_ranges
+#         )
+#         self.pipeline_layout = vkCreatePipelineLayout(self.w_device.vk_device, pipeline_layout_info, None)
+#         if self.pipeline_type == VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO:
+#             assert VK_SHADER_STAGE_COMPUTE_BIT in self.shaders, "Error, no compute shader bound!"
+#             self.pipeline_object = vkCreateComputePipelines(self.w_device.vk_device, VK_NULL_HANDLE, 1,
+#                                                             [
+#                                                                 VkComputePipelineCreateInfo(
+#                                                                     layout=self.pipeline_layout,
+#                                                                     stage=self.shaders[
+#                                                                         VK_SHADER_STAGE_COMPUTE_BIT
+#                                                                     ].vk_stage_info
+#                                                                 )], None)[0]
+#         elif self.pipeline_type == VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO:
+#             self.pipeline_object = vkCreateGraphicsPipelines(self.w_device.vk_device, VK_NULL_HANDLE, 1,
+#                                                              [
+#                                                                  VkGraphicsPipelineCreateInfo(
+#                                                                      layout=self.pipeline_layout,
+#                                                                      stageCount=len(self.shaders),
+#                                                                      pStages=[s.vk_stage_info for s in self.shaders.values()],
+#                                                                  )
+#                                                              ], None)[0]
+#         elif self.pipeline_type == VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR:
+#             self.pipeline_object = self.w_device.vkCreateRayTracingPipelines(
+#                 self.w_device.vk_device, VK_NULL_HANDLE,
+#                 VK_NULL_HANDLE, 1, [VkRayTracingPipelineCreateInfoKHR(
+#                                         layout=self.pipeline_layout,
+#                                         stageCount=len(self.rt_shaders),
+#                                         pStages=[s.vk_stage_info for s in self.rt_shaders],
+#                                         groupCount=len(self.rt_groups),
+#                                         pGroups=self.rt_groups,
+#                                         maxPipelineRayRecursionDepth=self.max_recursion_depth
+#                                     )], None)[0]
+#             shader_handle_size = self.w_device.raytracing_properties.shaderGroupHandleSize
+#             all_handles = bytearray(shader_handle_size * len(self.rt_groups))
+#             self.w_device.vkGetRayTracingShaderGroupHandles(
+#                 self.w_device.vk_device,
+#                 self.pipeline_object,
+#                 0,
+#                 len(self.rt_groups),
+#                 len(self.rt_groups)*shader_handle_size,
+#                 ffi.from_buffer(all_handles)
+#             )
+#             for i, s in enumerate(self.rt_group_handles):
+#                 s._set_handle(all_handles[i*shader_handle_size:(i+1)*shader_handle_size])
+#
+#         for l in range(1):
+#             self._update_level(l)
+#
+#         self.initialized = True
+#
+#     def _set_at_cmdList(self, vk_cmdList, queue_index):
+#         self.current_cmdList = vk_cmdList
+#         self.current_queue_index = queue_index
+#         vkCmdBindPipeline(vk_cmdList, self.point, self.pipeline_object)
+#
+#     def _solve_resolver_as_buffers(self, buffer: ResourceWrapper, vk_descriptor_type):
+#         if buffer is None:
+#             # NULL DESCRIPTOR
+#             return VkDescriptorBufferInfo(
+#                 buffer=None,
+#                 offset=0,
+#                 range=UINT64_MAX
+#             )
+#         if vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+#             return None
+#         else:
+#             return VkDescriptorBufferInfo(
+#                 buffer=buffer.resource_data.vk_resource,
+#                 offset=buffer.current_slice["offset"],
+#                 range=buffer.current_slice["size"]
+#             )
+#
+#     __SHADER_STAGE_2_PIPELINE_STAGE = {
+#         VK_SHADER_STAGE_VERTEX_BIT: VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+#         VK_SHADER_STAGE_FRAGMENT_BIT: VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+#         VK_SHADER_STAGE_GEOMETRY_BIT: VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT,
+#         VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT: VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT,
+#         VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT,
+#         VK_SHADER_STAGE_MESH_BIT_NV: VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV,
+#         VK_SHADER_STAGE_COMPUTE_BIT: VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+#         VK_SHADER_STAGE_ANY_HIT_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#         VK_SHADER_STAGE_MISS_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#         VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#         VK_SHADER_STAGE_INTERSECTION_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#         VK_SHADER_STAGE_RAYGEN_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#         VK_SHADER_STAGE_CALLABLE_BIT_KHR: VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+#     }
+#
+#     def _solve_resolver_as_image(self, t, vk_descriptor_type, vk_shader_stage):
+#
+#         vk_stage = 0
+#         for v in self.__valid_stages:
+#             if (v & vk_shader_stage) != 0:
+#                 vk_stage |= PipelineBindingWrapper.__SHADER_STAGE_2_PIPELINE_STAGE[v]
+#
+#         if vk_descriptor_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+#             image, sampler = t
+#         else:
+#             image = t
+#             sampler = None
+#
+#         if vk_descriptor_type == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE or \
+#            vk_descriptor_type == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+#             vk_access = VK_ACCESS_SHADER_READ_BIT
+#             vk_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+#         else:
+#             if image.w_resource.is_readonly:
+#                 vk_access = VK_ACCESS_SHADER_READ_BIT
+#             else:
+#                 vk_access = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT
+#             vk_layout = VK_IMAGE_LAYOUT_GENERAL
+#
+#         # image.w_resource.add_barrier(self.current_cmdList, ResourceState(
+#         #     vk_access=vk_access,
+#         #     vk_layout=vk_layout,
+#         #     vk_stage=vk_stage
+#         # ))
+#         return VkDescriptorImageInfo(
+#             imageView=image.w_resource.view,
+#             imageLayout=vk_layout,
+#             sampler=None if sampler is None else sampler.vk_sampler
+#         )
+#
+#     def _update_level(self, level):
+#         descriptorWrites = []
+#         for slot, vk_stage, vk_descriptor_type, count, resolver in self.descriptor_sets_description[level]:
+#             is_buffer = vk_descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER or \
+#                         vk_descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER or\
+#                         vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR
+#             next = None
+#             if vk_descriptor_type == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:  # set next pointer
+#                 resources = resolver()
+#                 next = VkWriteDescriptorSetAccelerationStructureKHR(
+#                     accelerationStructureCount=len(resources),
+#                     pAccelerationStructures=[VK_NULL_HANDLE if r is None else r.w_resource.resource_data.ads for r in resources]
+#                 )
+#             if is_buffer:
+#                 descriptors = [self._solve_resolver_as_buffers(b.w_resource if b else None, vk_descriptor_type) for b in resolver()]
+#             else:
+#                 descriptors = [self._solve_resolver_as_image(t, vk_descriptor_type, vk_stage) for t in resolver()]
+#             dw = VkWriteDescriptorSet(
+#                 pNext=next,
+#                 dstSet=self.descriptor_sets[level],
+#                 dstBinding=slot,
+#                 descriptorType=vk_descriptor_type,
+#                 descriptorCount=len(descriptors),
+#                 pBufferInfo= descriptors if is_buffer and not next else None,
+#                 pImageInfo= descriptors if not is_buffer else None
+#             )
+#             descriptorWrites.append(dw)
+#         vkUpdateDescriptorSets(
+#             device=self.w_device.vk_device,
+#             descriptorWriteCount=len(descriptorWrites),
+#             pDescriptorWrites=descriptorWrites,
+#             descriptorCopyCount=0,
+#             pDescriptorCopies=None
+#         )
+#
+#     def _bind(self):
+#         vkCmdBindDescriptorSets(
+#             commandBuffer=self.current_cmdList,
+#             pipelineBindPoint=self.point,
+#             layout=self.pipeline_layout,
+#             firstSet=0,
+#             descriptorSetCount=4,
+#             pDescriptorSets=self.descriptor_sets,
+#             dynamicOffsetCount=0,
+#             pDynamicOffsets=None
+#         )
+#
+#     def _unbind(self):
+#         pass
+#
+#     def attach_render_target(self, slot: int, render_target: Union['ResourceWrapper', Callable[[], 'ResourceWrapper']], format: Format):
+#         """
+#         Binds a render target with specific format to a specific slot.
+#         Format is provided since bound resource might be deferred.
+#         """
+#         while len(self.render_targets_descriptions) <= slot:
+#             self.render_targets_descriptions.append(None)
+#             self.render_targets_bindings.append(None)
+#         assert self.render_targets_bindings[slot] is None, f"Slot {slot} was already bound to a resource"
+#         if not callable(render_target):
+#             render_target = lambda: render_target
+#         self.render_targets_descriptions[slot] = format
+#         self.render_targets_bindings[slot] = render_target
+#
+#     def attach_depth_stencil(self, depth_stencil: Union['ResourceWrapper', Callable[[], 'ResourceWrapper']]):
+#         """
+#         Binds a depth-stencil resource to the render pass.
+#         The resource can be deferred.
+#         """
+#         assert self.depth_stencil_description is None, "Depth-stencil resource is already bound to the render pass"
+#         if not callable(depth_stencil):
+#             depth_stencil = lambda: depth_stencil
+#         self.depth_stencil_description = Format.DEPTH_STENCIL
+#         self.depth_stencil_binding = depth_stencil
+#
+#     def _update_attachments(self):
+#         """
+#         Called when attachments are updated.
+#         """
+#         pass
+
 
 
 class CommandListState(Enum):
@@ -1349,21 +2005,46 @@ class CommandListState(Enum):
     FINISHED = 5
 
 
+def _usage_to_vk_layout(usage: ImageUsage):
+    if usage == ImageUsage.RENDER_TARGET:
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    if usage == ImageUsage.DEPTH_STENCIL:
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    if usage == ImageUsage.SAMPLED:
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    return VK_IMAGE_LAYOUT_GENERAL
+
+
 class CommandBufferWrapper:
     """
     Wrapper for a command list.
     """
 
-    def __init__(self, vk_cmdList, pool):
+    def __init__(self, vk_cmdList, pool : 'CommandPoolWrapper'):
         self.vk_cmdList = vk_cmdList
-        self.pool : CommandPoolWrapper = pool
+        self.pool = pool
         self.__is_frozen = False
         self.state = CommandListState.INITIAL
-        self.current_pipeline = None
+        self.current_pipeline : Optional['PipelineWrapper'] = None
+        self.current_render_pass = None
         self.shader_groups_size = self.pool.device.raytracing_properties.shaderGroupHandleSize
+        self._associated_pipelines = []
+        self.__image_layout = {}
+
+
+    def use_image_as(self, w_im: 'ResourceWrapper', usage: ImageUsage):
+        vk_layout = _usage_to_vk_layout(usage)
+        self.__image_layout[w_im] = vk_layout
+
+    def transition_image_layout(self, w_im: 'ResourceWrapper', usage: ImageUsage):
+        assert w_im in self.__image_layout
+        vk_layout = _usage_to_vk_layout(usage)
+        w_im.add_barrier(self.vk_cmdList, self.__image_layout[w_im], vk_layout)
+        self.__image_layout[w_im] = vk_layout
 
     @trace_destroying
     def __del__(self):
+        self._associated_pipelines = None
         self.current_pipeline = None
         self.current_program = None
         self.pool = None
@@ -1381,6 +2062,10 @@ class CommandBufferWrapper:
 
     def end(self):
         assert self.state == CommandListState.RECORDING, f"Error, to end a cmdList should be in recording not {self.state}"
+
+        if self.current_render_pass is not None:  # need to end render pass first
+            vkCmdEndRenderPass(self.vk_cmdList)
+
         vkEndCommandBuffer(self.vk_cmdList)
         self.state = CommandListState.EXECUTABLE
         # self.current_pipeline = None
@@ -1390,6 +2075,9 @@ class CommandBufferWrapper:
         assert self.state == CommandListState.EXECUTABLE, "Error, to reset a cmdList should be in executable state"
         vkResetCommandBuffer(self.vk_cmdList, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT)
         self.state = CommandListState.INITIAL
+        self._associated_pipelines = []
+        self.__image_layout = {}
+        self.current_pipeline = None
 
     def flush_and_wait(self):
         if self.__is_frozen:
@@ -1408,6 +2096,7 @@ class CommandBufferWrapper:
         self.__is_frozen = True
 
     def close(self):
+        # TODO: I think this is not valid any more
         self.end()
         self.state = CommandListState.FINISHED
 
@@ -1425,22 +2114,21 @@ class CommandBufferWrapper:
     def clear_color(self, w_image: ResourceWrapper, color):
         if not isinstance(color, list) and not isinstance(color, tuple):
             color = list(color)
-
         image = w_image.resource_data.vk_resource
-
-        new_access, new_stage, new_layout = w_image.resource_data.current_state
-        if new_layout != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL or \
-                new_layout != VK_IMAGE_LAYOUT_GENERAL or \
-                new_layout != VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR:
-            new_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-
-        w_image.add_barrier(self.vk_cmdList, ResourceState(
-            vk_access=new_access,
-            vk_stage=new_stage,
-            vk_layout=new_layout
-        ))
-        vkCmdClearColorImage(self.vk_cmdList, image, new_layout, VkClearColorValue(color), 1,
+        vkCmdClearColorImage(self.vk_cmdList, image, VK_IMAGE_LAYOUT_GENERAL, VkClearColorValue(color), 1,
                              [ResourceData.get_subresources(w_image.current_slice)])
+
+    def clear_depth_stencil(self, w_image: ResourceWrapper, depth, stencil):
+        image = w_image.resource_data.vk_resource
+        sub_resources = ResourceData.get_subresources(w_image.current_slice, True)
+        w_image.add_barrier(self.vk_cmdList, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+        vkCmdClearDepthStencilImage(self.vk_cmdList, image,
+                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                    VkClearDepthStencilValue(depth, stencil),
+                                    pRanges=[sub_resources],
+                                    rangeCount=1
+                                    )
+        w_image.add_barrier(self.vk_cmdList,  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 
     def copy(self, src: ResourceWrapper, dst: ResourceWrapper):
         ResourceData.copy_from_to(self.vk_cmdList, src.resource_data, src.current_slice, dst.resource_data, dst.current_slice)
@@ -1486,12 +2174,37 @@ class CommandBufferWrapper:
     #             )
     #                    ])
 
-    def set_pipeline(self, pipeline: PipelineBindingWrapper):
+    def set_pipeline(self, pipeline: PipelineWrapper):
+        self._associated_pipelines.append(pipeline)
         self.current_pipeline = pipeline
-        pipeline._set_at_cmdList(self.vk_cmdList, self.pool.queue_index)
-        pipeline._bind()
+        vkCmdBindPipeline(self.vk_cmdList, pipeline.point, pipeline.pipeline_object)
+
+    def set_framebuffer(self, framebuffer: 'FrameBufferWrapper'):
+        if self.current_render_pass is not None:
+            vkCmdEndRenderPass(self.vk_cmdList)  # end previous render pass
+        vkCmdBeginRenderPass(
+            self.vk_cmdList,
+            VkRenderPassBeginInfo(
+                renderPass=framebuffer.render_pass,
+                framebuffer=framebuffer.frame_buffer,
+                renderArea=VkRect2D(VkOffset2D(0.0, 0.0), VkExtent2D(framebuffer.width, framebuffer.height))
+            ),
+            contents=VK_SUBPASS_CONTENTS_INLINE
+        )
+        vkCmdSetViewport(
+            self.vk_cmdList,
+            0, 1,
+            [VkViewport(0.0, 0.0, framebuffer.width, framebuffer.height, 0.0, 1.0)]
+        )
+        vkCmdSetScissor(
+            self.vk_cmdList,
+            0, 1,
+            [VkRect2D(VkOffset2D(0.0, 0.0), VkExtent2D(framebuffer.width, framebuffer.height))]
+        )
+        self.current_render_pass = framebuffer
 
     def update_constants(self, **fields):
+        assert self.current_pipeline is not None, 'A Pipeline Object must be set first.'
         for f, v in fields.items():
             assert f in self.current_pipeline.push_constants_fields, f"Field {f} was not found in push constants"
             field_offset, field_size, field_stages, field_backbuffer = self.current_pipeline.push_constants_fields[f]  # layout
@@ -1502,8 +2215,33 @@ class CommandBufferWrapper:
                 field_stages, field_offset, field_size, ffi.from_buffer(field_backbuffer) # ffi.from_buffer(field_backbuffer.numpy())
             )
 
-    # def update_bindings_level(self, level):
-    #     self.current_pipeline._update_level(level)
+    def bind(self, w_ds: 'DescriptorSetWrapper'):
+        vkCmdBindDescriptorSets(
+            self.vk_cmdList,
+            self.current_pipeline.point,
+            self.current_pipeline.pipeline_layout,
+            w_ds.set,
+            1,
+            [w_ds.descriptor_set_handle],
+            0, None
+        )
+
+    def bind_vertex_buffer(self, binding: int, vertex_buffer: 'ResourceWrapper'):
+        assert vertex_buffer.resource_data.is_buffer
+        vkCmdBindVertexBuffers(self.vk_cmdList,
+                               binding,
+                               1,
+                               [vertex_buffer.resource_data.vk_resource],
+                               [vertex_buffer.current_slice['offset']]
+                               )
+
+    def bind_index_buffer(self, index_buffer: 'ResourceWrapper'):
+        assert index_buffer.resource_data.is_buffer
+        vkCmdBindIndexBuffer(
+            self.vk_cmdList,
+            index_buffer.resource_data.vk_resource,
+            index_buffer.current_slice['offset'], VK_INDEX_TYPE_UINT32
+        )
 
     def dispatch_groups(self, dimx, dimy, dimz):
         # vkCmdPipelineBarrier(self.vk_cmdList,
@@ -1521,6 +2259,12 @@ class CommandBufferWrapper:
         #         srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT,
         #         dstAccessMask=VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT
         #     ), 0, 0, 0, 0)
+
+    def dispatch_primitives(self, vertices, instances, vertex_start, instance_start):
+        vkCmdDraw(self.vk_cmdList, vertices, instances, vertex_start, instance_start)
+
+    def dispatch_indexed_primitives(self, indices, instanceCount, firstIndex, vertexOffset, firstInstance):
+        vkCmdDrawIndexed(self.vk_cmdList, indices, instanceCount, firstIndex, vertexOffset, firstInstance)
 
     def _get_strided_device_address(self, w_resource: ResourceWrapper, stride):
         if w_resource is None:
@@ -1841,7 +2585,6 @@ class DeviceWrapper:
 
         vkDeviceWaitIdle(self.vk_device)
 
-        self.memory_manager.destroy()
 
         for p in self.__pipelines:  # Clean all pipelines hanging
             p._vk_destroy()
@@ -1865,6 +2608,8 @@ class DeviceWrapper:
         self.loaded_modules = {}
 
         gc.collect()
+
+        self.memory_manager.destroy()
 
         if self.vk_device:
             vkDestroyDevice(self.vk_device, None)
@@ -2459,13 +3204,16 @@ class DeviceWrapper:
                 return i
         raise Exception("failed to find suitable memory type!")
 
-    def __resolve_initial_state(self): #self, is_buffer, is_ads, usage, properties):
-        # if is_ads:
-        #     return ResourceState(
-        #         vk_access=VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR,
-        #         vk_stage=VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-        #         vk_layout=VK_IMAGE_LAYOUT_UNDEFINED
-        #     )
+    def __resolve_desired_layout(self, usage): #self, is_buffer, is_ads, usage, properties):
+        if usage == VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
+            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        if usage == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
+            return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        if usage in [
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT]:
+            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
         return ResourceState(
             vk_access=0,
             vk_stage=VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -2501,7 +3249,7 @@ class DeviceWrapper:
         w_memory : VulkanMemory = self.memory_manager.allocate_memory_for_buffer(buffer, location)
         vkBindBufferMemory(self.vk_device, buffer, w_memory.vulkan_memory, w_memory.vulkan_memory_offset)
         resource_data = ResourceData(self, self.vk_device, info, location, buffer, w_memory, True,
-                               self.__resolve_initial_state())
+                                     VK_IMAGE_LAYOUT_UNDEFINED)
         self.__resources.add(resource_data)
         return resource_data
 
@@ -2617,7 +3365,7 @@ class DeviceWrapper:
         device_address = self.vkGetAccelerationStructureDeviceAddress(self.vk_device, query_device_address_info)
         return ads_buffer, info, ranges, device_address, max(sizes.buildScratchSize, sizes.updateScratchSize)*2
 
-    def _create_image_data(self, image_type, image_format, flags, extent, mips, layers, usage, properties):
+    def _create_image_data(self, image_type, image_format, flags, extent, mips, layers, usage, properties, desired_layout):
         external_info = VkExternalMemoryImageCreateInfo(
             handleTypes=VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT if os.name == 'nt' else VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
         )
@@ -2638,7 +3386,7 @@ class DeviceWrapper:
         w_memory : VulkanMemory = self.memory_manager.allocate_memory_for_image(image, properties)
         vkBindImageMemory(self.vk_device, image, w_memory.vulkan_memory, w_memory.vulkan_memory_offset)
         resource_data = ResourceData(self, self.vk_device, info, properties, image, w_memory, False,
-                                     self.__resolve_initial_state())
+                                     desired_layout)
         ResourceData.initialize_image(self, resource_data)
         self.__resources.add(resource_data)
         return resource_data
@@ -2752,13 +3500,19 @@ class DeviceWrapper:
 
     def create_image(self, image_type: ImageType, image_format: Format, is_cube: bool, extent: tuple, mips: int, layers: int,
                      usage: ImageUsage, location: MemoryLocation):
-        usage = __IMAGE_USAGE_2_VK__[usage]
+        vk_usage = __IMAGE_USAGE_2_VK__[usage]
         image_type = __IMAGE_TYPE_2_VK__[image_type]
         location = __MEMORY_LOCATION_2_VK__[location]
         image_format = __FORMAT_2_VK__[image_format]
         extent = VkExtent3D(extent[0], extent[1], extent[2])
         flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT if is_cube else 0
-        resource_data = self._create_image_data(image_type, image_format, flags, extent, mips, layers, usage, location)
+        if usage == ImageUsage.RENDER_TARGET:
+            desired_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        elif usage == ImageUsage.DEPTH_STENCIL:
+            desired_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+        else:
+            desired_layout = VK_IMAGE_LAYOUT_GENERAL
+        resource_data = self._create_image_data(image_type, image_format, flags, extent, mips, layers, vk_usage, location, desired_layout)
         return ResourceWrapper(resource_data)
 
     def create_sampler(self, mag_filter, min_filter, mipmap_mode, address_U, address_V, address_W,
@@ -2766,27 +3520,29 @@ class DeviceWrapper:
                        compare_op, min_LOD, max_LOD, border_color, use_unnormalized_coordinates
                        ):
         info = VkSamplerCreateInfo(
-            magFilter=mag_filter,
-            minFilter=min_filter,
-            mipmapMode=mipmap_mode,
-            addressModeU=address_U,
-            addressModeV=address_V,
-            addressModeW=address_W,
+            magFilter=__FILTER_2_VK__[mag_filter],
+            minFilter=__FILTER_2_VK__[min_filter],
+            mipmapMode=__FILTER_2_VK__[mipmap_mode],
+            addressModeU=__ADDRESS_MODE_2_VK__[address_U],
+            addressModeV=__ADDRESS_MODE_2_VK__[address_V],
+            addressModeW=__ADDRESS_MODE_2_VK__[address_W],
             mipLodBias=mip_LOD_bias,
             anisotropyEnable=enable_anisotropy,
             maxAnisotropy=max_anisotropy,
             compareEnable=enable_compare,
-            compareOp=compare_op,
+            compareOp=__COMPARE_OP_2_VK__[compare_op],
             minLod=min_LOD,
             maxLod=max_LOD,
-            borderColor=border_color,
+            borderColor=__BORDER_COLOR_2_VK__[border_color],
             unnormalizedCoordinates=use_unnormalized_coordinates
         )
-        return SamplerWrapper(self, vkCreateSampler(self.vk_device, info, None))
+        sampler = SamplerWrapper(self, vkCreateSampler(self.vk_device, info, None))
+        self.__resources.add(sampler)
+        return sampler
 
     def create_pipeline(self, pipeline_type: PipelineType):
         pipeline_type = __PIPELINE_TYPE_2_VK__[pipeline_type]
-        p = PipelineBindingWrapper(w_device=self, pipeline_type=pipeline_type)
+        p = PipelineWrapper(w_device=self, pipeline_type=pipeline_type)
         self.__pipelines.add(p)
         return p
 

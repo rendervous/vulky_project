@@ -187,8 +187,30 @@ class ViewTensor(torch.Tensor):
         return ViewTensor.from_blob(t.data_ptr(), new_shape, dtype, device=t.device, strides=bytes_strides, owner=t)
 
 
+class LayoutAlignment(IntEnum):
+    """
+    Determines the type of rules for alignment applied in a layout.
+    """
+    COMPACT = 0,
+    """
+    No alignment is applied.
+    """
+    SCALAR = 1,
+    """
+    Scalar alignment is applied. Struct and arrays are aligned to the maximum scalar contained inside.
+    """
+    STD430 = 2,
+    """
+    Applies the std430 layout rules.
+    """
+
+
+
 @freezable_type
 class Layout:
+    """
+    Represents a specific layout of fields and arrays in memory with alignment rules.
+    """
 
     def __init__(self,
                  declaration,
@@ -242,6 +264,9 @@ class Layout:
 
     @staticmethod
     def fix_shape(shape, total):
+        """
+        Converts a shape of a variable dimension (-1) to a fix shape.
+        """
         shape = list(shape)
         num_el = 1
         free_pos = -1
@@ -304,9 +329,9 @@ class Layout:
             # t_bool,
             # quint4x2
         ]},
-        int: 4,
-        float: 4,
-        complex: 16
+        # int: 4,
+        # float: 4,
+        # complex: 16
     }
 
     __TYPE_FORMATS__ = {
@@ -336,7 +361,14 @@ class Layout:
     }
 
     @staticmethod
-    def scalar_size(type: torch.dtype) -> int:
+    def scalar_size(type: Union[type, torch.dtype]) -> int:
+        """
+        Return the size in bytes for a scalar type, int, float, complex or torch dtypes.
+        """
+        if type == int or type == float:
+            return 4
+        if type == complex:
+            return 16
         if type in Layout.__TYPE_SIZES__:
             return Layout.__TYPE_SIZES__[type]
         # if isinstance(type, GTensorMeta):
@@ -464,21 +496,34 @@ class Layout:
         raise Exception('Not supported type definition')
 
     @staticmethod
-    def create(type, mode: Literal['compact', 'std430', 'scalar'] = 'scalar') -> 'Layout':
+    def from_description(mode: LayoutAlignment, description: Union[type, dict, list, torch.dtype]) -> 'Layout':
+        """
+        Creates a layout from a general type definition.
+        type definition defines:
+        - arrays with a list in the form [<type>, size]
+        - structures with a dict in the form { field_name : field_type, ... }
+        - scalars with the types from torch.dtype or int, float, complex.
+        """
         return {
-            'compact': Layout._build_layout_compact,
-            'std430': Layout._build_layout_std430,
-            'scalar': Layout._build_layout_scalar
-        }[mode](type)
+            LayoutAlignment.COMPACT: Layout._build_layout_compact,
+            LayoutAlignment.STD430: Layout._build_layout_std430,
+            LayoutAlignment.SCALAR: Layout._build_layout_scalar
+        }[mode](description)
 
     @staticmethod
-    def create_structure(mode: Literal['compact', 'std430', 'scalar'] = 'scalar', **fields):
-        return Layout.create({**fields}, mode=mode)
+    def from_structure(mode: LayoutAlignment = LayoutAlignment.SCALAR, **fields):
+        """
+        Creates a layout for a structure.
+        """
+        return Layout.from_description(mode=mode, description={**fields})
 
     @staticmethod
-    def create_instance_layout():
-        return Layout.create_structure(
-            mode='scalar',
+    def from_instance():
+        """
+        Creates a layout for an instance buffer
+        """
+        return Layout.from_structure(
+            mode=LayoutAlignment.SCALAR,
             # transform=[3, [4, float]],
             transform=mat3x4,
             instanceCustomIndex=[3, torch.uint8],
@@ -489,21 +534,30 @@ class Layout:
         )
 
     @staticmethod
-    def create_aabb_layout():
-        return Layout.create_structure(
-            mode='scalar',
+    def from_aabb():
+        """
+        Creates a layout for an axis-aligned boundary boxes buffer.
+        """
+        return Layout.from_structure(
+            mode=LayoutAlignment.SCALAR,
             b_min=vec3,
             b_max=vec3
         )
 
     @staticmethod
     def set_24bit_from_int(src: torch.Tensor, dst: torch.Tensor):
+        """
+        Copies the lowest 24 bits from integers in src to dst.
+        src is a tensor of int32 and dst is a tensor of int8 with 3 components for the last dimension.
+        """
         dst[...,0] = src % 256
         dst[...,1] = (src >> 8) % 256
         dst[...,2] = (src >> 16) % 256
 
     @staticmethod
     def is_scalar_type(type):
+        if type == float or type == int:
+            return True
         return isinstance(type, Hashable) and type in Layout.__TYPE_SIZES__
 
     __FORMAT_TO_TORCH_INFO__ = {
@@ -526,11 +580,15 @@ class Layout:
         Format.UVEC2: (2, torch.int32),
         Format.UVEC3: (3, torch.int32),
         Format.UVEC4: (4, torch.int32),
-        Format.PRESENTER: (4, torch.uint8)
+        Format.PRESENTER: (4, torch.uint8),
+        Format.DEPTH_STENCIL: (4, torch.uint8),
     }
 
     @staticmethod
     def from_format(format: Format):
+        """
+        Creates a layout for the image formats.
+        """
         components, dtype = Layout.__FORMAT_TO_TORCH_INFO__[format]
         return Layout._build_layout_scalar([components, dtype])
 
