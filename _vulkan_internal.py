@@ -944,6 +944,9 @@ class SamplerWrapper:
         self.vk_sampler = None
         self.w_device = None
 
+    def __del__(self):
+        self._vk_destroy()
+
 
 @freezable_type
 class ShaderHandlerWrapper:
@@ -1009,7 +1012,7 @@ class DescriptorSetWrapper:
                 dstSet=self.descriptor_set_handle,
                 dstBinding=binding,
                 dstArrayElement=0,
-                descriptorCount=len(resource) if next_ads is None else 0,
+                descriptorCount=len(resource), # if next_ads is None else 0,
                 descriptorType=descriptor_type,
                 pBufferInfo=bufferInfo,
                 pImageInfo=imageInfo,
@@ -1061,7 +1064,7 @@ class DescriptorSetCollectionWrapper:
             maxSets=copies,
             poolSizeCount=6,
             pPoolSizes=[VkDescriptorPoolSize(t, c * copies) for t, c in counting_by_type.items()],
-            flags=VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT
+            flags=VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT
         ), pAllocator=None)
 
         self.desc_sets = vkAllocateDescriptorSets(
@@ -1339,6 +1342,7 @@ class PipelineWrapper:
                 vk_stage
             )
             bound = VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT if is_variable else 0
+            bound |= VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT
             descriptor_set_layout_bindings[set].append(lb)
             descriptor_set_layout_bindings_bound_info[set].append(bound)
 
@@ -2850,7 +2854,7 @@ class DeviceWrapper:
         ads_features = VkPhysicalDeviceAccelerationStructureFeaturesKHR(
             accelerationStructure=self.support_raytracing,
             # accelerationStructureHostCommands=True,
-            # descriptorBindingAccelerationStructureUpdateAfterBind=True,
+            descriptorBindingAccelerationStructureUpdateAfterBind=True,
         )
 
         rt_features = VkPhysicalDeviceRayTracingPipelineFeaturesKHR(
@@ -2869,14 +2873,13 @@ class DeviceWrapper:
             runtimeDescriptorArray=True,
             descriptorBindingVariableDescriptorCount=True,
             descriptorBindingPartiallyBound=True,
-
-            # descriptorBindingStorageImageUpdateAfterBind=True,
-            # descriptorBindingStorageBufferUpdateAfterBind=True,
-            # descriptorBindingUniformBufferUpdateAfterBind=True,
-            # descriptorBindingStorageTexelBufferUpdateAfterBind=True,
-            # descriptorBindingUniformTexelBufferUpdateAfterBind=True,
-            # descriptorBindingUpdateUnusedWhilePending=True,
-            # descriptorBindingSampledImageUpdateAfterBind=True,
+            descriptorBindingStorageImageUpdateAfterBind=True,
+            descriptorBindingStorageBufferUpdateAfterBind=True,
+            descriptorBindingUniformBufferUpdateAfterBind=True,
+            descriptorBindingStorageTexelBufferUpdateAfterBind=True,
+            descriptorBindingUniformTexelBufferUpdateAfterBind=True,
+            descriptorBindingUpdateUnusedWhilePending=True,
+            descriptorBindingSampledImageUpdateAfterBind=True,
             # shaderFloat16=True,
             # shaderSubgroupExtendedTypes=True,
             # vulkanMemoryModel=True,
@@ -3522,7 +3525,7 @@ class DeviceWrapper:
         info = VkSamplerCreateInfo(
             magFilter=__FILTER_2_VK__[mag_filter],
             minFilter=__FILTER_2_VK__[min_filter],
-            mipmapMode=__FILTER_2_VK__[mipmap_mode],
+            mipmapMode=__MIPMAP_MODE_2_VK__[mipmap_mode],
             addressModeU=__ADDRESS_MODE_2_VK__[address_U],
             addressModeV=__ADDRESS_MODE_2_VK__[address_V],
             addressModeW=__ADDRESS_MODE_2_VK__[address_W],

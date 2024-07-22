@@ -1,6 +1,7 @@
 """
 Home-made obj loader.
 """
+import typing
 
 import torch
 import os
@@ -166,5 +167,46 @@ def load_obj(path: str) -> dict:
             C_indices=torch.tensor(texcoords_indices, dtype=torch.int32)
         )
     }
+
+
+def create_mesh(obj_data: dict, mode: typing.Literal['po', 'vo', 'fo']):
+    """
+    Creates the mesh information (vertices, indices) given an obj data.
+    po: Position order - Each position determines a vertex, normals and coordinates belonging to the same vertex are blended
+    vo: Vertex order - Each distinct triple determines a vertex.
+    fo: Face order - Each face determines three new vertices.
+    """
+    positions = obj_data['buffers']['P']
+    normals = obj_data['buffers']['N']
+    coordinates = obj_data['buffers']['C']
+    P_indices = obj_data['buffers']['P_indices']
+    N_indices = obj_data['buffers']['N_indices']
+    C_indices = obj_data['buffers']['C_indices']
+    has_normals = len(normals) > 0
+    if not has_normals:
+        N_indices = torch.zeros_like(P_indices)
+    has_coordinates = len(coordinates) > 0
+    if not has_coordinates:
+        C_indices = torch.zeros_like(P_indices)
+    if mode == 'po':
+        vertices = torch.zeros(len(positions), 8)
+        vertices[:, 0:3] = positions
+        if has_normals:
+            vertices[P_indices, 3:6] += normals[N_indices]
+        if has_coordinates:
+            vertices[P_indices, 6:8] += coordinates[C_indices, 0:2]
+        # for fp, fn, fc in zip(P_indices, N_indices, C_indices):
+        #     if has_normals:
+        #         vertices[fp[0], 3:6] += normals[fn[0]]
+        #         vertices[fp[1], 3:6] += normals[fn[1]]
+        #         vertices[fp[2], 3:6] += normals[fn[2]]
+        #     if has_coordinates:
+        #         vertices[fp[0], 6:8] = coordinates[fc[0], 0:2]
+        #         vertices[fp[1], 6:8] = coordinates[fc[1], 0:2]
+        #         vertices[fp[2], 6:8] = coordinates[fc[2], 0:2]
+        # normalize normals
+        vertices[:,3:6] /= torch.sqrt((vertices[:,3:6]**2).sum(dim=-1, keepdim=True)) + 0.00001
+        return vertices, P_indices
+    raise Exception()
 
 

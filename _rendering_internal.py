@@ -17,7 +17,7 @@ import torch
 
 from ._enums import *
 from ._common import *
-from ._obj import load_obj
+from ._obj import load_obj, create_mesh
 from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
 from ._vulkan_internal import \
     ResourceWrapper, \
@@ -899,7 +899,7 @@ class Pipeline:
                binding: int,
                array_size: Optional[int] = None,
                is_variable: bool = False,
-               **bind_declaration):
+               **bind_declaration: DescriptorType):
         """
         Declares a part of the pipeline layout.
         set: specify the set number this bind belongs to.
