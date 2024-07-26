@@ -2867,8 +2867,8 @@ class DeviceWrapper:
 
         features = VkPhysicalDeviceVulkan12Features(
             bufferDeviceAddress=True,
-            bufferDeviceAddressCaptureReplay=True,
-            bufferDeviceAddressMultiDevice=True,
+            bufferDeviceAddressCaptureReplay=False,
+            bufferDeviceAddressMultiDevice=False,
             scalarBlockLayout=True,
             shaderSampledImageArrayNonUniformIndexing=True,
             runtimeDescriptorArray=True,
@@ -3068,6 +3068,8 @@ class DeviceWrapper:
         vk12_prop = VkPhysicalDeviceVulkan12Properties(pNext=rt_prop)
         prop = VkPhysicalDeviceProperties2(pNext=vk12_prop)
         self.vkGetPhysicalDeviceProperties2(self.__physical_device, prop)
+        self._vk12_prop = vk12_prop
+        self._rt_prop = rt_prop
 
         self.support_cooperative_matrices = coop_prop.cooperativeMatrixSupportedStages != 0
         self.support_raytracing = feat_ads.accelerationStructure
