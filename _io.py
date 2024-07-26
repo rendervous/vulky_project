@@ -6,6 +6,8 @@ import typing
 import torch
 import os
 
+import torchvision.io
+
 
 def _load_mtl_file(path, directory) -> dict:
     materials = {}
@@ -209,4 +211,55 @@ def create_mesh(obj_data: dict, mode: typing.Literal['po', 'vo', 'fo']):
         return vertices, P_indices
     raise Exception()
 
+
+def save_image(t: torch.Tensor, filename: str):
+    """
+    t: (HxWx3)
+    """
+    if t.dtype == torch.float:
+        t = (torch.clamp(t, 0.0, 1.0) * 255).to(torch.uint8)
+    try:
+        ext = filename.split('.')[-1]
+    except:
+        raise Exception('Please refer to a valid extension [jpg, png]')
+
+    if t.device != 'cpu':
+        t = t.to('cpu')
+
+    import torchvision
+    if ext.lower() == 'png':
+        torchvision.io.write_png(t, filename)
+    elif ext.lower() == 'jpg' or ext.lower() == 'jpeg':
+        torchvision.io.write_jpeg(t, filename)
+    else:
+        raise Exception('Please refer to a valid extension [jpg, png]')
+
+def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
+    if t.dtype == torch.float:
+        t = (torch.clamp(t, 0.0, 1.0) * 255).to(torch.uint8)
+    try:
+        ext = filename.split('.')[-1]
+    except:
+        raise Exception('Please refer to a valid extension [webp, avi]')
+
+    if t.device != 'cpu':
+        t = t.to('cpu')
+
+    import torchvision
+    if ext.lower() == 'webp':
+        codec = 'libwebp'
+    else:
+        codec = 'libx264'
+    torchvision.io.write_video(filename, t, fps, codec, options=kwargs)
+
+
+def load_image(filename: str):
+    import torchvision
+    t = torchvision.io.read_image(filename, mode=torchvision.io.ImageReadMode.RGB_ALPHA)
+    t = t.permute(1, 2, 0).contiguous()
+    return t
+
+
+def load_video(filename: str):
+    return torchvision.io.read_video(filename)
 

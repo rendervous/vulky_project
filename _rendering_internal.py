@@ -1,11 +1,12 @@
 import os
 import threading
 import weakref
-from typing import Callable, Any
+import typing
+# from typing import Callable, Any
 import time
 
-from vulky._vulkan_internal import DescriptorSetCollectionWrapper
-from vulky._vulkan_internal import DescriptorSetWrapper
+# from vulky._vulkan_internal import DescriptorSetCollectionWrapper
+# from vulky._vulkan_internal import DescriptorSetWrapper
 
 try:
     import imgui
@@ -17,21 +18,28 @@ import torch
 
 from ._enums import *
 from ._common import *
-from ._obj import load_obj, create_mesh
+from ._io import load_obj, create_mesh, save_image, save_video, load_image, load_video
 from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
-from ._vulkan_internal import \
-    ResourceWrapper, \
-    DeviceWrapper, \
-    ShaderHandlerWrapper, \
-    PipelineWrapper, \
-    DescriptorSetCollectionWrapper, \
-    DescriptorSetWrapper, \
-    ShaderStageWrapper, \
-    CommandBufferWrapper, \
-    SamplerWrapper as Sampler, \
-    FrameBufferWrapper as FrameBuffer, \
-    WindowWrapper, \
-    syncronize_external_computation
+from . import _vulkan_internal as internal
+from ._vulkan_internal import (
+    ShaderHandlerWrapper as ShaderHandler,
+    DescriptorSetCollectionWrapper as DescriptorSetCollection,
+    FrameBufferWrapper as FrameBuffer,
+    SamplerWrapper as Sampler
+)
+# from ._vulkan_internal import \
+#     ResourceWrapper, \
+#     DeviceWrapper, \
+#     ShaderHandlerWrapper as ShaderHandler, \
+#     PipelineWrapper, \
+#     DescriptorSetCollectionWrapper as DescriptorSetCollection, \
+#     DescriptorSetWrapper, \
+#     ShaderStageWrapper, \
+#     CommandBufferWrapper, \
+#     SamplerWrapper as Sampler, \
+#     FrameBufferWrapper as FrameBuffer, \
+#     WindowWrapper, \
+#     syncronize_external_computation
 
 
 def compile_shader_source(code, stage, include_dirs):
@@ -109,11 +117,11 @@ def _get_last_modified_time_for_headers_at(d: str):
     return last_modified_time
 
 
-def _get_last_modified_time_for_headers_included(include_dirs: List):
+def _get_last_modified_time_for_headers_included(include_dirs: typing.List):
     return max(_get_last_modified_time_for_headers_at(d) for d in include_dirs)
 
 
-def compile_shader_file(filename: str, include_dirs: List):
+def compile_shader_file(filename: str, include_dirs: typing.List):
     filename_without_extension, extension = os.path.splitext(filename)
     binary_file = filename_without_extension + ".spv"
     if os.path.isfile(binary_file):
@@ -144,7 +152,7 @@ def compile_shader_sources(directory='.', force_all: bool = False):
 
 
 class Resource(object):
-    def __init__(self, device, w_resource: ResourceWrapper):
+    def __init__(self, device, w_resource: internal.ResourceWrapper):
         self.w_resource = w_resource
         self.device = device
 
@@ -268,7 +276,7 @@ class ObjectBufferAccessor:
         return value
 
     @staticmethod
-    def _equal_values(field_layout: Layout, v1: Any, v2: Any):
+    def _equal_values(field_layout: Layout, v1: typing.Any, v2: typing.Any):
         if field_layout.is_scalar:
             if field_layout.scalar_format == 'Q':
                 return v1 is v2
@@ -331,7 +339,7 @@ class Buffer(Resource):
     """
     Represents a continuous memory on the device
     """
-    def __init__(self, device: 'DeviceManager', w_buffer: ResourceWrapper):
+    def __init__(self, device: 'DeviceManager', w_buffer: internal.ResourceWrapper):
         super().__init__(device, w_buffer)
 
     # def tensor(self, *shape: int, dtype: torch.dtype = torch.uint8, offset: int = 0):
@@ -363,7 +371,7 @@ class Buffer(Resource):
 
 
 class ObjectBuffer(Buffer):
-    def __init__(self, device: 'DeviceManager', w_buffer: ResourceWrapper, layout: Layout):
+    def __init__(self, device: 'DeviceManager', w_buffer: internal.ResourceWrapper, layout: Layout):
         super(ObjectBuffer, self).__init__(device, w_buffer)
         assert layout.aligned_size == w_buffer.size
         if not w_buffer.resource_data.is_cpu:
@@ -466,12 +474,12 @@ class StructuredBufferAccess:
 
 
 class StructuredBuffer(Buffer):
-    def __init__(self, device: 'DeviceManager', w_buffer: ResourceWrapper, layout: Layout):
+    def __init__(self, device: 'DeviceManager', w_buffer: internal.ResourceWrapper, layout: Layout):
         assert w_buffer.size % layout.aligned_size == 0
         super(StructuredBuffer, self).__init__(device, w_buffer)
         self.layout = layout
 
-    def map(self, mode: Literal['in', 'out', 'inout'], clear: bool = False):
+    def map(self, mode: typing.Literal['in', 'out', 'inout'], clear: bool = False):
         assert not clear or mode == 'in', 'Can only clear when map in'
         _self: StructuredBuffer = self
         if self.w_resource.resource_data.is_gpu:
@@ -636,7 +644,7 @@ class Image(Resource):
     def compute_dimension(width: int, height: int, depth: int, mip_level: int):
         return max(1, width // (1 << mip_level)), max(1, height // (1 << mip_level)), max(1, depth // (1 << mip_level))
 
-    def __init__(self, device, w_image: ResourceWrapper, texel_layout: Layout):
+    def __init__(self, device, w_image: internal.ResourceWrapper, texel_layout: Layout):
         super().__init__(device, w_image)
         self.width, self.height, self.depth = Image.compute_dimension(
             w_image.resource_data.vk_description.extent.width,
@@ -684,7 +692,7 @@ class Image(Resource):
 
 class GeometryCollection:
 
-    def __init__(self, device: DeviceWrapper):
+    def __init__(self, device: internal.DeviceWrapper):
         self.w_device = device
         self.descriptions = []
 
@@ -698,7 +706,7 @@ class GeometryCollection:
 
 class TriangleCollection(GeometryCollection):
 
-    def __init__(self, device: DeviceWrapper):
+    def __init__(self, device: internal.DeviceWrapper):
         super().__init__(device)
 
     def append(self, vertices: Buffer,
@@ -711,7 +719,7 @@ class TriangleCollection(GeometryCollection):
 
 
 class AABBCollection(GeometryCollection):
-    def __init__(self, device: DeviceWrapper):
+    def __init__(self, device: internal.DeviceWrapper):
         super().__init__(device)
 
     def append(self, aabb: Buffer):
@@ -722,8 +730,8 @@ class AABBCollection(GeometryCollection):
 
 
 class ADS(Resource):
-    def __init__(self, device, w_resource: ResourceWrapper, handle, scratch_size,
-                 info: Any, ranges, instance_buffer=None):
+    def __init__(self, device, w_resource: internal.ResourceWrapper, handle, scratch_size,
+                 info: typing.Any, ranges, instance_buffer=None):
         super().__init__(device, w_resource)
         self.ads = w_resource.resource_data.ads
         self.ads_info = info
@@ -736,7 +744,7 @@ class ADS(Resource):
 class RTProgram:
 
     def __init__(self, pipeline: 'Pipeline',
-                 w_shader_table: ResourceWrapper,
+                 w_shader_table: internal.ResourceWrapper,
                  miss_offset,
                  hit_offset,
                  callable_offset):
@@ -785,33 +793,33 @@ class RTProgram:
         self.hitgroup_slice = None
         self.callable_slice = None
 
-    def set_generation(self, gen_index: int, shader_group: ShaderHandlerWrapper):
+    def set_generation(self, gen_index: int, shader_group: ShaderHandler):
         assert self.__map_w_table is not None, 'Program need to updated inside a context, use with program...'
         offset = gen_index * self.shader_handle_stride
         self.__map_w_table_tensor[offset:offset + self.shader_handle_stride] = torch.frombuffer(shader_group.handle, dtype=torch.uint8)
 
-    def set_miss(self, miss_index: int, shader_group: ShaderHandlerWrapper):
+    def set_miss(self, miss_index: int, shader_group: ShaderHandler):
         assert self.__map_w_table is not None, 'Program need to updated inside a context, use with program...'
         offset = self.miss_offset + miss_index * self.shader_handle_stride
         self.__map_w_table_tensor[offset:offset + self.shader_handle_stride] = torch.frombuffer(shader_group.handle, dtype=torch.uint8)
 
-    def set_hit_group(self, hit_group_index: int, shader_group: ShaderHandlerWrapper):
+    def set_hit_group(self, hit_group_index: int, shader_group: ShaderHandler):
         assert self.__map_w_table is not None, 'Program need to updated inside a context, use with program...'
         offset = self.hit_offset + hit_group_index * self.shader_handle_stride
         self.__map_w_table_tensor[offset:offset + self.shader_handle_stride] = torch.frombuffer(shader_group.handle, dtype=torch.uint8)
 
-    def set_callable(self, callable_index: int, shader_group: ShaderHandlerWrapper):
+    def set_callable(self, callable_index: int, shader_group: ShaderHandler):
         assert self.__map_w_table is not None, 'Program need to updated inside a context, use with program...'
         offset = self.callable_offset + callable_index * self.shader_handle_stride
         self.__map_w_table_tensor[offset:offset + self.shader_handle_stride] = torch.frombuffer(shader_group.handle, dtype=torch.uint8)
 
 
 class DescriptorSet:
-    def __init__(self, w_ds: 'DescriptorSetWrapper', layout_reference_names: Dict[str, Tuple[int, int]]):
+    def __init__(self, w_ds: 'DescriptorSetWrapper', layout_reference_names: typing.Dict[str, typing.Tuple[int, int]]):
         self.w_ds = w_ds
         self.layout_reference_name = layout_reference_names
 
-    def update(self, **bindings: Union['Resource', List['Resource'], Tuple['Resource', 'Sampler']]):
+    def update(self, **bindings: typing.Union['Resource', typing.List['Resource'], typing.Tuple['Resource', 'Sampler']]):
         """
         Updates the descriptors for bindings in the descriptor set.
         Notice that grouping bindings updates in a single call might lead to better performance.
@@ -827,7 +835,7 @@ class DescriptorSet:
         >>>     environment=my_environment_image
         >>> )
         """
-        def convert_to_wrapped(r: Union['Resource', List['Resource'], Tuple['Resource', 'Sampler']]):
+        def convert_to_wrapped(r: typing.Union['Resource', typing.List['Resource'], typing.Tuple['Resource', 'Sampler']]):
             if r is None:
                 return r
             if isinstance(r, tuple):
@@ -845,7 +853,7 @@ class DescriptorSet:
 
 
 class DescriptorSetCollection:
-    def __init__(self, w_dsc: 'DescriptorSetCollectionWrapper', layout_reference_names: Dict[str, Tuple[int, int]]):
+    def __init__(self, w_dsc: 'DescriptorSetCollectionWrapper', layout_reference_names: typing.Dict[str, typing.Tuple[int, int]]):
         self.w_dsc = w_dsc
         self.layout_reference_names = layout_reference_names
 
@@ -858,7 +866,7 @@ class DescriptorSetCollection:
 
 
 class Pipeline:
-    def __init__(self, w_pipeline: PipelineWrapper):
+    def __init__(self, w_pipeline: internal.PipelineWrapper):
         self.w_pipeline = w_pipeline
         self.layout_reference_names = {}  # maps name to layout (set, binding)
 
@@ -897,7 +905,7 @@ class Pipeline:
     def layout(self,
                set: int,
                binding: int,
-               array_size: Optional[int] = None,
+               array_size: typing.Optional[int] = None,
                is_variable: bool = False,
                **bind_declaration: DescriptorType):
         """
@@ -926,7 +934,7 @@ class Pipeline:
         self.w_pipeline.layout(set=set, binding=binding, descriptor_type=v, count=array_size, is_variable=is_variable)
 
     def load_shader(self, path, *specialization, main_function = 'main'):
-        return self.w_pipeline.load_shader(ShaderStageWrapper.from_file(
+        return self.w_pipeline.load_shader(internal.ShaderStageWrapper.from_file(
             device=self.w_pipeline.w_device,
             main_function=main_function,
             path=path,
@@ -948,7 +956,7 @@ class Pipeline:
         shader_id  = -1
         # try:
         binary_code = compile_shader_source(code, stage_prefix, include_dirs)
-        shader_id = self.w_pipeline.load_shader(ShaderStageWrapper.from_binary(
+        shader_id = self.w_pipeline.load_shader(internal.ShaderStageWrapper.from_binary(
             device=self.w_pipeline.w_device,
             main_function=main_function,
             bytecode=binary_code,
@@ -970,7 +978,7 @@ class Pipeline:
 
 
 class GraphicsPipeline(Pipeline):
-    def __init__(self, w_pipeline: PipelineWrapper):
+    def __init__(self, w_pipeline: internal.PipelineWrapper):
         super().__init__(w_pipeline)
         self.attach_reference_names = {}  # maps name to attach slot
         self.vertex_reference_names = {}  # maps name to vertex attributes
@@ -1000,7 +1008,7 @@ class GraphicsPipeline(Pipeline):
             self.vertex_reference_names[k][0]: offset for k, offset in attribute_offset_map.items()
         })
 
-    def create_framebuffer(self, width: int, height: int, layers: int = 1, **bindings: Union['Image', None]) -> FrameBuffer:
+    def create_framebuffer(self, width: int, height: int, layers: int = 1, **bindings: typing.Union['Image', None]) -> FrameBuffer:
         max_slot = -1 if len(self.attach_reference_names)==0 else max(self.attach_reference_names.values())
         attachments = [None]*(max_slot + 1)
         for k,v in bindings.items():
@@ -1009,7 +1017,7 @@ class GraphicsPipeline(Pipeline):
 
 
 class RaytracingPipeline(Pipeline):
-    def __init__(self, w_pipeline: PipelineWrapper):
+    def __init__(self, w_pipeline: internal.PipelineWrapper):
         super().__init__(w_pipeline)
 
     def create_rt_hit_group(self, closest_hit: int = None, any_hit: int = None, intersection: int = None):
@@ -1044,10 +1052,13 @@ class RaytracingPipeline(Pipeline):
             memory=MemoryLocation.CPU)# .clear(self.w_pipeline.w_device)
         return RTProgram(self, w_buffer, raygen_size, raygen_size + raymiss_size, raygen_size + raymiss_size + rayhit_size)
 
+    def stack_size(self, depth: int):
+        self.w_pipeline.set_max_recursion(depth)
+
 
 class CommandManager:
 
-    def __init__(self, device, w_cmdList: CommandBufferWrapper):
+    def __init__(self, device, w_cmdList: internal.CommandBufferWrapper):
         self.w_cmdList = w_cmdList
         self.device = device
 
@@ -1084,7 +1095,7 @@ class CommandManager:
 
 
 class CopyManager(CommandManager):
-    def __init__(self, device, w_cmdList: CommandBufferWrapper):
+    def __init__(self, device, w_cmdList: internal.CommandBufferWrapper):
         super().__init__(device, w_cmdList)
 
     @classmethod
@@ -1104,7 +1115,7 @@ class CopyManager(CommandManager):
 
 
 class ComputeManager(CopyManager):
-    def __init__(self, device, w_cmdList: CommandBufferWrapper):
+    def __init__(self, device, w_cmdList: internal.CommandBufferWrapper):
         super().__init__(device, w_cmdList)
 
     @classmethod
@@ -1149,7 +1160,7 @@ class ComputeManager(CopyManager):
 
 
 class GraphicsManager(ComputeManager):
-    def __init__(self, device, w_cmdList: CommandBufferWrapper):
+    def __init__(self, device, w_cmdList: internal.CommandBufferWrapper):
         super().__init__(device, w_cmdList)
         self.current_framebuffer = None
 
@@ -1180,7 +1191,7 @@ class GraphicsManager(ComputeManager):
 
 
 class RaytracingManager(GraphicsManager):
-    def __init__(self, device, w_cmdList: CommandBufferWrapper):
+    def __init__(self, device, w_cmdList: internal.CommandBufferWrapper):
         super().__init__(device, w_cmdList)
 
     @classmethod
@@ -1334,7 +1345,7 @@ class Caps:
 
 class GPUPtr:
 
-    def __init__(self, device_ptr: int, obj: Any, is_direct: bool = True):
+    def __init__(self, device_ptr: int, obj: typing.Any, is_direct: bool = True):
         self.device_ptr = device_ptr
         self.obj = obj
         self.is_direct = is_direct
@@ -1348,12 +1359,12 @@ class GPUPtr:
     def mark_as_dirty(self):
         raise NotImplementedError()
 
-    def update_mode(self, additional_mode: Literal['in', 'out', 'inout']):
+    def update_mode(self, additional_mode: typing.Literal['in', 'out', 'inout']):
         raise NotImplementedError()
 
 
 class DirectGPUPtr(GPUPtr):
-    def __init__(self, device_ptr: int, obj: Any):
+    def __init__(self, device_ptr: int, obj: typing.Any):
         super(DirectGPUPtr, self).__init__(device_ptr, obj)
 
     __NULL__ = None
@@ -1372,12 +1383,12 @@ class DirectGPUPtr(GPUPtr):
     def mark_as_dirty(self):
         pass
 
-    def update_mode(self, additional_mode: Literal['in', 'out', 'inout']):
+    def update_mode(self, additional_mode: typing.Literal['in', 'out', 'inout']):
         pass
 
 
 class WrappedTensorPtr(GPUPtr):
-    def __init__(self, obj: Any, t: torch.Tensor, v: ViewTensor, mode: Literal['in', 'out', 'inout']):
+    def __init__(self, obj: typing.Any, t: torch.Tensor, v: ViewTensor, mode: typing.Literal['in', 'out', 'inout']):
         super(WrappedTensorPtr, self).__init__(v.memory_owner.device_ptr, obj, is_direct=False)
         self.cpu_tensor = t
         self.gpu_backend = v
@@ -1389,7 +1400,7 @@ class WrappedTensorPtr(GPUPtr):
             self.gpu_version = t._version
         self.mark_as_dirty()  # automatic assumed dirty after map since common use is to call invalidate after submit.
 
-    def update_mode(self, additional_mode: Literal['in', 'out', 'inout']):
+    def update_mode(self, additional_mode: typing.Literal['in', 'out', 'inout']):
         if self.mode == additional_mode or self.mode == 'inout':
             return
         if additional_mode == 'in':
@@ -1423,9 +1434,9 @@ class WrappedTensorPtr(GPUPtr):
 class _GPUWrappingManager:
     def __init__(self, device: 'DeviceManager'):
         self.device = weakref.ref(device)
-        self.hashed_wraps : List[Optional[weakref.WeakSet]] = [None] * 10013
+        self.hashed_wraps : typing.List[typing.Optional[weakref.WeakSet]] = [None] * 10013
 
-    def wrap_gpu(self, t: Any, mode: Literal['in', 'out', 'inout']) -> GPUPtr:
+    def wrap_gpu(self, t: typing.Any, mode: typing.Literal['in', 'out', 'inout']) -> GPUPtr:
         if t is None:
             return DirectGPUPtr.null()
         obj = t
@@ -1484,7 +1495,7 @@ class _GPUWrappingManager:
 
 class Window:
 
-    def __init__(self, device: 'DeviceManager', w_window: WindowWrapper, format: Format):
+    def __init__(self, device: 'DeviceManager', w_window: internal.WindowWrapper, format: Format):
         self.w_window = w_window
         self.device = device
         self._stats_fps = 0
@@ -1523,7 +1534,7 @@ class Window:
         self.backbuffer_images = { }  # map from name to (vulkan backbuffer image, same but as opengl image) used to draw tensors and textures in imgui through an opengl texture
 
     class ClientContext:
-        def __init__(self, window: 'Window', map: Union[Image, Buffer, torch.Tensor], man: Optional[GraphicsManager]):
+        def __init__(self, window: 'Window', map: typing.Union[Image, Buffer, torch.Tensor], man: typing.Optional[GraphicsManager]):
             self.window = window
             self.w_window = window.w_window
             self.map = map
@@ -1759,7 +1770,7 @@ class DeviceManager:
         self.__wrapping = _GPUWrappingManager(self)
 
 
-    def wrap_gpu(self, data: Any, mode: Literal['in', 'out', 'inout']) -> GPUPtr:
+    def wrap_gpu(self, data: typing.Any, mode: typing.Literal['in', 'out', 'inout']) -> GPUPtr:
         return self.__wrapping.wrap_gpu(data, mode)
 
     def allow_cross_threading(self):
@@ -1781,7 +1792,7 @@ class DeviceManager:
         DeviceManager.__event__.wait()
         # print(len(self.__queue))
 
-    def execute_loop(self, main_process: Callable[[Optional[Any]], bool], *process: Callable[[Optional[Any]], None], context: Optional[Any] = None):
+    def execute_loop(self, main_process: typing.Callable[[typing.Optional[typing.Any]], bool], *process: typing.Callable[[typing.Optional[typing.Any]], None], context: typing.Optional[typing.Any] = None):
         assert threading.current_thread() == threading.main_thread(), "execution of main process can only be triggered from main thread!"
         if self.__loop_process is not None:
             for p in self.__loop_process:
@@ -1814,7 +1825,7 @@ class DeviceManager:
     def support(self) -> Caps:
         return self.__caps
 
-    def __bind__(self, w_device: DeviceWrapper):
+    def __bind__(self, w_device: internal.DeviceWrapper):
         self.w_device = w_device
         self.__caps.cooperative_matrices = w_device.support_cooperative_matrices
         self.__caps.ray_tracing = w_device.support_raytracing
@@ -1844,7 +1855,7 @@ class DeviceManager:
         memory = MemoryLocation.CPU if t.device.type == 'cpu' else MemoryLocation.GPU
         return self.create_tensor(*shape, dtype=t.dtype, memory=memory)
 
-    def create_buffer_like(self, t: Union[torch.Tensor, Resource], memory: MemoryLocation):
+    def create_buffer_like(self, t: typing.Union[torch.Tensor, Resource], memory: MemoryLocation):
         if isinstance(t, torch.Tensor):
             return self.create_buffer(math.prod(t.shape) * t.element_size(), usage=BufferUsage.STAGING, memory=memory)
         return self.create_buffer(t.w_resource.size, usage=BufferUsage.STAGING, memory=memory)
@@ -1852,14 +1863,14 @@ class DeviceManager:
     def create_buffer(self, size: int, usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU) -> Buffer:
         return Buffer(self, self.w_device.create_buffer(size, usage, memory))
 
-    def create_structured_buffer(self, count: int, element_description: Union[type, torch.dtype, Layout, List, Dict],
+    def create_structured_buffer(self, count: int, element_description: typing.Union[type, torch.dtype, Layout, typing.List, typing.Dict],
                       usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
         if not isinstance(element_description, Layout):
             element_description = Layout.from_description(LayoutAlignment.SCALAR, element_description)
         size = element_description.aligned_size * count
         return StructuredBuffer(self, self.w_device.create_buffer(size, usage, memory), element_description)
 
-    def create_object_buffer(self, element_description: Union[type, torch.dtype, Layout, List, Dict],
+    def create_object_buffer(self, element_description: typing.Union[type, torch.dtype, Layout, typing.List, typing.Dict],
                              usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU):
         if not isinstance(element_description, Layout):
             element_description = Layout.from_description(element_description)
@@ -1982,7 +1993,7 @@ class DeviceManager:
     def flush(self):
         self.w_device.flush_pending_and_wait()
 
-    def copy(self, dst: Union[torch.Tensor, Resource], src: Union[torch.Tensor, Resource]):
+    def copy(self, dst: typing.Union[torch.Tensor, Resource], src: typing.Union[torch.Tensor, Resource]):
         if isinstance(dst, Resource):
             return dst.load(src)
         if isinstance(src, Resource):
@@ -2008,38 +2019,158 @@ class DeviceManager:
         device_manager(self.__previous_device)
 
 
-__ACTIVE_DEVICE__: Optional[DeviceManager] = None
+class NoneDeviceManager(DeviceManager):
+    def _raise_access_error(self) -> typing.Any:
+        raise Exception("No active device, use create_device")
+
+    def submit(self, man: CommandManager, wait: bool = True):
+        return self._raise_access_error()
+
+    def torch_ptr_to_device_ptr(self, t: torch.Tensor) -> int:
+        return self._raise_access_error()
+
+    def __bind__(self, w_device: internal.DeviceWrapper):
+        return self._raise_access_error()
+
+    def __del__(self):
+        pass
+
+    def get_compute(self) -> ComputeManager:
+        return self._raise_access_error()
+
+    def get_copy(self) -> CopyManager:
+        return self._raise_access_error()
+
+    def get_graphics(self) -> GraphicsManager:
+        return self._raise_access_error()
+
+    def get_raytracing(self) -> RaytracingManager:
+        return self._raise_access_error()
+
+    def create_triangle_collection(self) -> TriangleCollection:
+        return self._raise_access_error()
+
+    def create_compute_pipeline(self):
+        return self._raise_access_error()
+
+    def create_graphics_pipeline(self):
+        return self._raise_access_error()
+
+    def create_scene_ads(self, instance_buffer: Buffer):
+        return self._raise_access_error()
+
+    def create_raytracing_pipeline(self):
+        return self._raise_access_error()
+
+    def create_aabb_collection(self) -> AABBCollection:
+        return self._raise_access_error()
+
+    def create_geometry_ads(self, collection: GeometryCollection) -> ADS:
+        return self._raise_access_error()
+
+    def create_tensor_like(self, t: torch.Tensor) -> torch.Tensor:
+        return self._raise_access_error()
+
+    def create_window(self, width: int, height: int, format: Format) -> Window:
+        return self._raise_access_error()
+
+    def create_buffer_like(self, t: typing.Union[torch.Tensor, Resource], memory: MemoryLocation):
+        return self._raise_access_error()
+
+    def create_instance_buffer(self, instances: int, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
+        return self._raise_access_error()
+
+    def create_tensor(self, *shape: int, dtype: torch.dtype, memory: MemoryLocation = MemoryLocation.GPU):
+        return self._raise_access_error()
+
+    def create_buffer(self, size: int, usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU) -> Buffer:
+        return self._raise_access_error()
+
+    def create_object_buffer(self, element_description: typing.Union[type, torch.dtype, Layout, typing.List, typing.Dict],
+                             usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU):
+        return self._raise_access_error()
+
+    def create_structured_buffer(self, count: int, element_description: typing.Union[type, torch.dtype, Layout, typing.List, typing.Dict],
+                      usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
+        return self._raise_access_error()
+
+    def create_image(self, image_type: ImageType, is_cube: bool, image_format: Format,
+                     width: int, height: int, depth: int,
+                     mips: int, layers: int,
+                     usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU):
+        return self._raise_access_error()
+
+    def create_sampler(self,
+                       mag_filter: Filter = Filter.POINT,
+                       min_filter: Filter = Filter.POINT,
+                       mipmap_mode: MipMapMode = MipMapMode.POINT,
+                       address_U: AddressMode = AddressMode.REPEAT,
+                       address_V: AddressMode = AddressMode.REPEAT,
+                       address_W: AddressMode = AddressMode.REPEAT,
+                       mip_LOD_bias: float = 0.0,
+                       enable_anisotropy: bool = False,
+                       max_anisotropy: float = 0.0,
+                       enable_compare: bool = False,
+                       compare_op: CompareOp = CompareOp.NEVER,
+                       min_LOD: float = 0.0,
+                       max_LOD: float = 0.0,
+                       border_color: BorderColor = BorderColor.TRANSPARENT_BLACK_FLOAT,
+                       use_unnormalized_coordinates: bool = False
+                       ) -> Sampler:
+        return self._raise_access_error()
+
+    def wrap_gpu(self, data: typing.Any, mode: typing.Literal['in', 'out', 'inout']) -> GPUPtr:
+        return self._raise_access_error()
+
+    def support(self) -> Caps:
+        return self._raise_access_error()
+
+    def set_debug_name(self, name: str):
+        return self._raise_access_error()
+
+    def safe_dispatch_function(self, function):
+        return self._raise_access_error()
+
+    def release(self):
+        return self._raise_access_error()
+
+    def load_technique(self, technique):
+        return self._raise_access_error()
+
+    def flush(self):
+        return self._raise_access_error()
+
+    def execute_loop(self, main_process: typing.Callable[[typing.Optional[typing.Any]], bool], *process: typing.Callable[[typing.Optional[typing.Any]], None], context: typing.Optional[typing.Any] = None):
+        return self._raise_access_error()
+
+    def dispatch_technique(self, technique):
+        return self._raise_access_error()
+
+    def copy(self, dst: typing.Union[torch.Tensor, Resource], src: typing.Union[torch.Tensor, Resource]):
+        return self._raise_access_error()
+
+    def allow_cross_threading(self):
+        return self._raise_access_error()
 
 
-def device_manager(new_device: Optional[DeviceManager] = None) -> DeviceManager:
+__ACTIVE_DEVICE__: DeviceManager = NoneDeviceManager()
+
+
+def device_manager(new_device: typing.Optional[DeviceManager] = None) -> DeviceManager:
     global __ACTIVE_DEVICE__
     if new_device is not None:
         __ACTIVE_DEVICE__ = new_device
     return __ACTIVE_DEVICE__
 
 
-def create_device(*, device: int = -1, debug: bool = False, set_active: bool = True) -> DeviceManager:
+def create_device(*, device: int = 0, debug: bool = False, set_active: bool = True) -> DeviceManager:
     """
     Creates a device manager. This is the core of vulkan graphics call.
     This method automatically sets created device as active, further actions will use it.
     To change to other devices use device method. e.g: device_manager(other_device)
     """
-    if device == -1:  # search available GPU
-        import subprocess as sp
-        command = "nvidia-smi --query-gpu=memory.used --format=csv"
-        mems = sp.check_output(command.split()).decode('ascii').split('\n')[1:-1]
-        if len(mems) == 1:
-            device = 0  # No option here
-        else:
-            for i, m in enumerate(mems):
-                if int(m.split()[0]) < 20:
-                    device = i
-                    break
-        assert device>=0, "All devices where in use!"
-
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(device)
-
-    state = DeviceWrapper(
+    state = internal.DeviceWrapper(
+        device_index=device,
         enable_validation_layers=debug
     )
     dev = DeviceManager()
@@ -2071,37 +2202,38 @@ class Technique(DeviceManager):
         pass
 
 
-def Extends(class_):
-    def wrapper(function):
-        setattr(class_, function.__name__, function)
+# def Extends(class_):
+#     def wrapper(function):
+#         setattr(class_, function.__name__, function)
+#
+#     return wrapper
 
-    return wrapper
+
+# import functools
+#
+# __check_active_T = TypeVar('CheckActiveType')
+#
+# def _check_active_device(f: __check_active_T) -> __check_active_T:
+#     @functools.wraps(f)
+#     def wrap(*args, **kwargs):
+#         assert __ACTIVE_DEVICE__ is not None, "Create a device, a presenter or set active a device."
+#         return f(*args, **kwargs)
+#
+#     return wrap
 
 
-import functools
-
-__check_active_T = TypeVar('CheckActiveType')
-
-def _check_active_device(f: __check_active_T) -> __check_active_T:
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        assert __ACTIVE_DEVICE__ is not None, "Create a device, a presenter or set active a device."
-        return f(*args, **kwargs)
-
-    return wrap
-
-@_check_active_device
+# @_check_active_device
 def window(width: int, height: int, format: Format = Format.VEC4) -> Window:
     return __ACTIVE_DEVICE__.create_window(width, height, format)
 
-@_check_active_device
+# @_check_active_device
 def support() -> Caps:
     """
     Gets the set of features supported by the rendering system.
     """
     return __ACTIVE_DEVICE__.support()
 
-@_check_active_device
+# @_check_active_device
 def tensor_like(t: torch.Tensor) -> torch.Tensor:
     """
     Creates a tensor in gpu vulkan memory using another tensor as reference.
@@ -2109,7 +2241,7 @@ def tensor_like(t: torch.Tensor) -> torch.Tensor:
     """
     return __ACTIVE_DEVICE__.create_tensor_like(t)
 
-@_check_active_device
+# @_check_active_device
 def tensor(*shape, dtype: dtype = torch.float32) -> torch.Tensor:
     """
     Creates a tensor using a specific shape and type with compatible memory with vulkan, cupy and numpy tensors.
@@ -2118,34 +2250,34 @@ def tensor(*shape, dtype: dtype = torch.float32) -> torch.Tensor:
     return __ACTIVE_DEVICE__.create_tensor(*shape, dtype=dtype)
     # return __ACTIVE_DEVICE__.create_tensor_buffer(*shape, dtype=dtype, memory=memory, clear=clear).as_tensor()
 
-@_check_active_device
+# @_check_active_device
 def tensor_copy(t: torch.Tensor) -> ViewTensor:
     vk_t = tensor(*t.shape, dtype=t.dtype)
     vk_t.copy_(t)
     return vk_t
 
-@_check_active_device
+# @_check_active_device
 def pipeline_raytracing() -> RaytracingPipeline:
     """
     Creates a Pipeline to manage the setup of a raytracing pipeline, resources, include and other attributes.
     """
     return __ACTIVE_DEVICE__.create_raytracing_pipeline()
 
-@_check_active_device
+# @_check_active_device
 def pipeline_graphics() -> GraphicsPipeline:
     """
     Creates a Pipeline to manage the setup of a graphics pipeline, resources, include and other attributes.
     """
     return __ACTIVE_DEVICE__.create_graphics_pipeline()
 
-@_check_active_device
+# @_check_active_device
 def pipeline_compute() -> Pipeline:
     """
     Creates a Pipeline to manage the setup of a compute pipeline, resources, include and other attributes.
     """
     return __ACTIVE_DEVICE__.create_compute_pipeline()
 
-@_check_active_device
+# @_check_active_device
 def sampler(mag_filter: Filter = Filter.POINT,
             min_filter: Filter = Filter.POINT,
             mipmap_mode: MipMapMode = MipMapMode.POINT,
@@ -2171,7 +2303,7 @@ def sampler(mag_filter: Filter = Filter.POINT,
         enable_compare, compare_op, min_LOD, max_LOD, border_color, use_unnormalized_coordinates
     )
 
-@_check_active_device
+# @_check_active_device
 def sampler_linear(address_U: AddressMode = AddressMode.REPEAT,
                   address_V: AddressMode = AddressMode.REPEAT,
                   address_W: AddressMode = AddressMode.REPEAT,
@@ -2194,7 +2326,7 @@ def sampler_linear(address_U: AddressMode = AddressMode.REPEAT,
         enable_compare, compare_op, min_LOD, max_LOD, border_color, use_unnormalized_coordinates
     )
 
-@_check_active_device
+# @_check_active_device
 def image_1D(image_format: Format, width: int, mips=None, layers=1,
                      usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
@@ -2205,7 +2337,7 @@ def image_1D(image_format: Format, width: int, mips=None, layers=1,
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_1D, False, image_format,
                              width, 1, 1, mips, layers, usage, memory=memory)
 
-@_check_active_device
+# @_check_active_device
 def image_2D(image_format: Format, width: int, height: int, mips=None, layers=1,
                      usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
@@ -2216,7 +2348,7 @@ def image_2D(image_format: Format, width: int, height: int, mips=None, layers=1,
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, image_format,
                              width, height, 1, mips, layers, usage, memory=memory)
 
-@_check_active_device
+# @_check_active_device
 def image_3D(image_format: Format, width: int, height: int, depth: int, mips : int = None, layers : int = 1,
                      usage: ImageUsage = ImageUsage.SAMPLED, memory: MemoryLocation = MemoryLocation.GPU) -> Image:
     """
@@ -2232,10 +2364,10 @@ def external_sync():
     """
     Must be used if a tensor bound to a pipeline depends on some external computation, e.g. CUDA.
     """
-    syncronize_external_computation()
+    internal.syncronize_external_computation()
 
 
-@_check_active_device
+# @_check_active_device
 def image(image_type: ImageType, is_cube: bool, image_format: Format,
                  width: int, height: int, depth: int,
                  mips: int, layers: int,
@@ -2246,7 +2378,7 @@ def image(image_type: ImageType, is_cube: bool, image_format: Format,
     return __ACTIVE_DEVICE__.create_image(image_type, is_cube, image_format,
                               width, height, depth, mips, layers, usage, memory)
 
-@_check_active_device
+# @_check_active_device
 def render_target(image_format: Format, width: int, height: int) -> Image:
     """
     Creates a two-dimensional image object on the GPU to be used as render target.
@@ -2254,7 +2386,7 @@ def render_target(image_format: Format, width: int, height: int) -> Image:
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, image_format,
                              width, height, 1, 1, 1, ImageUsage.RENDER_TARGET, MemoryLocation.GPU)
 
-@_check_active_device
+# @_check_active_device
 def depth_stencil(width: int, height: int) -> Image:
     """
     Creates a two-dimensional image object on the GPU to be used as depth stencil buffer.
@@ -2262,7 +2394,7 @@ def depth_stencil(width: int, height: int) -> Image:
     return __ACTIVE_DEVICE__.create_image(ImageType.TEXTURE_2D, False, Format.DEPTH_STENCIL,
                              width, height, 1, 1, 1, ImageUsage.DEPTH_STENCIL, MemoryLocation.GPU)
 
-@_check_active_device
+# @_check_active_device
 def scratch_buffer(*adss) -> Buffer:
     """
     Creates a buffer on the GPU to be used as scratch buffer for acceleration-datastructure creation.
@@ -2270,28 +2402,28 @@ def scratch_buffer(*adss) -> Buffer:
     size = max(a.scratch_size for a in adss)
     return __ACTIVE_DEVICE__.create_buffer(size, usage=BufferUsage.RAYTRACING_ADS, memory=MemoryLocation.GPU)
 
-@_check_active_device
+# @_check_active_device
 def instance_buffer(instances: int, memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
     """
     Creates a buffer on the GPU to be used to store instances of a scene acceleration-datastructure.
     """
     return __ACTIVE_DEVICE__.create_instance_buffer(instances, memory)
 
-@_check_active_device
+# @_check_active_device
 def ads_scene(instance_buffer: Buffer) -> ADS:
     """
     Creates an acceleration data structure for the scene elements (top-level ads).
     """
     return __ACTIVE_DEVICE__.create_scene_ads(instance_buffer)
 
-@_check_active_device
+# @_check_active_device
 def ads_model(collection: GeometryCollection) -> ADS:
     """
     Creates an acceleration data structure for a model formed by a set of geometries (bottom-level ads).
     """
     return __ACTIVE_DEVICE__.create_geometry_ads(collection)
 
-@_check_active_device
+# @_check_active_device
 def buffer(size: int, usage: BufferUsage, memory: MemoryLocation) -> Buffer:
     """
     Creates a buffer for a generic usage. Cuda-visible buffers exposes a cuda_ptr and
@@ -2299,11 +2431,11 @@ def buffer(size: int, usage: BufferUsage, memory: MemoryLocation) -> Buffer:
     """
     return __ACTIVE_DEVICE__.create_buffer(size, usage=usage, memory=memory)
 
-@_check_active_device
-def buffer_like(t: Union[torch.Tensor, Resource], memory: MemoryLocation) -> Buffer:
+# @_check_active_device
+def buffer_like(t: typing.Union[torch.Tensor, Resource], memory: MemoryLocation) -> Buffer:
     return __ACTIVE_DEVICE__.create_buffer_like(t, memory)
 
-@_check_active_device
+# @_check_active_device
 def object_buffer(layout: Layout, usage: BufferUsage = BufferUsage.UNIFORM, memory: MemoryLocation = MemoryLocation.CPU) -> ObjectBuffer:
     """
     Creates a buffer for a uniform store. Uniform CPU data can be updated (cpu version) accessing to the fields.
@@ -2311,8 +2443,8 @@ def object_buffer(layout: Layout, usage: BufferUsage = BufferUsage.UNIFORM, memo
     """
     return __ACTIVE_DEVICE__.create_object_buffer(element_description=layout, usage = usage, memory = memory)
 
-@_check_active_device
-def structured_buffer(count: int, element_description: Union[type, torch.dtype, Layout, Dict, List],
+# @_check_active_device
+def structured_buffer(count: int, element_description: typing.Union[type, torch.dtype, Layout, typing.Dict, typing.List],
                              usage: BufferUsage = BufferUsage.STORAGE,
                              memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
     """
@@ -2322,7 +2454,7 @@ def structured_buffer(count: int, element_description: Union[type, torch.dtype, 
     """
     return __ACTIVE_DEVICE__.create_structured_buffer(count, element_description=element_description, usage = usage, memory = memory)
 
-@_check_active_device
+# @_check_active_device
 def index_buffer(count: int,
                           memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
     """
@@ -2332,8 +2464,8 @@ def index_buffer(count: int,
     """
     return __ACTIVE_DEVICE__.create_structured_buffer(count, element_description=Layout.from_description(LayoutAlignment.SCALAR, torch.int32), usage = BufferUsage.INDEX, memory = memory)
 
-@_check_active_device
-def vertex_buffer(count: int, element_description: Union[type, torch.dtype, Layout, Dict, List],
+# @_check_active_device
+def vertex_buffer(count: int, element_description: typing.Union[type, torch.dtype, Layout, typing.Dict, typing.List],
                              memory: MemoryLocation = MemoryLocation.GPU) -> StructuredBuffer:
     """
     Creates a buffer for a structured store. Each index is a Uniform that
@@ -2369,32 +2501,32 @@ def vertex_buffer(count: int, element_description: Union[type, torch.dtype, Layo
 #     """
 #     return __ACTIVE_DEVICE__.map_gpu(*objs, mode='inout')
 
-@_check_active_device
+# @_check_active_device
 def triangle_collection() -> TriangleCollection:
     """
     Creates a collection to store triangle meshes for ray-cast
     """
     return __ACTIVE_DEVICE__.create_triangle_collection()
 
-@_check_active_device
+# @_check_active_device
 def aabb_collection() -> AABBCollection:
     """
     Creates a collection to store boxes for ray-cast
     """
     return __ACTIVE_DEVICE__.create_aabb_collection()
 
-@_check_active_device
+# @_check_active_device
 def flush():
     """
     Flushes all pending work of vulkan submissions and wait for completion.
     """
     __ACTIVE_DEVICE__.flush()
 
-@_check_active_device
+# @_check_active_device
 def torch_ptr_to_device_ptr(t: torch.Tensor):
     return __ACTIVE_DEVICE__.torch_ptr_to_device_ptr(t)
 
-@_check_active_device
+# @_check_active_device
 def compute_manager() -> ComputeManager:
     """
     Gets a compute manager object that can be used to populate with compute commands.
@@ -2403,7 +2535,7 @@ def compute_manager() -> ComputeManager:
     """
     return __ACTIVE_DEVICE__.get_compute()
 
-@_check_active_device
+# @_check_active_device
 def copy_manager() -> CopyManager:
     """
     Gets a copy manager object that can be used to populate with transfer commands.
@@ -2412,7 +2544,7 @@ def copy_manager() -> CopyManager:
     """
     return __ACTIVE_DEVICE__.get_copy()
 
-@_check_active_device
+# @_check_active_device
 def graphics_manager() -> GraphicsManager:
     """
     Gets a graphics manager object that can be used to populate with graphics commands.
@@ -2421,7 +2553,7 @@ def graphics_manager() -> GraphicsManager:
     """
     return __ACTIVE_DEVICE__.get_graphics()
 
-@_check_active_device
+# @_check_active_device
 def raytracing_manager() -> RaytracingManager:
     """
     Gets a raytracing manager object that can be used to populate with raytracing commands.
@@ -2430,29 +2562,29 @@ def raytracing_manager() -> RaytracingManager:
     """
     return __ACTIVE_DEVICE__.get_raytracing()
 
-@_check_active_device
+# @_check_active_device
 def submit(man: CommandManager, wait: bool = True):
     """
     Allows to submit the command list save in a manager using freeze.
     """
     __ACTIVE_DEVICE__.submit(man, wait)
 
-@_check_active_device
+# @_check_active_device
 def load_technique(technique):
     return __ACTIVE_DEVICE__.load_technique(technique)
 
-@_check_active_device
+# @_check_active_device
 def dispatch_technique(technique):
     return __ACTIVE_DEVICE__.dispatch_technique(technique)
 
-@_check_active_device
-def execute_loop(main_process: Callable[[Optional[Any]], bool], *process: Callable[[Optional[Any]], None], context: Optional[Any] = None):
+# @_check_active_device
+def execute_loop(main_process: typing.Callable[[typing.Optional[typing.Any]], bool], *process: typing.Callable[[typing.Optional[typing.Any]], None], context: typing.Optional[typing.Any] = None):
     """
     Creates a thread to execute the process safety dispatching vulkan calls in the main thread
     """
     __ACTIVE_DEVICE__.execute_loop(main_process, *process, context=context)
 
-@_check_active_device
+# @_check_active_device
 def allow_cross_threading():
     """
     Allows dispatching cross-threading vulkan calls. The safest way is to include the cross-threading code
@@ -2460,15 +2592,15 @@ def allow_cross_threading():
     """
     __ACTIVE_DEVICE__.allow_cross_threading()
 
-@_check_active_device
+# @_check_active_device
 def set_debug_name(name: str):
     """
     Sets the name for the next resource to be created.
     """
     __ACTIVE_DEVICE__.set_debug_name(name)
 
-@_check_active_device
-def wrap_gpu(t: Any, mode: Literal['in', 'out', 'inout'] = 'in') -> GPUPtr:
+# @_check_active_device
+def wrap_gpu(t: typing.Any, mode: typing.Literal['in', 'out', 'inout'] = 'in') -> GPUPtr:
     """
     Wraps an object to be accessible from/to the GPU depending on the mode.
     Returned object can be assigned to fields of type int64_t and use as reference buffers.

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import math
-from typing import Any, Union, Optional
+import typing
 
 
 def tensor_to_vec(t: torch.Tensor) -> '_GTensorBase':
@@ -43,7 +43,7 @@ def tensor_to_mat(t: torch.Tensor) -> '_GTensorBase':
     return typ(t)
 
 
-def tensor_to_gtensor_if_possible(t: torch.Tensor, dimension: int) -> Union[torch.Tensor, '_GTensorBase']:
+def tensor_to_gtensor_if_possible(t: torch.Tensor, dimension: int) -> typing.Union[torch.Tensor, '_GTensorBase']:
     """
     Tool method to convert a torch tensor into a graphic tensor or scalar
     """
@@ -331,7 +331,7 @@ class vec2(_GTensorBase):
 
 class vec3(_GTensorBase):
     @classmethod
-    def cross(cls, a: Union[torch.Tensor, 'vec3'], b: Union[torch.Tensor, 'vec3']) -> 'vec3':
+    def cross(cls, a: typing.Union[torch.Tensor, 'vec3'], b: typing.Union[torch.Tensor, 'vec3']) -> 'vec3':
         return vec3(torch.cross(a, b))
 
 
@@ -365,7 +365,7 @@ class mat2(_GTensorBase):
 
 class mat3(_GTensorBase):
     @staticmethod
-    def rotation(axis: Union[torch.Tensor, vec3], angle: Union[float, torch.Tensor]) -> 'mat3':
+    def rotation(axis: typing.Union[torch.Tensor, vec3], angle: typing.Union[float, torch.Tensor]) -> 'mat3':
         axis, angle = broadcast_args_to_max_batch(
             (axis, (3,)),
             (angle, (1,)),
@@ -393,23 +393,23 @@ class mat3(_GTensorBase):
         return mat3(m.view(*axis.shape[:-1], 3, 3))
 
     @staticmethod
-    def quaternion_rotation(q: Union[torch.Tensor, vec4]) -> 'mat3':
+    def quaternion_rotation(q: typing.Union[torch.Tensor, vec4]) -> 'mat3':
         raise NotImplemented()
 
     @staticmethod
-    def euler_rotation(yaw: Union[torch.Tensor, float], pitch: Union[torch.Tensor, float], roll: Union[torch.Tensor, float]) -> 'mat3':
+    def euler_rotation(yaw: typing.Union[torch.Tensor, float], pitch: typing.Union[torch.Tensor, float], roll: typing.Union[torch.Tensor, float]) -> 'mat3':
         raise NotImplemented()
 
     @staticmethod
-    def scale(s: Union[float, torch.Tensor, vec3]) -> 'mat3':
+    def scale(s: typing.Union[float, torch.Tensor, vec3]) -> 'mat3':
         raise NotImplemented()
 
 
 class mat3x4(_GTensorBase):
 
     @staticmethod
-    def composite(internal: Optional[Union['mat3x4', torch.Tensor]],
-                  external: Optional[Union['mat3x4', torch.Tensor]]) -> 'mat3x4':
+    def composite(internal: typing.Optional[typing.Union['mat3x4', torch.Tensor]],
+                  external: typing.Optional[typing.Union['mat3x4', torch.Tensor]]) -> 'mat3x4':
         """
         Gets the transform composition between two transforms (in transpose mode).
         x', 1 = M (x, 1)^T
@@ -431,7 +431,11 @@ class mat3x4(_GTensorBase):
 
 class mat4x3(_GTensorBase):
     @staticmethod
-    def trs(offset: vec3, axis: vec3, angle: Union[float, torch.Tensor], scale: vec3) -> 'mat4x3':
+    def trs(
+            offset: vec3 = vec3(0.0, 0.0, 0.0),
+            axis: vec3 = vec3(0.0, 1.0, 0.0),
+            angle: typing.Union[float, torch.Tensor] = 0.0,
+            scale: vec3 = vec3(1.0, 1.0, 1.0)) -> 'mat4x3':
         offset, axis, angle, scale = broadcast_args_to_max_batch(
             (offset, (3,)),
             (axis, (3,)),
@@ -472,7 +476,7 @@ class mat4x3(_GTensorBase):
         return mat4x3(T)
 
     @staticmethod
-    def composite(internal: Optional[Union['mat4x3', torch.Tensor]], external: Optional[Union['mat4x3', torch.Tensor]]) -> 'mat4x3':
+    def composite(internal: typing.Optional[typing.Union['mat4x3', torch.Tensor]], external: typing.Optional[typing.Union['mat4x3', torch.Tensor]]) -> 'mat4x3':
         if internal is None:
             return external
         if external is None:
@@ -529,10 +533,10 @@ class mat4(_GTensorBase):
 
     @staticmethod
     def perspective(
-            fov: Union[float, torch.Tensor]=np.pi/4,
-            aspect: Union[float, torch.Tensor]=1.0,
-            znear: Union[float, torch.Tensor] = 0.001,
-            zfar: Union[float, torch.Tensor] = 100):
+            fov: typing.Union[float, torch.Tensor]=np.pi/4,
+            aspect: typing.Union[float, torch.Tensor]=1.0,
+            znear: typing.Union[float, torch.Tensor] = 0.001,
+            zfar: typing.Union[float, torch.Tensor] = 100):
         all_floats = all(not isinstance(a, torch.Tensor) for a in [fov, aspect, znear, zfar])
         if all_floats:
             fov = torch.tensor([fov])
@@ -559,7 +563,7 @@ class mat4(_GTensorBase):
         return mat4(torch.linalg.inv(self))
 
     @staticmethod
-    def trs(offset: vec3, axis: vec3, angle: Union[float, torch.Tensor], scale: vec3) -> 'mat4':
+    def trs(offset: vec3, axis: vec3, angle: typing.Union[float, torch.Tensor], scale: vec3) -> 'mat4':
         offset, axis, angle, scale = broadcast_args_to_max_batch(
             (offset, (3,)),
             (axis, (3,)),

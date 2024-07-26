@@ -1,7 +1,7 @@
-from enum import IntEnum
+import enum
 
 
-class PresenterMode(IntEnum):
+class PresenterMode(enum.IntEnum):
     """
     Presentation mode of a device. Decide if the render target resources are optimized for window
     presentation or not.
@@ -23,7 +23,7 @@ class PresenterMode(IntEnum):
 
 
 
-class QueueType(IntEnum):
+class QueueType(enum.IntEnum):
     """
     Type of the graphics engine queue used for submitting tasks.
     """
@@ -49,7 +49,7 @@ class QueueType(IntEnum):
     """
 
 
-class BufferUsage(IntEnum):
+class BufferUsage(enum.IntEnum):
     """
     Determines the usage for a buffer object.
     """
@@ -91,7 +91,7 @@ class BufferUsage(IntEnum):
     """
 
 
-class ImageUsage(IntEnum):
+class ImageUsage(enum.IntEnum):
     """
     Determines the usage for an image object.
     """
@@ -125,7 +125,7 @@ class ImageUsage(IntEnum):
     """
 
 
-class Format(IntEnum):
+class Format(enum.IntEnum):
     NONE = 0
     UINT_RGBA = 1
     UINT_RGB = 2
@@ -149,14 +149,14 @@ class Format(IntEnum):
     DEPTH_STENCIL = 20
 
 
-class ImageType(IntEnum):
+class ImageType(enum.IntEnum):
     NONE = 0
     TEXTURE_1D = 1
     TEXTURE_2D = 2
     TEXTURE_3D = 3
 
 
-class MemoryLocation(IntEnum):
+class MemoryLocation(enum.IntEnum):
     """
     Memory configurations.
     """
@@ -174,7 +174,7 @@ class MemoryLocation(IntEnum):
     """
 
 
-class ShaderStage(IntEnum):
+class ShaderStage(enum.IntEnum):
     """
     Determines the shader stage
     """
@@ -225,7 +225,7 @@ class ShaderStage(IntEnum):
 
 
 
-class Filter(IntEnum):
+class Filter(enum.IntEnum):
     """
     Filter used during sampling a texel.
     """
@@ -243,7 +243,7 @@ class Filter(IntEnum):
     """
 
 
-class MipMapMode(IntEnum):
+class MipMapMode(enum.IntEnum):
     """
     Filter used during sampling between mip maps.
     """
@@ -261,7 +261,7 @@ class MipMapMode(IntEnum):
     """
 
 
-class AddressMode(IntEnum):
+class AddressMode(enum.IntEnum):
     """
     Determines how the sampler behaves at edges.
     """
@@ -283,7 +283,7 @@ class AddressMode(IntEnum):
     """
 
 
-class CompareOp(IntEnum):
+class CompareOp(enum.IntEnum):
     """
     Determines different comparison operations for depth, blending, stencil and other operations.
     """
@@ -325,7 +325,7 @@ class CompareOp(IntEnum):
     """
 
 
-class BorderColor(IntEnum):
+class BorderColor(enum.IntEnum):
     """
     Determines possible values for the border sampling.
     """
@@ -359,7 +359,7 @@ class BorderColor(IntEnum):
     """
 
 
-class ADSNodeType(IntEnum):
+class ADSNodeType(enum.IntEnum):
     """
     Determines possible types of an ADS buffer.
     """
@@ -381,7 +381,7 @@ class ADSNodeType(IntEnum):
     """
 
 
-class PipelineType(IntEnum):
+class PipelineType(enum.IntEnum):
     """
     Determines the pipeline type.
     """
@@ -403,7 +403,7 @@ class PipelineType(IntEnum):
     """
 
 
-class DescriptorType(IntEnum):
+class DescriptorType(enum.IntEnum):
     """
     Determines the type of descriptor of a resource binding.
     """

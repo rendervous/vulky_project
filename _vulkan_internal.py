@@ -9,7 +9,8 @@ from ._common import *
 import struct
 import gc
 import torch
-from typing import Callable, Union
+import typing
+# from typing import Callable, Union
 
 
 # Internal classes for the vulkan backend
@@ -671,7 +672,7 @@ class ResourceWrapper:
     """
     def __init__(self,
                  resource_data: ResourceData,
-                 resource_slice: Dict[str, int] = None
+                 resource_slice: typing.Dict[str, int] = None
                  ):
         self.resource_data = resource_data
         self.vk_view = None
@@ -960,13 +961,13 @@ class ShaderHandlerWrapper:
 
 class DescriptorSetWrapper:
     def __init__(self, w_device, set: int, descriptor_set_handle: int,
-                 descriptor_types: Dict[int, int]):
+                 descriptor_types: typing.Dict[int, int]):
         self.w_device = w_device
         self.set = set
         self.descriptor_set_handle = descriptor_set_handle
         self.descriptor_types = descriptor_types
 
-    def _resolve_buffer_descriptor(self, buffer: Union[ResourceWrapper, None]):
+    def _resolve_buffer_descriptor(self, buffer: typing.Union[ResourceWrapper, None]):
         if buffer is None:
             # NULL DESCRIPTOR
             return ResourceWrapper.buffer_null_descriptor()
@@ -976,7 +977,7 @@ class DescriptorSetWrapper:
             range=buffer.current_slice["size"]
         )
 
-    def _resolve_image_descriptor(self, image: Union[ResourceWrapper, None], sampler: Union[SamplerWrapper, None]):
+    def _resolve_image_descriptor(self, image: typing.Union[ResourceWrapper, None], sampler: typing.Union[SamplerWrapper, None]):
         if image is None:
             return ResourceWrapper.image_null_descriptor()
         return VkDescriptorImageInfo(
@@ -985,7 +986,7 @@ class DescriptorSetWrapper:
             imageLayout=VK_IMAGE_LAYOUT_GENERAL
         )
 
-    def update(self, bindings: Dict[int, Union['ResourceWrapper', tuple['ResourceWrapper','SamplerWrapper'], List['ResourceWrapper'], List[Tuple['ResourceWrapper','SamplerWrapper']], None]]):
+    def update(self, bindings: typing.Dict[int, typing.Union['ResourceWrapper', tuple['ResourceWrapper','SamplerWrapper'], typing.List['ResourceWrapper'], typing.List[typing.Tuple['ResourceWrapper','SamplerWrapper']], None]]):
         writes = []
         for binding, resource in bindings.items():
             if not isinstance(resource, list):
@@ -1035,7 +1036,7 @@ class DescriptorSetCollectionWrapper:
                  pipeline: 'PipelineWrapper',
                  set: int,  # set for the DescriptorSets will be constructed
                  copies: int,  # max number of sets will be created
-                 variable_size_value: Optional[int] = None,
+                 variable_size_value: typing.Optional[int] = None,
                  ):
         """
         Initializes a descriptor manager.
@@ -1094,7 +1095,7 @@ class FrameBufferWrapper:
     def __init__(self,
                  w_device: 'DeviceWrapper',
                  pipeline: 'PipelineWrapper',
-                 images: List[Union['ResourceWrapper', None]],
+                 images: typing.List[typing.Union['ResourceWrapper', None]],
                  width: int,
                  height: int,
                  layers: int
@@ -1215,7 +1216,7 @@ class PipelineWrapper:
     def __del__(self):
         self._vk_destroy()
 
-    def _set_active_vk_stages(self, vk_stages: List[int]):
+    def _set_active_vk_stages(self, vk_stages: typing.List[int]):
         st = 0
         for s in vk_stages:
             st |= s
@@ -1261,7 +1262,7 @@ class PipelineWrapper:
         assert location not in self.vertex_att_format, f'Vertex att at {location} bound twice'
         self.vertex_att_format[location] = __FORMAT_2_VK__[format]
 
-    def vertex_binding(self, binding: int, stride: int, atts: Dict[int, int]):
+    def vertex_binding(self, binding: int, stride: int, atts: typing.Dict[int, int]):
         self.vertex_binding_descriptions.append(VkVertexInputBindingDescription(binding=binding, stride=stride, inputRate=VK_VERTEX_INPUT_RATE_VERTEX))
         for location, offset in atts.items():
             self.vertex_att_descriptions.append(
@@ -1527,7 +1528,7 @@ class PipelineWrapper:
     def create_descriptor_set_collection(self,
                         set: int,
                         count: int,
-                        variable_size: Optional[int] = None) -> DescriptorSetCollectionWrapper:
+                        variable_size: typing.Optional[int] = None) -> DescriptorSetCollectionWrapper:
         assert self.initialized
         dsc = DescriptorSetCollectionWrapper(
             self.w_device, self, set, count, variable_size_value=variable_size
@@ -1536,7 +1537,7 @@ class PipelineWrapper:
         return dsc
 
     def create_framebuffer(self, width: int, height: int, layers: int,
-                           images: List[Union['ResourceWrapper', None]]):
+                           images: typing.List[typing.Union['ResourceWrapper', None]]):
         assert self.initialized
         fb = FrameBufferWrapper(self.w_device, self, images, width, height, layers)
         self.framebuffers.append(fb)
@@ -2029,7 +2030,7 @@ class CommandBufferWrapper:
         self.pool = pool
         self.__is_frozen = False
         self.state = CommandListState.INITIAL
-        self.current_pipeline : Optional['PipelineWrapper'] = None
+        self.current_pipeline : typing.Optional['PipelineWrapper'] = None
         self.current_render_pass = None
         self.shader_groups_size = self.pool.device.raytracing_properties.shaderGroupHandleSize
         self._associated_pipelines = []
@@ -2557,7 +2558,7 @@ class WindowWrapper(object):
 
 
 class DeviceWrapper:
-    def __init__(self, enable_validation_layers):
+    def __init__(self, device_index: int, enable_validation_layers):
         self.enable_validation_layers = enable_validation_layers
         # this is ugly, we need to change for a proper dependency graph in rendervous objects
         self.__resources = weakref.WeakSet()
@@ -2575,7 +2576,7 @@ class DeviceWrapper:
         self.__load_vk_calls()
         if enable_validation_layers:
             self.__createDebugInstance()
-        self.__createPhysicalDevice()
+        self.__createPhysicalDevice(device_index)
         self.__createQueues()
         self.mem_properties = vkGetPhysicalDeviceMemoryProperties(self.__physical_device)
         self.memory_manager = VulkanMemoryManager(self.vk_device, self.__physical_device)
@@ -3043,15 +3044,11 @@ class DeviceWrapper:
         self.__instance = vkCreateInstance(instanceInfo, None)
         print("[INFO] Vulkan Instance created...")
 
-    def __createPhysicalDevice(self):
+    def __createPhysicalDevice(self, device_index: int):
         all_devices = list(vkEnumeratePhysicalDevices(self.__instance))
-        selected_device = 0
+        selected_device = device_index
         if 'CUDA_VISIBLE_DEVICES' in os.environ:
-            selected_device = int(os.environ['CUDA_VISIBLE_DEVICES'].split(',')[0])
-            if selected_device > len(all_devices):
-                selected_device = 0
-                os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-                print("[WARNING] Selected device is not in range. Device 0 was selected")
+            selected_device = int(os.environ['CUDA_VISIBLE_DEVICES'].split(',')[device_index])
         self.__physical_device = all_devices[selected_device]
         self.__physical_device_features = vkGetPhysicalDeviceFeatures(self.__physical_device)
         feat_atom2 = VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT()
