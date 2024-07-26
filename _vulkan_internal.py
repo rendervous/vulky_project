@@ -2855,7 +2855,7 @@ class DeviceWrapper:
         ads_features = VkPhysicalDeviceAccelerationStructureFeaturesKHR(
             accelerationStructure=self.support_raytracing,
             # accelerationStructureHostCommands=True,
-            descriptorBindingAccelerationStructureUpdateAfterBind=True,
+            descriptorBindingAccelerationStructureUpdateAfterBind=self.support_raytracing,
         )
 
         rt_features = VkPhysicalDeviceRayTracingPipelineFeaturesKHR(
@@ -3070,11 +3070,12 @@ class DeviceWrapper:
         self.vkGetPhysicalDeviceProperties2(self.__physical_device, prop)
 
         self.support_cooperative_matrices = coop_prop.cooperativeMatrixSupportedStages != 0
-        self.support_raytracing = ads_prop.maxGeometryCount > 0
+        self.support_raytracing = feat_ads.accelerationStructure
         self.support_buffer_map = torch.cuda.is_available()  # right now direct vulkan-torch interop is only valid for cuda
         self.support_torch_map = os.name == 'nt'  # TODO: this should be checking if virtual gpu pointers are used or not, no the system
         self.support_atomic_float_add = feat_atom.shaderBufferFloat32AtomicAdd
         self.support_raytracing_query = feat_qrt.rayQuery > 0
+        print(f"[INFO] Supported features {dict(coop_mat=self.support_cooperative_matrices, rt=self.support_raytracing, rq=self.support_raytracing_query, atomic=self.support_atomic_float_add)}")
 
         if self.support_cooperative_matrices:
             # This is needed? probably to fetch some properties and activate?
