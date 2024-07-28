@@ -252,7 +252,7 @@ def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
     if ext.lower() == 'webp':
         codec = 'libwebp'
     else:
-        codec = 'libx264'
+        codec = 'lib264'
     torchvision.io.write_video(filename, t, fps, codec, options=kwargs)
 
 
