@@ -2590,7 +2590,6 @@ class DeviceWrapper:
 
         vkDeviceWaitIdle(self.vk_device)
 
-
         for p in self.__pipelines:  # Clean all pipelines hanging
             p._vk_destroy()
 
@@ -3001,10 +3000,13 @@ class DeviceWrapper:
 
     def __createInstance(self):
         self.__layers = [l.layerName for l in vkEnumerateInstanceLayerProperties()]
-        if 'VK_LAYER_KHRONOS_validation' in self.__layers:
-            self.__layers = ['VK_LAYER_KHRONOS_validation']
+        print(f"[INFO] Initial available layers: {self.__layers}")
         if 'VK_LAYER_LUNARG_standard_validation' in self.__layers:
             self.__layers = ['VK_LAYER_LUNARG_standard_validation']
+        elif 'VK_LAYER_KHRONOS_validation' in self.__layers:
+            self.__layers = ['VK_LAYER_KHRONOS_validation']
+        else:
+            self.__layers = []
         if self.enable_validation_layers and len(self.__layers) == 0:
             raise Exception("validation layers requested, but not layer available!")
         self.__extensions = [e.extensionName for e in vkEnumerateInstanceExtensionProperties(None)]
