@@ -223,6 +223,8 @@ def save_image(t: torch.Tensor, filename: str):
     except:
         raise Exception('Please refer to a valid extension [jpg, png]')
 
+    t = t.permute(2, 0, 1)  # from HWC to CHW
+
     if t.device != 'cpu':
         t = t.to('cpu')
 
@@ -233,6 +235,7 @@ def save_image(t: torch.Tensor, filename: str):
         torchvision.io.write_jpeg(t, filename)
     else:
         raise Exception('Please refer to a valid extension [jpg, png]')
+
 
 def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
     if t.dtype == torch.float:
@@ -256,7 +259,7 @@ def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
 def load_image(filename: str):
     import torchvision
     t = torchvision.io.read_image(filename, mode=torchvision.io.ImageReadMode.RGB_ALPHA)
-    t = t.permute(1, 2, 0).contiguous()
+    t = t.permute(1, 2, 0).contiguous()  # from CHW to HWC
     return t
 
 

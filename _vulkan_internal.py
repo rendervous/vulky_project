@@ -1333,8 +1333,10 @@ class PipelineWrapper:
         the creation of DescriptorSets and Framebuffers.
         """
         assert not self.initialized, "Error, can not re-build pipeline objects"
-        descriptor_set_layout_bindings = [[]]*8
-        descriptor_set_layout_bindings_bound_info = [[]]*8
+        set_count = 1 if len(self.layout_bindings_by_set) == 0 else max(self.layout_bindings_by_set.keys()) + 1
+        assert set_count < 8, "Error, maximum set exceeded supported."  # TODO: Check from device properties.
+        descriptor_set_layout_bindings = [[]]*set_count
+        descriptor_set_layout_bindings_bound_info = [[]]*set_count
         for set, binding, vk_stage, vk_descriptor_type, count, is_variable in self.layout_bindings:
             lb = VkDescriptorSetLayoutBinding(
                 binding,
@@ -1348,7 +1350,7 @@ class PipelineWrapper:
             descriptor_set_layout_bindings_bound_info[set].append(bound)
 
         # Create DescriptorSet Layouts
-        self.descriptor_set_layouts = [VK_NULL_HANDLE]*8
+        self.descriptor_set_layouts = [VK_NULL_HANDLE]*set_count
         for set, (lb, bound_info) in enumerate(zip(descriptor_set_layout_bindings, descriptor_set_layout_bindings_bound_info)):
             bound_info = VkDescriptorSetLayoutBindingFlagsCreateInfo(
                 pBindingFlags=bound_info,
@@ -1433,7 +1435,7 @@ class PipelineWrapper:
             stageFlags=stage
         ) for stage, (offset, size, data) in self.push_constants.items()]
         pipeline_layout_info = VkPipelineLayoutCreateInfo(
-            setLayoutCount=8,
+            setLayoutCount=set_count,
             pSetLayouts=self.descriptor_set_layouts,
             pushConstantRangeCount=len(push_constant_ranges),
             pPushConstantRanges=push_constant_ranges
