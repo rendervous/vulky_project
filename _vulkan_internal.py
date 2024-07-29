@@ -2201,7 +2201,7 @@ class CommandBufferWrapper:
         vkCmdSetViewport(
             self.vk_cmdList,
             0, 1,
-            [VkViewport(0.0, 0.0, framebuffer.width, framebuffer.height, 0.0, 1.0)]
+            [VkViewport(0.0, framebuffer.height, framebuffer.width, -framebuffer.height, 0.0, 1.0)]
         )
         vkCmdSetScissor(
             self.vk_cmdList,

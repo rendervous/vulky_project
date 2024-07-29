@@ -223,6 +223,20 @@ class _GTensorBase(torch.Tensor, metaclass=GTensorMeta):
         return v / torch.sqrt(cls.dot(v, v))
 
     @classmethod
+    def rand(cls, *shape: int, device: torch.device = torch.device('cpu')):
+        return cls(torch.rand(*shape, *cls.tensor_shape, device=device))
+
+    @classmethod
+    def randn(cls, *shape: int, device: torch.device = torch.device('cpu')):
+        return cls(torch.randn(*shape, *cls.tensor_shape, device=device))
+
+    @classmethod
+    def randd(cls, *shape: int, device: torch.device = torch.device('cpu')):
+        t = torch.randn(*shape, *cls.tensor_shape, device=device)
+        t /= torch.sqrt((t ** 2).sum(dim=-1, keepdim=True) + 0.000000001)
+        return cls(t)
+
+    @classmethod
     def identity(cls):
         """
         Creates an identity matrix.
@@ -394,7 +408,24 @@ class mat3(_GTensorBase):
 
     @staticmethod
     def quaternion_rotation(q: typing.Union[torch.Tensor, vec4]) -> 'mat3':
-        raise NotImplemented()
+        x = q[...,0]
+        y = q[...,1]
+        z = q[...,2]
+        w = q[...,3]
+        x2 = x**2
+        y2 = y**2
+        z2 = z**2
+        xy = x*y
+        xz = x*z
+        yz = y*z
+        xw = x*w
+        yw = y*w
+        zw = z*w
+        return mat3(torch.cat([
+            1 - 2 * y2 - 2 * z2, 2 * xy + 2 * zw, 2 * xz - 2 * yw,
+            2 * xy - 2 * zw, 1 - 2 * x2 - 2 * z2, 2 * yz + 2 * xw,
+            2 * xz + 2 * yw, 2 * yz - 2 * xw, 1 - 2 * x2 - 2 * y2
+        ], dim=-1).view(*q.shape[:-1], 3, 3))
 
     @staticmethod
     def euler_rotation(yaw: typing.Union[torch.Tensor, float], pitch: typing.Union[torch.Tensor, float], roll: typing.Union[torch.Tensor, float]) -> 'mat3':
@@ -606,8 +637,6 @@ class mat4(_GTensorBase):
         ).view(*offset.shape[:-1], 4, 4)
         T = s @ m
         return mat4(T)
-
-
 
 
 def broadcast_args_to_max_batch(*args):
