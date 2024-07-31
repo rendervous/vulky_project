@@ -1392,8 +1392,8 @@ class PipelineWrapper:
                             storeOp=VK_ATTACHMENT_STORE_OP_STORE,
                             stencilLoadOp=VK_ATTACHMENT_LOAD_OP_LOAD,
                             stencilStoreOp=VK_ATTACHMENT_STORE_OP_STORE,
-                            initialLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                            finalLayout=VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+                            initialLayout=VK_IMAGE_LAYOUT_GENERAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                            finalLayout=VK_IMAGE_LAYOUT_GENERAL if current_is_color else VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
                         ) for a, current_is_color in zip(atts, is_color)
                     ]
             color_atts = [
@@ -2013,8 +2013,8 @@ class CommandListState(Enum):
 
 
 def _usage_to_vk_layout(usage: ImageUsage):
-    if usage == ImageUsage.RENDER_TARGET:
-        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    # if usage == ImageUsage.RENDER_TARGET:
+    #     return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     if usage == ImageUsage.DEPTH_STENCIL:
         return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
     if usage == ImageUsage.SAMPLED:
@@ -2322,7 +2322,48 @@ class CommandBufferWrapper:
             scratchData=self.pool.device._get_device_address(w_scratch),
             dstAccelerationStructure=w_ads.resource_data.ads,
             mode=VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
-            flags=VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR
+            flags=VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
+        )
+        CommandBufferWrapper.vkCmdBuildAccelerationStructures(
+            self.vk_cmdList,
+            # self.pool.vk_device,
+            # None,
+            1,
+            build_info,
+            [ads_ranges]
+        )
+        vkCmdPipelineBarrier(self.vk_cmdList,
+                             VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+                             VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+                             0, 1,
+                                 VkMemoryBarrier(
+                                srcAccessMask=VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR,
+                                dstAccessMask=VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR
+                                ), 0, 0, 0, 0)
+
+    def update_ads(self,
+                  w_ads: ResourceWrapper,
+                  ads_info: VkAccelerationStructureBuildGeometryInfoKHR,
+                  ads_ranges,
+                  w_scratch: ResourceWrapper):
+        vkCmdPipelineBarrier(self.vk_cmdList,
+                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                             VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+                             0, 1,
+                             VkMemoryBarrier(
+                                 srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT,
+                                 dstAccessMask=VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR
+                             ), 0, 0, 0, 0)
+
+        build_info = VkAccelerationStructureBuildGeometryInfoKHR(
+            type = ads_info.type,
+            geometryCount=ads_info.geometryCount,
+            pGeometries=ads_info.pGeometries,
+            scratchData=self.pool.device._get_device_address(w_scratch),
+            srcAccelerationStructure=w_ads.resource_data.ads,
+            dstAccelerationStructure=w_ads.resource_data.ads,
+            mode=VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR,
+            flags=VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR
         )
         CommandBufferWrapper.vkCmdBuildAccelerationStructures(
             self.vk_cmdList,
@@ -3211,22 +3252,6 @@ class DeviceWrapper:
                 return i
         raise Exception("failed to find suitable memory type!")
 
-    def __resolve_desired_layout(self, usage): #self, is_buffer, is_ads, usage, properties):
-        if usage == VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
-            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        if usage == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
-            return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-        if usage in [
-            VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT]:
-            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        return ResourceState(
-            vk_access=0,
-            vk_stage=VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            vk_layout=VK_IMAGE_LAYOUT_UNDEFINED
-        )
-
     def clear_cache(self):
         self.memory_manager.clear_cache()
 
@@ -3513,9 +3538,9 @@ class DeviceWrapper:
         image_format = __FORMAT_2_VK__[image_format]
         extent = VkExtent3D(extent[0], extent[1], extent[2])
         flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT if is_cube else 0
-        if usage == ImageUsage.RENDER_TARGET:
-            desired_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-        elif usage == ImageUsage.DEPTH_STENCIL:
+        # if usage == ImageUsage.RENDER_TARGET:
+        #     desired_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+        if usage == ImageUsage.DEPTH_STENCIL:
             desired_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
         else:
             desired_layout = VK_IMAGE_LAYOUT_GENERAL

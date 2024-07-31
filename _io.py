@@ -238,6 +238,9 @@ def save_image(t: torch.Tensor, filename: str):
 
 
 def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
+
+    kwargs = {k: str(v) for k,v in kwargs.items()}
+
     if t.dtype == torch.float:
         t = (torch.clamp(t, 0.0, 1.0) * 255).to(torch.uint8)
     try:

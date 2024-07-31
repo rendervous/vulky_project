@@ -23,7 +23,6 @@ from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
 from . import _vulkan_internal as internal
 from ._vulkan_internal import (
     ShaderHandlerWrapper as ShaderHandler,
-    DescriptorSetCollectionWrapper as DescriptorSetCollection,
     FrameBufferWrapper as FrameBuffer,
     SamplerWrapper as Sampler
 )
@@ -853,7 +852,7 @@ class DescriptorSet:
 
 
 class DescriptorSetCollection:
-    def __init__(self, w_dsc: 'DescriptorSetCollectionWrapper', layout_reference_names: typing.Dict[str, typing.Tuple[int, int]]):
+    def __init__(self, w_dsc: internal.DescriptorSetCollectionWrapper, layout_reference_names: typing.Dict[str, typing.Tuple[int, int]]):
         self.w_dsc = w_dsc
         self.layout_reference_names = layout_reference_names
 
@@ -1200,6 +1199,13 @@ class RaytracingManager(GraphicsManager):
 
     def build_ads(self, ads: ADS, scratch_buffer: Buffer):
         self.w_cmdList.build_ads(
+            ads.w_resource,
+            ads.ads_info,
+            ads.ranges,
+            scratch_buffer.w_resource)
+
+    def update_ads(self, ads: ADS, scratch_buffer: Buffer):
+        self.w_cmdList.update_ads(
             ads.w_resource,
             ads.ads_info,
             ads.ranges,
