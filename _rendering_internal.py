@@ -4,6 +4,7 @@ import weakref
 import typing
 # from typing import Callable, Any
 import time
+import numpy as np
 
 # from vulky._vulkan_internal import DescriptorSetCollectionWrapper
 # from vulky._vulkan_internal import DescriptorSetWrapper
@@ -14,11 +15,7 @@ try:
 except:
     __GUI_AVAILABLE__ = False
 
-import torch
-
-from ._enums import *
 from ._common import *
-from ._io import load_obj, create_mesh, save_image, save_video, load_image, load_video
 from ._vulkan_memory_allocator import VulkanMemory, __TORCH_DEVICE__
 from . import _vulkan_internal as internal
 from ._vulkan_internal import (
@@ -213,9 +210,9 @@ class Resource(object):
 
 
 class ObjectBufferAccessor:
-    _rdv_memory: memoryview = None  # memory of the whole object
+    _rdv_memory: memoryview = None      # memory of the whole object
     _rdv_layout: Layout = None      # layout for the whole object
-    _rdv_fields: dict = None        # gets precomputed accessors, tensors or references
+    _rdv_fields: dict = None      # gets precomputed accessors, tensors or references
 
     def __init__(self, memory: memoryview, layout: Layout):
         object.__setattr__(self, '_rdv_memory', memory)
@@ -1927,8 +1924,8 @@ class DeviceManager:
             t.transform[0][0] = 1.0
             t.transform[1][1] = 1.0
             t.transform[2][2] = 1.0
-            t.mask = 0xFF
-            t.flags = 0
+            t.mask8_idx24 = asint32(0xFF000000)
+            # t.flags = 0
         return b
 
     def create_sampler(self,
@@ -2207,6 +2204,14 @@ class Technique(DeviceManager):
     def __dispatch__(self):
         pass
 
+
+def asint32(v: int):
+    """
+    Converts a python integer to a valid signed int32 value
+    """
+    if v < 0:
+        return v
+    return np.uint32(v).astype(np.int32)
 
 # def Extends(class_):
 #     def wrapper(function):

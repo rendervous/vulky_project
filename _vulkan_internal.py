@@ -1182,6 +1182,7 @@ class PipelineWrapper:
         self.vertex_att_format = {}  # vertex_attribute map to format
         self.vertex_binding_descriptions = []  # all vertex-buffer static bindings
         self.vertex_att_descriptions = []  # all collected attribute descriptions
+        self.pipeline_layout = None
 
     def _vk_destroy(self):
         # Destroy desciptor sets

@@ -2,12 +2,10 @@
 Home-made obj loader.
 """
 import typing
-
 import torch
 import os
-
 import torchvision.io
-
+from . import _rendering_internal as internal
 
 def _load_mtl_file(path, directory) -> dict:
     materials = {}
@@ -259,11 +257,26 @@ def save_video(t: torch.Tensor, filename: str, fps: int = 20, **kwargs):
     torchvision.io.write_video(filename, t, fps, codec, options=kwargs)
 
 
-def load_image(filename: str):
+def load_image(filename: str, with_alpha: bool = True) -> torch.Tensor:
     import torchvision
-    t = torchvision.io.read_image(filename, mode=torchvision.io.ImageReadMode.RGB_ALPHA)
-    t = t.permute(1, 2, 0).contiguous()  # from CHW to HWC
+    if with_alpha:
+        t = torchvision.io.read_image(filename, mode=torchvision.io.ImageReadMode.RGB_ALPHA)
+    else:
+        t = torchvision.io.read_image(filename, mode=torchvision.io.ImageReadMode.RGB)
+    t = (t.permute(1, 2, 0)/255.0).contiguous()  # from CHW to HWC
     return t
+
+
+def load_texture(filename: str) -> internal.Image:
+    t = load_image(filename)
+    width = t.shape[1]
+    heigh = t.shape[0]
+    im = internal.image_2D(internal.Format.VEC4, width, heigh)
+    im.subresource().load(t)
+    with internal.graphics_manager() as man:
+        for i in range(1, im.get_mip_count()):
+            man.blit_image(im.subresource(i - 1, 0), im.subresource(i, 0), filter=internal.Filter.LINEAR)
+    return im
 
 
 def load_video(filename: str):

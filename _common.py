@@ -24,6 +24,7 @@ short: dtype = torch.short
 int32: dtype = torch.int32
 t_int: dtype = torch.int
 int64: dtype = torch.int64
+ptr: dtype = torch.int64
 long: dtype = torch.long
 complex32: dtype = torch.complex32
 complex64: dtype = torch.complex64
@@ -527,12 +528,28 @@ class Layout:
             mode=LayoutAlignment.SCALAR,
             # transform=[3, [4, float]],
             transform=mat3x4,
+            mask8_idx24=torch.int32,
+            instanceShaderBindingTableRecordOffset=[3, torch.uint8],
+            flags=torch.uint8,
+            accelerationStructureReference=torch.int64
+        )
+
+    @staticmethod
+    def from_instance2():
+        """
+        Creates a layout for an instance buffer
+        """
+        return Layout.from_structure(
+            mode=LayoutAlignment.SCALAR,
+            # transform=[3, [4, float]],
+            transform=mat3x4,
             instanceCustomIndex=[3, torch.uint8],
             mask=torch.uint8,
             instanceShaderBindingTableRecordOffset=[3, torch.uint8],
             flags=torch.uint8,
             accelerationStructureReference=torch.int64
         )
+
 
     @staticmethod
     def from_aabb():
