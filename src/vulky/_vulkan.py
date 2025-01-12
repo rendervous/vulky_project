@@ -7,7 +7,7 @@ except AttributeError:
 import weakref as _weakref
 import sys
 
-from vulky.src.vulky._vulkancache import ffi
+from _vulkancache import ffi
 
 
 _weakkey_dict = _weakref.WeakKeyDictionary()
