@@ -1,7 +1,7 @@
-from _vulkan import *
+from ._vulkan import *
 import ctypes as _ctypes
 import torch as _torch
-from _common import ViewTensor, Layout, lazy_constant
+from ._common import ViewTensor, Layout, lazy_constant
 
 __SHOW_ALLOCATE_AND_FREES__ = False
 

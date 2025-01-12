@@ -3,7 +3,7 @@ Home-made obj loader.
 """
 import typing as _typing
 import torch as _torch
-from _rendering_internal import Image, Format, image_2D, Filter, graphics_manager
+from ._rendering_internal import Image, Format, image_2D, Filter, graphics_manager
 
 def _load_mtl_file(path, directory) -> dict:
     materials = {}
@@ -56,6 +56,7 @@ def load_obj(path: str) -> dict:
     ...
     @material_indices: List[int] with all per-faces materials
     '''
+    import os
     current_object_name = 'default'
     current_mtl_dict = { }
 

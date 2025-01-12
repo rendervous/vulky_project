@@ -1,10 +1,10 @@
 import enum as _enum
-from _vulkan_memory_allocator import *
-from _common import *
+from ._vulkan_memory_allocator import *
+from ._common import *
 import torch as _torch
 import typing as _typing
 import numpy as _np
-
+import ctypes as _ctypes
 
 # Internal classes for the vulkan backend
 
@@ -3258,6 +3258,7 @@ class DeviceWrapper:
         self.memory_manager.clear_cache()
 
     def create_tensor(self, *shape: int, dtype: _torch.dtype, memory: MemoryLocation = MemoryLocation.GPU):
+        import math
         element_size = Layout.scalar_size(dtype)
         numels = int(math.prod(shape))
         size = element_size * numels
@@ -3437,17 +3438,17 @@ class DeviceWrapper:
             from OpenGL.GL.EXT.memory_object_fd import glImportMemoryFdEXT, GL_HANDLE_TYPE_OPAQUE_FD_EXT
         from OpenGL.GL.EXT.memory_object import glTexStorageMem2DEXT
 
-        memory_object = ctypes.c_uint(0)
+        memory_object = _ctypes.c_uint(0)
         glCreateMemoryObjectsEXT(1, memory_object)
         # memory_object = memory_object.value
 
         if os.name == 'nt':
-            mhandle = ctypes.c_void_p(image_data.w_memory.page_allocator.memory_vk_handle_win32)
+            mhandle = _ctypes.c_void_p(image_data.w_memory.page_allocator.memory_vk_handle_win32)
             r = glImportMemoryWin32HandleEXT(memory_object, image_data.w_memory.page_allocator.capacity, GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, mhandle)
         else:
             glImportMemoryFdEXT(memory_object, image_data.w_memory.page_allocator.capacity, GL_HANDLE_TYPE_OPAQUE_FD_EXT, image_data.w_memory.page_allocator.memory_vk_handle)
 
-        texture_ogl = ctypes.c_uint(0)
+        texture_ogl = _ctypes.c_uint(0)
         GL.glCreateTextures(GL.GL_TEXTURE_2D, 1, texture_ogl)
         # texture_ogl = texture_ogl.value
         ogl_format = {
@@ -3489,17 +3490,17 @@ class DeviceWrapper:
             from OpenGL.GL.EXT.memory_object_fd import glImportMemoryFdEXT, GL_HANDLE_TYPE_OPAQUE_FD_EXT
         from OpenGL.GL.EXT.memory_object import glTexStorageMem2DEXT
 
-        memory_object = ctypes.c_uint(0)
+        memory_object = _ctypes.c_uint(0)
         glCreateMemoryObjectsEXT(1, memory_object)
         # memory_object = memory_object.value
 
         if os.name == 'nt':
-            mhandle = ctypes.c_void_p(image_data.w_memory.page_allocator.memory_vk_handle_win32)
+            mhandle = _ctypes.c_void_p(image_data.w_memory.page_allocator.memory_vk_handle_win32)
             r = glImportMemoryWin32HandleEXT(memory_object, image_data.w_memory.page_allocator.capacity, GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, mhandle)
         else:
             glImportMemoryFdEXT(memory_object, image_data.w_memory.page_allocator.capacity, GL_HANDLE_TYPE_OPAQUE_FD_EXT, image_data.w_memory.page_allocator.memory_vk_handle)
 
-        texture_ogl = ctypes.c_uint(0)
+        texture_ogl = _ctypes.c_uint(0)
         GL.glCreateTextures(GL.GL_TEXTURE_2D, 1, texture_ogl)
         # texture_ogl = texture_ogl.value
         ogl_format = {
@@ -3529,7 +3530,7 @@ class DeviceWrapper:
         # GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, ogl_format, 32, 32, 0, GL.GL_RGBA, GL.GL_FLOAT, color)
         glTexStorageMem2DEXT(GL.GL_TEXTURE_2D, 1, ogl_format, image_data.vk_description.extent.width, image_data.vk_description.extent.height,
                                  memory_object, image_data.w_memory.offset)
-        fb_ogl = ctypes.c_uint(0)
+        fb_ogl = _ctypes.c_uint(0)
         GL.glGenFramebuffers(1, fb_ogl)
         GL.glBindFramebuffer(GL.GL_READ_FRAMEBUFFER, fb_ogl)
         GL.glFramebufferTexture(GL.GL_READ_FRAMEBUFFER, GL.GL_COLOR_ATTACHMENT0, texture_ogl, 0)

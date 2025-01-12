@@ -1,8 +1,11 @@
 # from typing import Optional, Dict, Tuple, Literal, Union, List, TypeVar, Hashable
 import ctypes as _ctypes
 import torch as _torch
-from _gmath import *
-from _enums import *
+import typing as _typing
+import numpy as _np
+import enum as _enum
+from ._gmath import *
+from ._enums import *
 
 
 ## TYPES SAME AS TORCH
@@ -45,7 +48,7 @@ __DTYPE_TO_STR__ = {
     }
 
 
-__frozen_type_T = typing.TypeVar('FrozenType')
+__frozen_type_T = _typing.TypeVar('FrozenType')
 
 
 def freezable_type(t: __frozen_type_T) -> __frozen_type_T:
@@ -151,16 +154,16 @@ class ViewTensor(_torch.Tensor):
     __torch_function__ = _torch._C._disabled_torch_function_impl
 
     @staticmethod
-    def from_blob(ptr: int, shape: typing.Union[typing.Tuple[int], typing.List[int]], dtype: _torch.dtype, device: _torch.device, *, strides: typing.Union[typing.Tuple[int], typing.List[int], None] = None, owner: object = None) -> 'ViewTensor':
+    def from_blob(ptr: int, shape: _typing.Union[_typing.Tuple[int], _typing.List[int]], dtype: _torch.dtype, device: _torch.device, *, strides: _typing.Union[_typing.Tuple[int], _typing.List[int], None] = None, owner: object = None) -> 'ViewTensor':
         if device.type == 'cpu':
             nptype = {
-                _torch.int: np.int32,
-                _torch.float: np.float32,
-                _torch.uint8: np.uint8,
-                _torch.int64: np.int64
+                _torch.int: _np.int32,
+                _torch.float: _np.float32,
+                _torch.uint8: _np.uint8,
+                _torch.int64: _np.int64
             }[dtype]
             # wrap as cpu pointer
-            data = np.array(wrap_cpu_ptr(ptr, shape, dtype, strides=strides), dtype=nptype, copy=False)
+            data = _np.array(wrap_cpu_ptr(ptr, shape, dtype, strides=strides), dtype=nptype, copy=False)
             v = ViewTensor(_torch.from_numpy(data))
         elif device.type == 'cuda':
             data = wrap_cuda_ptr(ptr, shape, dtype, strides=strides)
@@ -171,7 +174,7 @@ class ViewTensor(_torch.Tensor):
         return v
 
     @staticmethod
-    def reinterpret(t: _torch.Tensor, dtype: typing.Union[_torch.dtype, int, float]):
+    def reinterpret(t: _torch.Tensor, dtype: _typing.Union[_torch.dtype, int, float]):
         if dtype == int:
             dtype = _torch.int32
         if dtype == float:
@@ -186,7 +189,7 @@ class ViewTensor(_torch.Tensor):
         return ViewTensor.from_blob(t.data_ptr(), new_shape, dtype, device=t.device, strides=bytes_strides, owner=t)
 
 
-class LayoutAlignment(enum.IntEnum):
+class LayoutAlignment(_enum.IntEnum):
     """
     Determines the type of rules for alignment applied in a layout.
     """
@@ -215,10 +218,10 @@ class Layout:
                  declaration,
                  size,
                  alignment: int = 1,
-                 array_stride: typing.Optional[int] = None,
-                 matrix_stride: typing.Optional[int] = None,
-                 element_layout: typing.Optional['Layout'] = None,
-                 fields_layout: typing.Optional[typing.Dict[str, typing.Tuple[int, 'Layout']]] = None):
+                 array_stride: _typing.Optional[int] = None,
+                 matrix_stride: _typing.Optional[int] = None,
+                 element_layout: _typing.Optional['Layout'] = None,
+                 fields_layout: _typing.Optional[_typing.Dict[str, _typing.Tuple[int, 'Layout']]] = None):
         super(Layout, self).__init__()
         if declaration is int:
             declaration = _torch.int32
@@ -298,7 +301,7 @@ class Layout:
         return Layout(type, size, alignment, element_layout=element_layout, array_stride=array_stride)
 
     @staticmethod
-    def _create_structure_layout(type, size: int, alignment: int, fields: typing.Dict[str, typing.Tuple[int, 'Layout']]) -> 'Layout':
+    def _create_structure_layout(type, size: int, alignment: int, fields: _typing.Dict[str, _typing.Tuple[int, 'Layout']]) -> 'Layout':
         return Layout(type, size, alignment, fields_layout=fields)
 
     __TYPE_SIZES__ = {
@@ -360,7 +363,7 @@ class Layout:
     }
 
     @staticmethod
-    def scalar_size(type: typing.Union[type, _torch.dtype]) -> int:
+    def scalar_size(type: _typing.Union[type, _torch.dtype]) -> int:
         """
         Return the size in bytes for a scalar type, int, float, complex or torch dtypes.
         """
@@ -380,7 +383,7 @@ class Layout:
 
     @staticmethod
     def _build_layout_compact(type):
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, _typing.Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, 1)
         if isinstance(type, GTensorMeta):
@@ -414,7 +417,7 @@ class Layout:
     def _build_layout_scalar(type):
         if type == int or type == float:
             return Layout._create_scalar_layout(type, 4, 4)
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, _typing.Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, size)
         if isinstance(type, GTensorMeta):
@@ -454,7 +457,7 @@ class Layout:
     def _build_layout_std430(type):
         if type == int or type == float:
             return Layout._create_scalar_layout(type, 4, 4)
-        if isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__:
+        if isinstance(type, _typing.Hashable) and type in Layout.__TYPE_SIZES__:
             size = Layout.__TYPE_SIZES__[type]
             return Layout._create_scalar_layout(type, size, size)
         if isinstance(type, GTensorMeta):
@@ -495,7 +498,7 @@ class Layout:
         raise Exception('Not supported type definition')
 
     @staticmethod
-    def from_description(mode: LayoutAlignment, description: typing.Union[type, dict, list, _torch.dtype]) -> 'Layout':
+    def from_description(mode: LayoutAlignment, description: _typing.Union[type, dict, list, _torch.dtype]) -> 'Layout':
         """
         Creates a layout from a general type definition.
         type definition defines:
@@ -573,7 +576,7 @@ class Layout:
     def is_scalar_type(type):
         if type == float or type == int:
             return True
-        return isinstance(type, typing.Hashable) and type in Layout.__TYPE_SIZES__
+        return isinstance(type, _typing.Hashable) and type in Layout.__TYPE_SIZES__
 
     __FORMAT_TO_TORCH_INFO__ = {
         Format.NONE: (1, _torch.uint8),
@@ -636,7 +639,7 @@ class StructuredTensor(object):
         return element_layout.declaration(matrix_tensor[..., 0:matrix_type.tensor_shape[1]])
 
     @staticmethod
-    def create_compatible_tensor(element_layout: 'Layout', *structure_shape: int, device: typing.Union[_torch.device, str, None] = None):
+    def create_compatible_tensor(element_layout: 'Layout', *structure_shape: int, device: _typing.Union[_torch.device, str, None] = None):
         required_alignment = element_layout.alignment
         if required_alignment <= 1:
             nbytes = 1
@@ -658,13 +661,14 @@ class StructuredTensor(object):
         return ViewTensor.reinterpret(t, _torch.uint8)[..., 0:element_layout.aligned_size]
 
     @staticmethod
-    def create(layout: Layout, device: typing.Union[_torch.device, str, None] = None) -> 'StructuredTensor':
+    def create(layout: Layout, device: _typing.Union[_torch.device, str, None] = None) -> 'StructuredTensor':
         if device is None:
             device = 'cpu'
         tensor = StructuredTensor.create_compatible_tensor(layout, device=device)
         return StructuredTensor(tensor, layout)
 
     def __init__(self, base_tensor: _torch.Tensor, element_layout: Layout):
+        import math
         if base_tensor.dtype != _torch.uint8:
             base_tensor = ViewTensor.reinterpret(base_tensor, _torch.uint8)
         assert base_tensor.shape[-1] >= element_layout.size, "Byte size of the last dimension is not sufficient for the layout structure"
@@ -778,7 +782,7 @@ class StructuredTensor(object):
             return item_structured_tensor.item(*next_indices)
         assert False, 'Can only index vector, matrices or arrays'
 
-    def _direct_if_possible(self, s: typing.Union[_torch.Tensor, 'StructuredTensor']) -> typing.Union['StructuredTensor', _torch.Tensor, GTensorMeta]:
+    def _direct_if_possible(self, s: _typing.Union[_torch.Tensor, 'StructuredTensor']) -> _typing.Union['StructuredTensor', _torch.Tensor, GTensorMeta]:
         if isinstance(s, _torch.Tensor):
             return s
         if s.layout.is_structure or s.layout.is_array:
