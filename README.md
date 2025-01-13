@@ -59,7 +59,7 @@ In google colab execute next cell to install all dependencies:
 </td>
 <td>
     <b>Devices:</b> Creating and destroying devices in vulky, manipulating vectors and matrices.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_project/examples/blob/main/notebooks/e01_create_and_destroy_device.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e01_create_and_destroy_device.ipynb">open in colab</a>
 </td>
 </tr>
 
