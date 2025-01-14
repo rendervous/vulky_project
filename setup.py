@@ -12,6 +12,14 @@ setup(
     packages=find_packages(),             # Automatically find packages in your project
     install_requires=[
         "numpy>=1.21.0",                  # List dependencies here
+        "cffi",
+        "torch",
+        "torchvision",
+        "cuda-python",
+        "PyOpenGL",
+        "glfw",
+        "imgui",
+        "pywin32",
         "requests"
     ],
     classifiers=[
