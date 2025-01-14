@@ -1,6 +1,6 @@
 import os as _os
 import torch as _torch
-from ._io import load_obj
+from ._io import load_obj, load_texture
 
 __VULKY_DATA_REPO__ = "https://github.com/rendervous/vulky_data"
 __DATASETS_PATH__ = _os.path.dirname(__file__).replace('\\','/')+ "/datasets"
@@ -66,3 +66,9 @@ class Images:
     def environment_example(cls):
         return _torch.load(__DATASETS_PATH__ + "/vulky_data/environment_0.pt", map_location=_torch.device('cpu'))
 
+
+class Textures:
+    @classmethod
+    @property
+    def whitted_texture(cls):
+        return load_texture(__DATASETS_PATH__ + "/vulky_data/whitted_texture.png")

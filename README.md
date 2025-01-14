@@ -40,16 +40,6 @@ Examples showing *vulky* and how to create rendering applications in few lines o
 Vulky exposes a simplified view of Vulkan API, but at the same time is compact, elegant and
 with little overhead.
 
-In google colab execute next cell to install all dependencies:
-
-```shell
-!sudo apt-get update -y
-!sudo apt-get install -y libnvidia-gl-555 vulkan-tools glslang-tools vulkan-validationlayers-dev
-!pip install pyav
-!git clone https://github.com/rendervous/vulky
-!git clone https://github.com/rendervous/vulky_data
-```
-
 <table>
 <tr> 
 <td>
