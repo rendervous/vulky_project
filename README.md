@@ -61,7 +61,7 @@ with little overhead.
 </td>
 <td>
     <b>Basic Compute:</b> Computing the Mandelbrot set to an image.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e02_basic_compute.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e02_basic_compute.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -73,7 +73,7 @@ with little overhead.
 </td>
 <td>
     <b>Basic Rasterization:</b> Drawing primitives to a framebuffer with depth-test.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e03_basic_rasterization.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e03_basic_rasterization.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -86,7 +86,7 @@ with little overhead.
 </td>
 <td>
     <b>Vertex Buffers:</b> Drawing primitives based on vertices and indices.<br/>
-<a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e04_vertex_buffers.ipynb">open in colab</a>
+<a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e04_vertex_buffers.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -99,7 +99,7 @@ with little overhead.
 </td>
 <td>
     <b>OBJ Viewer:</b> Loading an OBJ and rendering the properties of the geometry with rasterization.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e05_obj_viewer.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e05_obj_viewer.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -112,7 +112,7 @@ with little overhead.
 </td>
 <td>
     <b>Texture Mapping: </b> Binding textures and samplers.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e06_texture_mapping.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e06_texture_mapping.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -125,7 +125,7 @@ with little overhead.
 </td>
 <td>
     <b>Basic Raytracing:</b> Raytracing pipeline, building ADS, updating.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e07_basic_raytracing.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e07_basic_raytracing.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -138,7 +138,7 @@ with little overhead.
 </td>
 <td>
     <b>Shadow cast:</b> Raytracing pipeline, raytracing programs.<br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e08_shadow_cast.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e08_shadow_cast.ipynb">open in colab</a>
 </td>
 </tr>
 
@@ -151,7 +151,7 @@ with little overhead.
 </td>
 <td>
     <b>Whitted Raytracing:</b> GPU Pointers <br/>
-    <a href="https://colab.research.google.com/github/rendervous/vulky_examples/blob/main/notebooks/e09_whitted_raytracing.ipynb">open in colab</a>
+    <a href="https://colab.research.google.com/github/rendervous/vulky_project/blob/main/examples/e09_whitted_raytracing.ipynb">open in colab</a>
 </td>
 </tr>
 
