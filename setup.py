@@ -21,7 +21,9 @@ setup(
         "PyOpenGL",
         "glfw",
         "imgui",
-        "pywin32",
+        "pywin32; platform_system == 'Windows'",
+        "pygobject; platform_system == 'Linux'",
+        "pyobjc; platform_system == 'Darwin'",
         "requests"
     ],
     classifiers=[
