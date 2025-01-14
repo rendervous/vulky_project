@@ -9,7 +9,9 @@ setup(
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/rendervous/vulky_project",
-    packages=find_packages(),             # Automatically find packages in your project
+    packages=find_packages(where="src"),  # Look for packages in "src"
+    package_dir={"": "src"},  # Map the root package directory to "src"
+    # packages=find_packages(),             # Automatically find packages in your project
     install_requires=[
         "numpy>=1.21.0",                  # List dependencies here
         "cffi",
