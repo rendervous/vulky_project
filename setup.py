@@ -21,11 +21,15 @@ setup(
         "PyOpenGL",
         "glfw",
         "imgui",
-        "pywin32; platform_system == 'Windows'",
-        "pygobject; platform_system == 'Linux'",
-        "pyobjc; platform_system == 'Darwin'",
         "requests"
     ],
+    extras_requires={
+        "gui": [
+            "pywin32; platform_system == 'Windows'",
+            "pygobject; platform_system == 'Linux'",
+            "pyobjc; platform_system == 'Darwin'",
+        ]
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
