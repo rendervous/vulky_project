@@ -44,3 +44,7 @@ autodoc_default_options = {
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+html_context = {
+    'jquery_url': 'https://code.jquery.com/jquery-3.6.0.min.js',
+}
