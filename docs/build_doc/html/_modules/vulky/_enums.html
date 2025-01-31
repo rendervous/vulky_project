@@ -1,0 +1,591 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vulky._enums &mdash; vulky 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            vulky
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/vulky.html">vulky</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">vulky</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">vulky._enums</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for vulky._enums</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">enum</span> <span class="k">as</span> <span class="nn">_enum</span>
+
+
+<div class="viewcode-block" id="PresenterMode">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.PresenterMode">[docs]</a>
+<span class="k">class</span> <span class="nc">PresenterMode</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Presentation mode of a device. Decide if the render target resources are optimized for window</span>
+<span class="sd">    presentation or not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The presentation mode is unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">OFFLINE</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render target is not optimized for window presentation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">WINDOW</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Render target is optimized for presenting on a window.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+
+<div class="viewcode-block" id="QueueType">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.QueueType">[docs]</a>
+<span class="k">class</span> <span class="nc">QueueType</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Type of the graphics engine queue used for submitting tasks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The queue is unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COPY</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The queue supports only transfer commands.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COMPUTE</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The queue supports transfer and compute commands.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GRAPHICS</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The queue supports transfer, compute and rasterization commands.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RAYTRACING</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The queue supports transfer, compute, graphics and raytracing commands.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="BufferUsage">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.BufferUsage">[docs]</a>
+<span class="k">class</span> <span class="nc">BufferUsage</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the usage for a buffer object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The usage is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STAGING</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used for staging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">VERTEX</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used as vertex buffer input in a rasterization pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">INDEX</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used as index buffer input in a rasterization pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">UNIFORM</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used as uniform object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STORAGE</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used as a storage buffer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RAYTRACING_ADS</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used to store a BVH.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RAYTRACING_RESOURCE</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used as vertices or indices for building a BVH</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SHADER_TABLE</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The buffer is used to store shader handles.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ImageUsage">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ImageUsage">[docs]</a>
+<span class="k">class</span> <span class="nc">ImageUsage</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the usage for an image object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The usage is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">TRANSFER</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be copied to/from the cpu</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SAMPLED</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be sampled from a shader.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RENDER_TARGET</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be used only as render target.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">DEPTH_STENCIL</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be used only as a depth-stencil buffer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STORAGE</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be used only as storage</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ANY</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The image can be used for sampling, storage and as render target.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Format">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Format">[docs]</a>
+<span class="k">class</span> <span class="nc">Format</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">UINT_RGBA</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">UINT_RGB</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">UINT_BGRA_STD</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">UINT_RGBA_STD</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">UINT_RGBA_UNORM</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">UINT_BGRA_UNORM</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">FLOAT</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">INT</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">UINT</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">VEC2</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">VEC3</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">VEC4</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="n">IVEC2</span> <span class="o">=</span> <span class="mi">13</span>
+    <span class="n">IVEC3</span> <span class="o">=</span> <span class="mi">14</span>
+    <span class="n">IVEC4</span> <span class="o">=</span> <span class="mi">15</span>
+    <span class="n">UVEC2</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">UVEC3</span> <span class="o">=</span> <span class="mi">17</span>
+    <span class="n">UVEC4</span> <span class="o">=</span> <span class="mi">18</span>
+    <span class="n">PRESENTER</span> <span class="o">=</span> <span class="mi">19</span>
+    <span class="n">DEPTH_STENCIL</span> <span class="o">=</span> <span class="mi">20</span></div>
+
+
+
+<div class="viewcode-block" id="ImageType">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ImageType">[docs]</a>
+<span class="k">class</span> <span class="nc">ImageType</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">TEXTURE_1D</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">TEXTURE_2D</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">TEXTURE_3D</span> <span class="o">=</span> <span class="mi">3</span></div>
+
+
+
+<div class="viewcode-block" id="MemoryLocation">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.MemoryLocation">[docs]</a>
+<span class="k">class</span> <span class="nc">MemoryLocation</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Memory configurations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Memory location is unknown</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GPU</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Efficient memory for reading and writing on the GPU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">CPU</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Memory can be read and write directly from the CPU</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ShaderStage">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ShaderStage">[docs]</a>
+<span class="k">class</span> <span class="nc">ShaderStage</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the shader stage</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">VERTEX</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for per-vertex process in a rasterization pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">FRAGMENT</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for per-fragment process in a rasterization pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COMPUTE</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for a compute process in a compute pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_GENERATION</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for ray generation in a ray-tracing pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_CLOSEST_HIT</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for closest hit process in a ray-tracing pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_MISS</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for a ray miss process in a ray-tracing pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_ANY_HIT</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for any ray hit process in a ray-tracing pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_INTERSECTION_HIT</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for final intersection hit process in a ray-tracing pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RT_CALLABLE</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for a callable shader in a ray-tracing pipeline.  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GEOMETRY</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shader stage for geometry process in a rasterization pipeline.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+
+<div class="viewcode-block" id="Filter">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Filter">[docs]</a>
+<span class="k">class</span> <span class="nc">Filter</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter used during sampling a texel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The filter is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">POINT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nearest sample.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LINEAR</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Linear (bilinear) interpolation is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MipMapMode">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.MipMapMode">[docs]</a>
+<span class="k">class</span> <span class="nc">MipMapMode</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter used during sampling between mip maps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The filter is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">POINT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nearest sample.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LINEAR</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Linear (bilinear, trilinear) interpolation is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AddressMode">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.AddressMode">[docs]</a>
+<span class="k">class</span> <span class="nc">AddressMode</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines how the sampler behaves at edges.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The behaviour is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">REPEAT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sampler repeat coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">CLAMP_EDGE</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sampler repeat color at edge</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">BORDER</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sampler uses a constant value for coordinates out of range.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="CompareOp">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.CompareOp">[docs]</a>
+<span class="k">class</span> <span class="nc">CompareOp</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines different comparison operations for depth, blending, stencil and other operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The operation is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NEVER</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test always fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LESS</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First element is less than second.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">EQUAL</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements are equals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LESS_OR_EQUAL</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First element is less or equals than second.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GREATER</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First element is greater than second.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NOT_EQUAL</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements are different.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GREATER_OR_EQUAL</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First element is greater or equals than second.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ALWAYS</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test always succeed.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="BorderColor">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.BorderColor">[docs]</a>
+<span class="k">class</span> <span class="nc">BorderColor</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines possible values for the border sampling.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The value is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">TRANSPARENT_BLACK_FLOAT</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All values are 0.0f.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">TRANSPARENT_BLACK_INT</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All values are 0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">OPAQUE_BLACK_FLOAT</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All components are 0.0 but the alpha is full (1.0f)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">OPAQUE_BLACK_INT</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All components are 0 but the alpha is full</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">OPAQUE_WHITE_FLOAT</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All components are 1.0f</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">OPAQUE_WHITE_INT</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All components are full</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ADSNodeType">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ADSNodeType">[docs]</a>
+<span class="k">class</span> <span class="nc">ADSNodeType</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines possible types of an ADS buffer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The element type is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">TRIANGLES</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements of the (bottom) ADS buffer are triangles. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">AABB</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements of the (bottom) ADS buffer are boxes. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">INSTANCE</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elements of the (top) ADS buffer are instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="PipelineType">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.PipelineType">[docs]</a>
+<span class="k">class</span> <span class="nc">PipelineType</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the pipeline type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The pipeline is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COMPUTE</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The pipeline is for a compute process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GRAPHICS</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The pipeline is for a rasterization process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">RAYTRACING</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The pipeline is for a ray-tracing process.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DescriptorType">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.DescriptorType">[docs]</a>
+<span class="k">class</span> <span class="nc">DescriptorType</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the type of descriptor of a resource binding.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">NONE</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is unknown.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SAMPLER</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for a sampler object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">UNIFORM_BUFFER</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for a uniform buffer object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STORAGE_BUFFER</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for a storage buffer object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STORAGE_IMAGE</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for a storage image object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SAMPLED_IMAGE</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for an image that can be sampled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COMBINED_IMAGE</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for an image and a sampler object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SCENE_ADS</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The descriptor is for an (top) ADS buffer.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ludwic Leonard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

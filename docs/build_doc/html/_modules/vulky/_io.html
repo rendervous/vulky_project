@@ -1,0 +1,402 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vulky._io &mdash; vulky 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            vulky
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/vulky.html">vulky</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">vulky</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">vulky._io</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for vulky._io</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Home-made obj loader.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">typing</span> <span class="k">as</span> <span class="nn">_typing</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">_torch</span>
+<span class="kn">from</span> <span class="nn">._rendering_internal</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">Format</span><span class="p">,</span> <span class="n">image_2D</span><span class="p">,</span> <span class="n">Filter</span><span class="p">,</span> <span class="n">graphics_manager</span>
+
+<span class="k">def</span> <span class="nf">_load_mtl_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">materials</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">current_material</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">current_material_name</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">close_current_material</span><span class="p">():</span>
+        <span class="k">nonlocal</span> <span class="n">current_material</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_material</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">materials</span><span class="p">[</span><span class="n">current_material_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_material</span>
+        <span class="n">current_material</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">directory</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1">#eof</span>
+                <span class="k">break</span>
+            <span class="n">elements</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># empty line</span>
+                <span class="k">continue</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;#&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;newmtl&#39;</span><span class="p">:</span>
+                <span class="n">close_current_material</span><span class="p">()</span>
+                <span class="n">current_material_name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">current_material_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;There should be newmtl command at least&#39;</span>
+                <span class="k">if</span> <span class="n">cmd</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_map&#39;</span><span class="p">):</span>
+                    <span class="c1"># load texture</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">current_material</span><span class="p">[</span><span class="n">cmd</span><span class="p">]</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+
+    <span class="n">close_current_material</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">materials</span>
+
+
+<span class="k">def</span> <span class="nf">load_obj</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Loads an obj file into a dict with separated vertex attributes and indices</span>
+<span class="sd">    @number_of_objects</span>
+<span class="sd">    @number_of_faces</span>
+<span class="sd">    @number_of_materials</span>
+<span class="sd">    @vertex_description: List[str] with all per-vertex elements. First attribute with be assumed as position always</span>
+<span class="sd">    vertex_element_i: tensor(different_elements, element_components)</span>
+<span class="sd">    ...</span>
+<span class="sd">    vertex_element_i_indices: tensor(num_faces, 3) indices to vertex_element_i list for the element of a vertex</span>
+<span class="sd">    ...</span>
+<span class="sd">    @material_indices: List[int] with all per-faces materials</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="n">current_object_name</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span>
+    <span class="n">current_mtl_dict</span> <span class="o">=</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="p">{</span> <span class="p">}</span>  <span class="c1"># name: tuple start_part_idx and stop_part_index</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># tuples with start_face_idx, stop_face_index, materials</span>
+
+    <span class="n">face_of_last_closed_material</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">material_of_last_closed_object</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">current_used_material</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">texcoords</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">positions_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normals_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">texcoords_indices</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">close_current_material</span><span class="p">():</span>
+        <span class="k">nonlocal</span> <span class="n">face_of_last_closed_material</span>
+        <span class="n">current_face</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">positions_indices</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">face_of_last_closed_material</span> <span class="o">==</span> <span class="n">current_face</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">face_of_last_closed_material</span><span class="p">,</span> <span class="n">current_face</span><span class="p">,</span> <span class="n">current_used_material</span><span class="p">))</span>
+        <span class="n">face_of_last_closed_material</span> <span class="o">=</span> <span class="n">current_face</span>
+
+    <span class="k">def</span> <span class="nf">close_current_object</span><span class="p">():</span>
+        <span class="n">close_current_material</span><span class="p">()</span>
+        <span class="k">nonlocal</span> <span class="n">material_of_last_closed_object</span>
+        <span class="n">current_material</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">material_of_last_closed_object</span> <span class="o">==</span> <span class="n">current_material</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">objects</span><span class="p">[</span><span class="n">current_object_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">material_of_last_closed_object</span><span class="p">,</span> <span class="n">current_material</span><span class="p">)</span>
+        <span class="n">material_of_last_closed_object</span> <span class="o">=</span> <span class="n">current_material</span>
+
+    <span class="k">def</span> <span class="nf">add_triplets</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">t3</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">indices1</span> <span class="o">=</span> <span class="n">t1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">indices2</span> <span class="o">=</span> <span class="n">t2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">indices3</span> <span class="o">=</span> <span class="n">t3</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">plen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
+        <span class="n">clen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">texcoords</span><span class="p">)</span>
+        <span class="n">nlen</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">normals</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indices1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">positions_indices</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">plen</span><span class="p">)</span> <span class="o">%</span> <span class="n">plen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">plen</span><span class="p">)</span> <span class="o">%</span> <span class="n">plen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices3</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">plen</span><span class="p">)</span> <span class="o">%</span> <span class="n">plen</span>
+            <span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">indices1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">texcoords_indices</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">clen</span><span class="p">)</span> <span class="o">%</span> <span class="n">clen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">clen</span><span class="p">)</span> <span class="o">%</span> <span class="n">clen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices3</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">clen</span><span class="p">)</span> <span class="o">%</span> <span class="n">clen</span>
+            <span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">indices1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">normals_indices</span><span class="o">.</span><span class="n">append</span><span class="p">([</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices1</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">nlen</span><span class="p">)</span> <span class="o">%</span> <span class="n">nlen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices2</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">nlen</span><span class="p">)</span> <span class="o">%</span> <span class="n">nlen</span><span class="p">,</span>
+                <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">indices3</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">nlen</span><span class="p">)</span> <span class="o">%</span> <span class="n">nlen</span>
+            <span class="p">])</span>
+    <span class="k">def</span> <span class="nf">add_face</span><span class="p">(</span><span class="n">triplets</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">triplets</span><span class="p">)):</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">triplets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">triplets</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">t3</span> <span class="o">=</span> <span class="n">triplets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">add_triplets</span><span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t3</span><span class="p">)</span>
+
+    <span class="n">obj_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1"># eof</span>
+                <span class="k">break</span>
+            <span class="n">elements</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># empty line</span>
+                <span class="k">continue</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="n">elements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;v&#39;</span><span class="p">:</span>  <span class="c1"># new position</span>
+                <span class="n">positions</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">3</span><span class="p">])])</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;vn&#39;</span><span class="p">:</span>  <span class="c1"># new normal</span>
+                <span class="n">normals</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">3</span><span class="p">])])</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;vt&#39;</span><span class="p">:</span>   <span class="c1"># new texcoord</span>
+                <span class="n">texcoords</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">3</span><span class="p">])])</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span><span class="p">:</span>
+                <span class="n">add_face</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;mtllib&#39;</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_mtl_dict</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;A mtl file was already loaded. Not supported several mtl files in obj.&#39;</span>
+                <span class="n">current_mtl_dict</span> <span class="o">=</span> <span class="n">_load_mtl_file</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">obj_directory</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;usemtl&#39;</span><span class="p">:</span>
+                <span class="n">close_current_material</span><span class="p">()</span>
+                <span class="n">mtl_name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="n">current_used_material</span> <span class="o">=</span> <span class="n">current_mtl_dict</span><span class="p">[</span><span class="n">mtl_name</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;o&#39;</span> <span class="ow">or</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span>  <span class="c1"># create a new object</span>
+                <span class="n">close_current_object</span><span class="p">()</span>
+                <span class="n">current_object_name</span> <span class="o">=</span> <span class="n">elements</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">close_current_object</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;objects&#39;</span><span class="p">:</span> <span class="n">objects</span><span class="p">,</span>
+        <span class="s1">&#39;parts&#39;</span><span class="p">:</span> <span class="n">parts</span><span class="p">,</span>
+        <span class="s1">&#39;buffers&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">P</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span>
+            <span class="n">N</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">normals</span><span class="p">),</span>
+            <span class="n">C</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">texcoords</span><span class="p">),</span>
+            <span class="n">P_indices</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">positions_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">N_indices</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">normals_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">C_indices</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">texcoords_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="create_mesh">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.create_mesh">[docs]</a>
+<span class="k">def</span> <span class="nf">create_mesh</span><span class="p">(</span><span class="n">obj_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;po&#39;</span><span class="p">,</span> <span class="s1">&#39;vo&#39;</span><span class="p">,</span> <span class="s1">&#39;fo&#39;</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates the mesh information (vertices, indices) given an obj data.</span>
+<span class="sd">    po: Position order - Each position determines a vertex, normals and coordinates belonging to the same vertex are blended</span>
+<span class="sd">    vo: Vertex order - Each distinct triple determines a vertex.</span>
+<span class="sd">    fo: Face order - Each face determines three new vertices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;P&#39;</span><span class="p">]</span>
+    <span class="n">normals</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;N&#39;</span><span class="p">]</span>
+    <span class="n">coordinates</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;C&#39;</span><span class="p">]</span>
+    <span class="n">P_indices</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;P_indices&#39;</span><span class="p">]</span>
+    <span class="n">N_indices</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;N_indices&#39;</span><span class="p">]</span>
+    <span class="n">C_indices</span> <span class="o">=</span> <span class="n">obj_data</span><span class="p">[</span><span class="s1">&#39;buffers&#39;</span><span class="p">][</span><span class="s1">&#39;C_indices&#39;</span><span class="p">]</span>
+    <span class="n">has_normals</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">normals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_normals</span><span class="p">:</span>
+        <span class="n">N_indices</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">P_indices</span><span class="p">)</span>
+    <span class="n">has_coordinates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">coordinates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_coordinates</span><span class="p">:</span>
+        <span class="n">C_indices</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">P_indices</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;po&#39;</span><span class="p">:</span>
+        <span class="n">vertices</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">vertices</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">positions</span>
+        <span class="k">if</span> <span class="n">has_normals</span><span class="p">:</span>
+            <span class="n">vertices</span><span class="p">[</span><span class="n">P_indices</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+=</span> <span class="n">normals</span><span class="p">[</span><span class="n">N_indices</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">has_coordinates</span><span class="p">:</span>
+            <span class="n">vertices</span><span class="p">[</span><span class="n">P_indices</span><span class="p">,</span> <span class="mi">6</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coordinates</span><span class="p">[</span><span class="n">C_indices</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="c1"># for fp, fn, fc in zip(P_indices, N_indices, C_indices):</span>
+        <span class="c1">#     if has_normals:</span>
+        <span class="c1">#         vertices[fp[0], 3:6] += normals[fn[0]]</span>
+        <span class="c1">#         vertices[fp[1], 3:6] += normals[fn[1]]</span>
+        <span class="c1">#         vertices[fp[2], 3:6] += normals[fn[2]]</span>
+        <span class="c1">#     if has_coordinates:</span>
+        <span class="c1">#         vertices[fp[0], 6:8] = coordinates[fc[0], 0:2]</span>
+        <span class="c1">#         vertices[fp[1], 6:8] = coordinates[fc[1], 0:2]</span>
+        <span class="c1">#         vertices[fp[2], 6:8] = coordinates[fc[2], 0:2]</span>
+        <span class="c1"># normalize normals</span>
+        <span class="n">vertices</span><span class="p">[:,</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">/=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">vertices</span><span class="p">[:,</span><span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="o">+</span> <span class="mf">0.00001</span>
+        <span class="k">return</span> <span class="n">vertices</span><span class="p">,</span> <span class="n">P_indices</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="save_image">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.save_image">[docs]</a>
+<span class="k">def</span> <span class="nf">save_image</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    t: (HxWx3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Please refer to a valid extension [jpg, png]&#39;</span><span class="p">)</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># from HWC to CHW</span>
+
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+
+    <span class="kn">import</span> <span class="nn">torchvision</span>
+    <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;png&#39;</span><span class="p">:</span>
+        <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_png</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;jpg&#39;</span> <span class="ow">or</span> <span class="n">ext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;jpeg&#39;</span><span class="p">:</span>
+        <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_jpeg</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Please refer to a valid extension [jpg, png]&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="save_video">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.save_video">[docs]</a>
+<span class="k">def</span> <span class="nf">save_video</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Please refer to a valid extension [webp, avi]&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+
+    <span class="kn">import</span> <span class="nn">torchvision</span>
+    <span class="k">if</span> <span class="n">ext</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;webp&#39;</span><span class="p">:</span>
+        <span class="n">codec</span> <span class="o">=</span> <span class="s1">&#39;webp&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">codec</span> <span class="o">=</span> <span class="s1">&#39;h264&#39;</span>
+    <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write_video</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">codec</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_image">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.load_image">[docs]</a>
+<span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">with_alpha</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">torchvision</span>
+    <span class="k">if</span> <span class="n">with_alpha</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_image</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ImageReadMode</span><span class="o">.</span><span class="n">RGB_ALPHA</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_image</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ImageReadMode</span><span class="o">.</span><span class="n">RGB</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="mf">255.0</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>  <span class="c1"># from CHW to HWC</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+
+<div class="viewcode-block" id="load_texture">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.load_texture">[docs]</a>
+<span class="k">def</span> <span class="nf">load_texture</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Image</span><span class="p">:</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">heigh</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">image_2D</span><span class="p">(</span><span class="n">Format</span><span class="o">.</span><span class="n">VEC4</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">heigh</span><span class="p">)</span>
+    <span class="n">im</span><span class="o">.</span><span class="n">subresource</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">graphics_manager</span><span class="p">()</span> <span class="k">as</span> <span class="n">man</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">im</span><span class="o">.</span><span class="n">get_mip_count</span><span class="p">()):</span>
+            <span class="n">man</span><span class="o">.</span><span class="n">blit_image</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">subresource</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">im</span><span class="o">.</span><span class="n">subresource</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="nb">filter</span><span class="o">=</span><span class="n">Filter</span><span class="o">.</span><span class="n">LINEAR</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">im</span></div>
+
+
+
+<div class="viewcode-block" id="load_video">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.load_video">[docs]</a>
+<span class="k">def</span> <span class="nf">load_video</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">torchvision.io</span>
+    <span class="k">return</span> <span class="n">torchvision</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_video</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ludwic Leonard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

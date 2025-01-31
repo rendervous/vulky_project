@@ -1,0 +1,1038 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vulky._common &mdash; vulky 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            vulky
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/vulky.html">vulky</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">vulky</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">vulky._common</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for vulky._common</h1><div class="highlight"><pre>
+<span></span><span class="c1"># from typing import Optional, Dict, Tuple, Literal, Union, List, TypeVar, Hashable</span>
+<span class="kn">import</span> <span class="nn">ctypes</span> <span class="k">as</span> <span class="nn">_ctypes</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">_torch</span>
+<span class="kn">import</span> <span class="nn">typing</span> <span class="k">as</span> <span class="nn">_typing</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">_np</span>
+<span class="kn">import</span> <span class="nn">enum</span> <span class="k">as</span> <span class="nn">_enum</span>
+<span class="kn">from</span> <span class="nn">._gmath</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">._enums</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="c1">## TYPES SAME AS TORCH</span>
+<span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">dtype</span>
+<span class="n">float32</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span>
+<span class="n">t_float</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float</span>
+<span class="n">float64</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float64</span>
+<span class="n">double</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">double</span>
+<span class="n">float16</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float16</span>
+<span class="n">bfloat16</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">bfloat16</span>
+<span class="n">half</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">half</span>
+<span class="n">uint8</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span>
+<span class="n">int8</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int8</span>
+<span class="n">int16</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int16</span>
+<span class="n">short</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">short</span>
+<span class="n">int32</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span>
+<span class="n">t_int</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int</span>
+<span class="n">int64</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span>
+<span class="n">ptr</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span>
+<span class="n">long</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">long</span>
+<span class="n">complex32</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">complex32</span>
+<span class="n">complex64</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">complex64</span>
+<span class="n">cfloat</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">cfloat</span>
+<span class="n">complex128</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">complex128</span>
+<span class="n">cdouble</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">cdouble</span>
+<span class="n">quint8</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">quint8</span>
+<span class="n">qint8</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">qint8</span>
+<span class="n">qint32</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">qint32</span>
+<span class="n">t_bool</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">bool</span>
+<span class="n">quint4x2</span><span class="p">:</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">quint4x2</span>
+
+
+<span class="n">__DTYPE_TO_STR__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span> <span class="s1">&#39;|u1&#39;</span><span class="p">,</span>
+        <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span> <span class="s1">&#39;&lt;f4&#39;</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">:</span> <span class="s1">&#39;&lt;f4&#39;</span><span class="p">,</span>
+        <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">:</span> <span class="s1">&#39;&lt;i4&#39;</span><span class="p">,</span>
+        <span class="nb">int</span><span class="p">:</span> <span class="s1">&#39;&lt;i4&#39;</span><span class="p">,</span>
+        <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="s1">&#39;&lt;i8&#39;</span>
+    <span class="p">}</span>
+
+
+<span class="n">__frozen_type_T</span> <span class="o">=</span> <span class="n">_typing</span><span class="o">.</span><span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;FrozenType&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">freezable_type</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">__frozen_type_T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">__frozen_type_T</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">new_call</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">instance</span> <span class="o">=</span> <span class="n">t</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_frozen</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">instance</span>
+
+    <span class="k">def</span> <span class="nf">new_setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_frozen&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frozen</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Object already frozen&#39;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="n">t</span><span class="o">.</span><span class="fm">__call__</span> <span class="o">=</span> <span class="n">new_call</span>
+    <span class="n">t</span><span class="o">.</span><span class="fm">__setattr__</span> <span class="o">=</span> <span class="n">new_setattr</span>
+    <span class="k">return</span> <span class="n">t</span>
+
+
+<span class="k">def</span> <span class="nf">mutable_method</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_freeze</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_freeze</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="k">class</span> <span class="nc">lazy_constant</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lazy_evaluation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lazy_evaluation</span> <span class="o">=</span> <span class="n">lazy_evaluation</span>
+
+    <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_evaluation</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lazy_evaluation</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+        <span class="c1"># raise Exception(&#39;Wrong implementation&#39;)  # should never arrive here</span>
+        <span class="c1"># for t in owner.__mro__:</span>
+        <span class="c1">#     for k, v in t.__dict__.items():</span>
+        <span class="c1">#         if v is self:  # found the descriptor in type</span>
+        <span class="c1">#             value = self.lazy_evaluation(instance)</span>
+        <span class="c1">#             object.__setattr__(instance, k, value)</span>
+        <span class="c1">#             return value</span>
+        <span class="c1"># raise Exception(&#39;Wrong implementation&#39;)  # should never arrive here</span>
+
+
+<span class="k">class</span> <span class="nc">wrap_cuda_ptr</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptr</span><span class="p">,</span> <span class="n">new_shape</span><span class="p">,</span> <span class="n">new_type</span><span class="p">,</span> <span class="n">strides</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cuda_array_interface__</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">new_shape</span><span class="p">,</span>
+            <span class="s1">&#39;typestr&#39;</span><span class="p">:</span> <span class="n">__DTYPE_TO_STR__</span><span class="p">[</span><span class="n">new_type</span><span class="p">],</span>
+            <span class="s1">&#39;strides&#39;</span><span class="p">:</span> <span class="n">strides</span><span class="p">,</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="mi">2</span>
+        <span class="p">}</span>
+
+
+<span class="k">class</span> <span class="nc">wrap_cpu_ptr</span><span class="p">:</span>
+    <span class="n">__array_interface__</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptr</span><span class="p">,</span> <span class="n">new_shape</span><span class="p">,</span> <span class="n">new_type</span><span class="p">,</span> <span class="n">strides</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__array_interface__</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="n">new_shape</span><span class="p">,</span>
+            <span class="s1">&#39;typestr&#39;</span><span class="p">:</span> <span class="n">__DTYPE_TO_STR__</span><span class="p">[</span><span class="n">new_type</span><span class="p">],</span>
+            <span class="s1">&#39;strides&#39;</span><span class="p">:</span> <span class="n">strides</span><span class="p">,</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="mi">3</span>
+        <span class="p">}</span>
+
+
+<div class="viewcode-block" id="ViewTensor">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor">[docs]</a>
+<span class="k">class</span> <span class="nc">ViewTensor</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<div class="viewcode-block" id="ViewTensor.__init__">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ViewTensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span> <span class="nf">__deepcopy__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memodict</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ViewTensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__deepcopy__</span><span class="p">(</span><span class="n">memodict</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_owner</span>
+        <span class="k">return</span> <span class="n">t</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">ViewTensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_owner</span>
+        <span class="k">return</span> <span class="n">t</span>
+
+<div class="viewcode-block" id="ViewTensor.detach">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor.detach">[docs]</a>
+    <span class="k">def</span> <span class="nf">detach</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_owner</span>
+        <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="ViewTensor.view">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor.view">[docs]</a>
+    <span class="k">def</span> <span class="nf">view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">shape</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ViewTensor&#39;</span><span class="p">:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">ViewTensor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">))</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory_owner</span>
+        <span class="k">return</span> <span class="n">t</span></div>
+
+
+    <span class="n">__torch_function__</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">_C</span><span class="o">.</span><span class="n">_disabled_torch_function_impl</span>
+
+<div class="viewcode-block" id="ViewTensor.from_blob">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor.from_blob">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_blob</span><span class="p">(</span><span class="n">ptr</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">shape</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_typing</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">_typing</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strides</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_typing</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">_typing</span><span class="o">.</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;ViewTensor&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;cpu&#39;</span><span class="p">:</span>
+            <span class="n">nptype</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int</span><span class="p">:</span> <span class="n">_np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">float</span><span class="p">:</span> <span class="n">_np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span> <span class="n">_np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="n">_np</span><span class="o">.</span><span class="n">int64</span>
+            <span class="p">}[</span><span class="n">dtype</span><span class="p">]</span>
+            <span class="c1"># wrap as cpu pointer</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wrap_cpu_ptr</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">nptype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;cuda&#39;</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">wrap_cuda_ptr</span><span class="p">(</span><span class="n">ptr</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Not supported tensor device&quot;</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">memory_owner</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="ViewTensor.reinterpret">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.ViewTensor.reinterpret">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">reinterpret</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span>
+        <span class="n">new_size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">scalar_size</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">old_size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">scalar_size</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">t</span><span class="o">.</span><span class="n">storage_offset</span><span class="p">()</span> <span class="o">*</span> <span class="n">old_size</span> <span class="o">%</span> <span class="n">new_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;New type can not be aligned to base tensor&#39;</span>
+        <span class="n">bytes_strides</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">stride</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">*</span> <span class="n">old_size</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">))])</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">b</span> <span class="o">%</span> <span class="n">new_size</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bytes_strides</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="s1">&#39;Some stride is not multiple of the new type size&#39;</span>
+        <span class="n">new_shape</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">old_size</span> <span class="o">//</span> <span class="n">new_size</span><span class="p">,)</span>
+        <span class="n">bytes_strides</span> <span class="o">=</span> <span class="n">bytes_strides</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">new_size</span><span class="p">,)</span>  <span class="c1"># update stride of last dimension to the new size</span>
+        <span class="k">return</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">from_blob</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">(),</span> <span class="n">new_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">bytes_strides</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="n">t</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LayoutAlignment">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.LayoutAlignment">[docs]</a>
+<span class="k">class</span> <span class="nc">LayoutAlignment</span><span class="p">(</span><span class="n">_enum</span><span class="o">.</span><span class="n">IntEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines the type of rules for alignment applied in a layout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">COMPACT</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    No alignment is applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SCALAR</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scalar alignment is applied. Struct and arrays are aligned to the maximum scalar contained inside.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">STD430</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies the std430 layout rules.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+
+<div class="viewcode-block" id="Layout">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout">[docs]</a>
+<span class="nd">@freezable_type</span>
+<span class="k">class</span> <span class="nc">Layout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a specific layout of fields and arrays in memory with alignment rules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Layout.__init__">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">declaration</span><span class="p">,</span>
+                 <span class="n">size</span><span class="p">,</span>
+                 <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                 <span class="n">array_stride</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">matrix_stride</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">element_layout</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="s1">&#39;Layout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">fields_layout</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">[</span><span class="n">_typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s1">&#39;Layout&#39;</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="n">declaration</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span>
+        <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="n">declaration</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declaration</span> <span class="o">=</span> <span class="n">declaration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alignment</span> <span class="o">=</span> <span class="n">alignment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aligned_size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_align_size</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">array_stride</span> <span class="o">=</span> <span class="n">array_stride</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matrix_stride</span> <span class="o">=</span> <span class="n">matrix_stride</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="n">array_stride</span> <span class="k">if</span> <span class="n">array_stride</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">matrix_stride</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element_layout</span> <span class="o">=</span> <span class="n">element_layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields_layout</span> <span class="o">=</span> <span class="n">fields_layout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_scalar</span> <span class="o">=</span> <span class="n">array_stride</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">matrix_stride</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">element_layout</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">fields_layout</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_array</span> <span class="o">=</span> <span class="n">array_stride</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_structure</span> <span class="o">=</span> <span class="n">fields_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_vector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">element_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_matrix</span> <span class="o">=</span> <span class="n">matrix_stride</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_compact</span> <span class="o">=</span> <span class="n">alignment</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_tensor_or_scalar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scalar</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_vector</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_matrix</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ctype</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="nb">int</span><span class="p">:</span> <span class="n">_ctypes</span><span class="o">.</span><span class="n">c_int32</span><span class="p">,</span>
+                <span class="nb">float</span><span class="p">:</span> <span class="n">_ctypes</span><span class="o">.</span><span class="n">c_float</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int</span><span class="p">:</span> <span class="n">_ctypes</span><span class="o">.</span><span class="n">c_int32</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span> <span class="n">_ctypes</span><span class="o">.</span><span class="n">c_float</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="n">_ctypes</span><span class="o">.</span><span class="n">c_int64</span><span class="p">,</span>
+            <span class="p">}[</span><span class="n">declaration</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ctype</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scalar_format</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="nb">int</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
+                <span class="nb">float</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+                <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span><span class="p">:</span> <span class="s1">&#39;Q&#39;</span><span class="p">,</span>
+            <span class="p">}[</span><span class="n">declaration</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scalar_format</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span></div>
+
+
+<div class="viewcode-block" id="Layout.fix_shape">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.fix_shape">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fix_shape</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">total</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a shape of a variable dimension (-1) to a fix shape.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">num_el</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">free_pos</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="n">s</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">s</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Dimensions must be positive or -1 to indicate one of the dimensions as variable&quot;</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">free_pos</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Not possible two variable dimensions&quot;</span>
+                <span class="n">free_pos</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">num_el</span> <span class="o">*=</span> <span class="n">s</span>
+        <span class="k">assert</span> <span class="n">total</span> <span class="o">%</span> <span class="n">num_el</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Dimensions are not valid combination for the number of elements of this buffer&quot;</span>
+        <span class="k">if</span> <span class="n">free_pos</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">shape</span><span class="p">[</span><span class="n">free_pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span> <span class="o">//</span> <span class="n">num_el</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_vector_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">:</span> <span class="s1">&#39;Layout&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">,</span> <span class="n">element_layout</span> <span class="o">=</span> <span class="n">element_layout</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_matrix_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">:</span> <span class="s1">&#39;Layout&#39;</span><span class="p">,</span> <span class="n">matrix_stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">=</span><span class="n">element_layout</span><span class="p">,</span> <span class="n">matrix_stride</span><span class="o">=</span><span class="n">matrix_stride</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_array_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">:</span> <span class="s1">&#39;Layout&#39;</span><span class="p">,</span> <span class="n">array_stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">=</span><span class="n">element_layout</span><span class="p">,</span> <span class="n">array_stride</span><span class="o">=</span><span class="n">array_stride</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_structure_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">alignment</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s1">&#39;Layout&#39;</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">,</span> <span class="n">fields_layout</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+
+    <span class="n">__TYPE_SIZES__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">element_size</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">t_float</span><span class="p">,</span>
+            <span class="n">float32</span><span class="p">,</span>
+            <span class="n">float64</span><span class="p">,</span>
+            <span class="n">double</span><span class="p">,</span>
+            <span class="n">float16</span><span class="p">,</span>
+            <span class="n">bfloat16</span><span class="p">,</span>
+            <span class="n">half</span><span class="p">,</span>
+            <span class="n">uint8</span><span class="p">,</span>
+            <span class="n">int8</span><span class="p">,</span>
+            <span class="n">int16</span><span class="p">,</span>
+            <span class="n">short</span><span class="p">,</span>
+            <span class="n">t_int</span><span class="p">,</span>
+            <span class="n">int32</span><span class="p">,</span>
+            <span class="n">int64</span><span class="p">,</span>
+            <span class="n">long</span><span class="p">,</span>
+            <span class="c1"># complex32,</span>
+            <span class="n">complex64</span><span class="p">,</span>
+            <span class="n">cfloat</span><span class="p">,</span>
+            <span class="n">complex128</span><span class="p">,</span>
+            <span class="n">cdouble</span><span class="p">,</span>
+            <span class="c1"># quint8,</span>
+            <span class="c1"># qint32,</span>
+            <span class="c1"># t_bool,</span>
+            <span class="c1"># quint4x2</span>
+        <span class="p">]},</span>
+        <span class="c1"># int: 4,</span>
+        <span class="c1"># float: 4,</span>
+        <span class="c1"># complex: 16</span>
+    <span class="p">}</span>
+
+    <span class="n">__TYPE_FORMATS__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nb">int</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+        <span class="nb">complex</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+        <span class="n">float32</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+        <span class="n">t_float</span><span class="p">:</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span>
+        <span class="n">float64</span><span class="p">:</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span>
+        <span class="n">double</span><span class="p">:</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span>
+        <span class="n">float16</span><span class="p">:</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span>
+        <span class="n">bfloat16</span><span class="p">:</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span>
+        <span class="n">half</span><span class="p">:</span> <span class="s1">&#39;e&#39;</span><span class="p">,</span>
+        <span class="n">uint8</span><span class="p">:</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span>
+        <span class="n">int8</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span>
+        <span class="n">int16</span><span class="p">:</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+        <span class="n">short</span><span class="p">:</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
+        <span class="n">int32</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
+        <span class="n">t_int</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
+        <span class="n">int64</span><span class="p">:</span> <span class="s1">&#39;q&#39;</span><span class="p">,</span>
+        <span class="n">long</span><span class="p">:</span> <span class="s1">&#39;q&#39;</span><span class="p">,</span>
+        <span class="n">quint8</span><span class="p">:</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span>
+        <span class="n">qint8</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span>
+        <span class="n">qint32</span><span class="p">:</span> <span class="s1">&#39;I&#39;</span><span class="p">,</span>
+        <span class="n">t_bool</span><span class="p">:</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span>
+        <span class="n">quint4x2</span><span class="p">:</span> <span class="s1">&#39;B&#39;</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="Layout.scalar_size">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.scalar_size">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">scalar_size</span><span class="p">(</span><span class="nb">type</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the size in bytes for a scalar type, int, float, complex or torch dtypes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">complex</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">16</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+        <span class="c1"># if isinstance(type, GTensorMeta):</span>
+        <span class="c1">#     return Layout.__TYPE_SIZES__[type.tensor_dtype] * math.prod(type.tensor_shape)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Not supported type </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_align_size</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">alignment</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">size</span> <span class="o">+</span> <span class="n">alignment</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="n">alignment</span> <span class="o">*</span> <span class="n">alignment</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_build_layout_compact</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Hashable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">GTensorMeta</span><span class="p">):</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_compact</span><span class="p">(</span><span class="nb">type</span><span class="o">.</span><span class="n">tensor_dtype</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_scalar</span><span class="p">,</span> <span class="s1">&#39;No supported matrices or vectors for non-scalar types&#39;</span>
+            <span class="n">component_size</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">vec_size</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">component_size</span>
+            <span class="n">vector_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_vector_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># vector</span>
+                <span class="k">return</span> <span class="n">vector_layout</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_matrix_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_size</span> <span class="o">*</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">vector_layout</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">array_len</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">array_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_compact</span><span class="p">(</span><span class="n">array_type</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_array_layout</span><span class="p">(</span>
+                <span class="nb">type</span><span class="p">,</span> <span class="n">array_len</span><span class="o">*</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">element_layout</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="nb">type</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;__name__&#39;</span><span class="p">:</span>
+                    <span class="n">field_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_compact</span><span class="p">(</span><span class="n">field_type</span><span class="p">)</span>
+                    <span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">field_layout</span><span class="p">)</span>
+                    <span class="n">offset</span> <span class="o">+=</span> <span class="n">field_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_structure_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported type definition&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_build_layout_scalar</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Hashable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">GTensorMeta</span><span class="p">):</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_scalar</span><span class="p">(</span><span class="nb">type</span><span class="o">.</span><span class="n">tensor_dtype</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_scalar</span><span class="p">,</span> <span class="s1">&#39;No supported matrices or vectors for non-scalar types&#39;</span>
+            <span class="n">component_size</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">vec_size</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">component_size</span>
+            <span class="n">vector_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_vector_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">,</span> <span class="n">component_size</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># vector</span>
+                <span class="k">return</span> <span class="n">vector_layout</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_matrix_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_size</span> <span class="o">*</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">component_size</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">array_len</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">array_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_scalar</span><span class="p">(</span><span class="n">array_type</span><span class="p">)</span>
+            <span class="n">array_stride</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_align_size</span><span class="p">(</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_array_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span>
+                                               <span class="n">array_len</span> <span class="o">*</span> <span class="n">array_stride</span><span class="p">,</span>
+                                               <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">,</span>
+                                               <span class="n">array_stride</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">max_alignment</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="nb">type</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;__name__&#39;</span><span class="p">:</span>
+                    <span class="n">field_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_scalar</span><span class="p">(</span><span class="n">field_type</span><span class="p">)</span>
+                    <span class="n">field_alignment</span> <span class="o">=</span> <span class="n">field_layout</span><span class="o">.</span><span class="n">alignment</span>
+                    <span class="n">offset</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_align_size</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">field_alignment</span><span class="p">)</span>
+                    <span class="n">max_alignment</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_alignment</span><span class="p">,</span> <span class="n">field_alignment</span><span class="p">)</span>
+                    <span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">field_layout</span><span class="p">)</span>
+                    <span class="n">offset</span> <span class="o">+=</span> <span class="n">field_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_structure_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">max_alignment</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Not supported type definition </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_build_layout_std430</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Hashable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_scalar_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">GTensorMeta</span><span class="p">):</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_std430</span><span class="p">(</span><span class="nb">type</span><span class="o">.</span><span class="n">tensor_dtype</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_scalar</span><span class="p">,</span> <span class="s1">&#39;No supported matrices or vectors for non-scalar types&#39;</span>
+            <span class="n">component_size</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="n">vec_size</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">component_size</span>
+            <span class="n">vec_align</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">component_size</span>
+            <span class="n">vector_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_vector_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_size</span><span class="p">,</span> <span class="n">vec_align</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="o">.</span><span class="n">dimension</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># vector</span>
+                <span class="k">return</span> <span class="n">vector_layout</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_matrix_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">vec_align</span> <span class="o">*</span> <span class="nb">type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vec_align</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">,</span> <span class="n">vec_align</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">array_len</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">array_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_std430</span><span class="p">(</span><span class="n">array_type</span><span class="p">)</span>
+            <span class="n">array_stride</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_align_size</span><span class="p">(</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_array_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span>
+                                               <span class="n">array_len</span> <span class="o">*</span> <span class="n">array_stride</span><span class="p">,</span>
+                                               <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">,</span>
+                                               <span class="n">array_stride</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">max_alignment</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">field_type</span> <span class="ow">in</span> <span class="nb">type</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">f</span> <span class="o">!=</span> <span class="s1">&#39;__name__&#39;</span><span class="p">:</span>
+                    <span class="n">field_layout</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_std430</span><span class="p">(</span><span class="n">field_type</span><span class="p">)</span>
+                    <span class="n">field_alignment</span> <span class="o">=</span> <span class="n">field_layout</span><span class="o">.</span><span class="n">alignment</span>
+                    <span class="n">offset</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_align_size</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">field_alignment</span><span class="p">)</span>
+                    <span class="n">max_alignment</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_alignment</span><span class="p">,</span> <span class="n">field_alignment</span><span class="p">)</span>
+                    <span class="n">fields</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">field_layout</span><span class="p">)</span>
+                    <span class="n">offset</span> <span class="o">+=</span> <span class="n">field_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_create_structure_layout</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">max_alignment</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Not supported type definition&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Layout.from_description">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_description">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_description</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">LayoutAlignment</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">dtype</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;Layout&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout from a general type definition.</span>
+<span class="sd">        type definition defines:</span>
+<span class="sd">        - arrays with a list in the form [&lt;type&gt;, size]</span>
+<span class="sd">        - structures with a dict in the form { field_name : field_type, ... }</span>
+<span class="sd">        - scalars with the types from _torch.dtype or int, float, complex.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; my_vertex_layout = Layout.from_description(</span>
+<span class="sd">        &gt;&gt;&gt;     LayoutAlignment.SCALAR,</span>
+<span class="sd">        &gt;&gt;&gt;     dict(</span>
+<span class="sd">        &gt;&gt;&gt;         P=vec3,</span>
+<span class="sd">        &gt;&gt;&gt;         N=vec3</span>
+<span class="sd">        &gt;&gt;&gt;     )</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &gt;&gt;&gt; my_ssbo_layout = Layout.from_description(</span>
+<span class="sd">        &gt;&gt;&gt;     LayoutAlignment.STD430,</span>
+<span class="sd">        &gt;&gt;&gt;     dict(</span>
+<span class="sd">        &gt;&gt;&gt;         count=int,</span>
+<span class="sd">        &gt;&gt;&gt;         data=[100, dict(P=vec3, C=vec4)]</span>
+<span class="sd">        &gt;&gt;&gt;     )</span>
+<span class="sd">        &gt;&gt;&gt; )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">COMPACT</span><span class="p">:</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_compact</span><span class="p">,</span>
+            <span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">STD430</span><span class="p">:</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_std430</span><span class="p">,</span>
+            <span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">SCALAR</span><span class="p">:</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_scalar</span>
+        <span class="p">}[</span><span class="n">mode</span><span class="p">](</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Layout.from_structure">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_structure">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_structure</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">LayoutAlignment</span> <span class="o">=</span> <span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">SCALAR</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout for a structure.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; vertex_layout = Layout.from_structure(P=vec3, N=vec3)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_description</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">fields</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="Layout.from_instance">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_instance">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_instance</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout for an instance buffer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">SCALAR</span><span class="p">,</span>
+            <span class="c1"># transform=[3, [4, float]],</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">mat3x4</span><span class="p">,</span>
+            <span class="n">mask8_idx24</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
+            <span class="n">instanceShaderBindingTableRecordOffset</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">],</span>
+            <span class="n">flags</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+            <span class="n">accelerationStructureReference</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int64</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Layout.from_instance2">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_instance2">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_instance2</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout for an instance buffer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">SCALAR</span><span class="p">,</span>
+            <span class="c1"># transform=[3, [4, float]],</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">mat3x4</span><span class="p">,</span>
+            <span class="n">instanceCustomIndex</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">],</span>
+            <span class="n">mask</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+            <span class="n">instanceShaderBindingTableRecordOffset</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">],</span>
+            <span class="n">flags</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+            <span class="n">accelerationStructureReference</span><span class="o">=</span><span class="n">_torch</span><span class="o">.</span><span class="n">int64</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Layout.from_aabb">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_aabb">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_aabb</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout for an axis-aligned boundary boxes buffer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_structure</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">LayoutAlignment</span><span class="o">.</span><span class="n">SCALAR</span><span class="p">,</span>
+            <span class="n">b_min</span><span class="o">=</span><span class="n">vec3</span><span class="p">,</span>
+            <span class="n">b_max</span><span class="o">=</span><span class="n">vec3</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Layout.set_24bit_from_int">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.set_24bit_from_int">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">set_24bit_from_int</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">dst</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copies the lowest 24 bits from integers in src to dst.</span>
+<span class="sd">        src is a tensor of int32 and dst is a tensor of int8 with 3 components for the last dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dst</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span> <span class="o">%</span> <span class="mi">256</span>
+        <span class="n">dst</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">src</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span>
+        <span class="n">dst</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">src</span> <span class="o">&gt;&gt;</span> <span class="mi">16</span><span class="p">)</span> <span class="o">%</span> <span class="mi">256</span></div>
+
+
+<div class="viewcode-block" id="Layout.is_scalar_type">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.is_scalar_type">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">is_scalar_type</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">float</span> <span class="ow">or</span> <span class="nb">type</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Hashable</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__TYPE_SIZES__</span></div>
+
+
+    <span class="n">__FORMAT_TO_TORCH_INFO__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_RGBA</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_RGB</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_BGRA_STD</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_RGBA_STD</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_RGBA_UNORM</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT_BGRA_UNORM</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">INT</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UINT</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">VEC2</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">VEC3</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">VEC4</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">IVEC2</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">IVEC3</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">IVEC4</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UVEC2</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UVEC3</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">UVEC4</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">PRESENTER</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+        <span class="n">Format</span><span class="o">.</span><span class="n">DEPTH_STENCIL</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">),</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="Layout.from_format">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.Layout.from_format">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_format</span><span class="p">(</span><span class="nb">format</span><span class="p">:</span> <span class="n">Format</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a layout for the image formats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">components</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">__FORMAT_TO_TORCH_INFO__</span><span class="p">[</span><span class="nb">format</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">_build_layout_scalar</span><span class="p">([</span><span class="n">components</span><span class="p">,</span> <span class="n">dtype</span><span class="p">])</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StructuredTensor">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor">[docs]</a>
+<span class="k">class</span> <span class="nc">StructuredTensor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allows to access the memory of a tensor assuming a specific layout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_tensor_map</span><span class="p">(</span><span class="n">byte_tensor</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">):</span>
+        <span class="n">added_shape</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_array</span><span class="p">:</span>
+            <span class="n">added_shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">element_layout</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">added_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">byte_tensor</span> <span class="o">=</span> <span class="n">byte_tensor</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">byte_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">*</span><span class="n">added_shape</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">byte_tensor</span> <span class="o">=</span> <span class="n">byte_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_structure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">byte_tensor</span>
+        <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_scalar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">byte_tensor</span><span class="p">,</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">)</span>
+        <span class="c1"># In this point only vector and matrix possibility left</span>
+        <span class="n">vector_layout</span> <span class="o">=</span> <span class="n">element_layout</span> <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_vector</span> <span class="k">else</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">element_layout</span>
+        <span class="n">component_type</span> <span class="o">=</span> <span class="n">vector_layout</span><span class="o">.</span><span class="n">element_layout</span><span class="o">.</span><span class="n">declaration</span>
+        <span class="n">scalar_tensor</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">byte_tensor</span><span class="p">,</span> <span class="n">component_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_vector</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">()(</span><span class="n">scalar_tensor</span><span class="p">)</span>
+        <span class="n">matrix_type</span><span class="p">:</span> <span class="n">GTensorMeta</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">declaration</span>
+        <span class="n">matrix_tensor</span> <span class="o">=</span> <span class="n">scalar_tensor</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="n">scalar_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">matrix_type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">(</span><span class="n">matrix_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">matrix_type</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+
+<div class="viewcode-block" id="StructuredTensor.create_compatible_tensor">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.create_compatible_tensor">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_compatible_tensor</span><span class="p">(</span><span class="n">element_layout</span><span class="p">:</span> <span class="s1">&#39;Layout&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">structure_shape</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">required_alignment</span> <span class="o">=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span>
+        <span class="k">if</span> <span class="n">required_alignment</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">nbytes</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span>
+        <span class="k">elif</span> <span class="n">required_alignment</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">nbytes</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">short</span>
+        <span class="k">elif</span> <span class="n">required_alignment</span> <span class="o">&lt;=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">nbytes</span> <span class="o">=</span> <span class="mi">4</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int32</span>
+        <span class="k">elif</span> <span class="n">required_alignment</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="n">nbytes</span> <span class="o">=</span> <span class="mi">8</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">int64</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nbytes</span> <span class="o">=</span> <span class="mi">16</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">complex128</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="p">(</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span> <span class="o">+</span> <span class="n">nbytes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">nbytes</span> <span class="o">*</span> <span class="n">nbytes</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">*</span><span class="n">structure_shape</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">element_layout</span><span class="o">.</span><span class="n">aligned_size</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.create">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.create">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;StructuredTensor&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">StructuredTensor</span><span class="o">.</span><span class="n">create_compatible_tensor</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.__init__">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_tensor</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">:</span> <span class="n">Layout</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">math</span>
+        <span class="k">if</span> <span class="n">base_tensor</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span>
+            <span class="n">base_tensor</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">base_tensor</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="s2">&quot;Byte size of the last dimension is not sufficient for the layout structure&quot;</span>
+        <span class="k">if</span> <span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">base_tensor</span> <span class="o">=</span> <span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_can_copy_direct&#39;</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">base_tensor</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span><span class="o">==</span><span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">data_ptr</span><span class="p">()</span> <span class="o">+</span> <span class="n">base_tensor</span><span class="o">.</span><span class="n">stride</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="o">%</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">alignment</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">),</span> <span class="s1">&#39;Wrong alignment wrt layout structure in some dimension&#39;</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;base_tensor&#39;</span><span class="p">,</span> <span class="n">base_tensor</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;layout&#39;</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_compact</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;map_tensor&#39;</span><span class="p">,</span> <span class="n">base_tensor</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;map_tensor&#39;</span><span class="p">,</span> <span class="n">StructuredTensor</span><span class="o">.</span><span class="n">_create_tensor_map</span><span class="p">(</span><span class="n">base_tensor</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">))</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_cached_fields&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span></div>
+
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">item</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StructuredTensor.numpy">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.numpy">[docs]</a>
+    <span class="k">def</span> <span class="nf">numpy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.tensor">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.tensor">[docs]</a>
+    <span class="k">def</span> <span class="nf">tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If layout is compatible with torch, returns a tensor sharing the same memory</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_tensor</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.structure_shape">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.structure_shape">[docs]</a>
+    <span class="k">def</span> <span class="nf">structure_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.read">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.read">[docs]</a>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For basic types (scalars, vectors and matrices), returns a tensor with the request values.</span>
+<span class="sd">        For vectors and matrices a GTensor is returned. If out tensor is provided, copy elements to that tensor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">StructuredTensor</span><span class="o">.</span><span class="n">create_compatible_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">structure_shape</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="o">...</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">out</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s1">&#39;Incompatible size of tensor out&#39;</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">StructuredTensor</span><span class="o">.</span><span class="n">_create_tensor_map</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.write">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.write">[docs]</a>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Writes the content of data to this structure tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">ViewTensor</span><span class="o">.</span><span class="n">reinterpret</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s1">&#39;Incompatible size of tensor data&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.get_field">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.get_field">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;StructuredTensor&#39;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_structure</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_vector</span><span class="p">(),</span> <span class="s1">&#39;Fields can only be asked for vectors and structures&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_structure</span><span class="p">:</span>
+            <span class="n">offset</span><span class="p">,</span> <span class="n">layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">fields_layout</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">field_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="n">layout</span><span class="o">.</span><span class="n">size</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">field_tensor</span><span class="p">,</span> <span class="n">layout</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># self.layout.is_vector():</span>
+            <span class="n">components</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+            <span class="k">assert</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">components</span><span class="p">,</span> <span class="s1">&#39;Invalid vector component name&#39;</span>
+            <span class="n">component_index</span> <span class="o">=</span> <span class="n">components</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="n">component_index</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">()</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;Component index exceed vector arity&#39;</span>
+            <span class="n">field_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="n">component_index</span> <span class="o">*</span> <span class="n">field_size</span>
+            <span class="n">field_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span><span class="n">offset</span> <span class="o">+</span> <span class="n">field_size</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">field_tensor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StructuredTensor.get_item">
+<a class="viewcode-back" href="../../generated/vulky.html#vulky.StructuredTensor.get_item">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;StructuredTensor&#39;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;No index specified&#39;</span>
+        <span class="n">current_index</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">next_indices</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_array</span><span class="p">:</span>
+            <span class="n">array_len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="n">current_index</span> <span class="o">&lt;</span> <span class="n">array_len</span>
+            <span class="n">item_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">stride</span> <span class="o">*</span> <span class="n">current_index</span>
+            <span class="n">item_end</span> <span class="o">=</span> <span class="n">item_start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">stride</span>
+            <span class="n">item_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">item_start</span><span class="p">:</span><span class="n">item_end</span><span class="p">]</span>
+            <span class="n">element_layout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span>
+            <span class="n">item_structured_tensor</span> <span class="o">=</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">item_tensor</span><span class="p">,</span> <span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_scalar</span> <span class="ow">or</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_vector</span><span class="p">()</span> <span class="ow">or</span> <span class="n">element_layout</span><span class="o">.</span><span class="n">is_matrix</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">item_structured_tensor</span><span class="o">.</span><span class="n">tensor</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">item_structured_tensor</span>
+            <span class="k">return</span> <span class="n">item_structured_tensor</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="o">*</span><span class="n">next_indices</span><span class="p">)</span>
+        <span class="n">array_len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">declaration</span><span class="p">()</span><span class="o">.</span><span class="n">tensor_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">current_index</span> <span class="o">&lt;</span> <span class="n">array_len</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_vector</span><span class="p">():</span>
+            <span class="n">component_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">item_start</span> <span class="o">=</span> <span class="n">component_size</span> <span class="o">*</span> <span class="n">current_index</span>
+            <span class="n">item_end</span> <span class="o">=</span> <span class="n">item_start</span> <span class="o">+</span> <span class="n">component_size</span>
+            <span class="n">item_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">item_start</span><span class="p">:</span><span class="n">item_end</span><span class="p">]</span>
+            <span class="n">item_structured_tensor</span> <span class="o">=</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">item_tensor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Can not index a vector with more than one index&#39;</span>
+            <span class="k">return</span> <span class="n">item_structured_tensor</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_matrix</span><span class="p">():</span>
+            <span class="n">vector_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">vector_aligned_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="o">.</span><span class="n">aligned_size</span>
+            <span class="n">item_start</span> <span class="o">=</span> <span class="n">vector_aligned_size</span> <span class="o">*</span> <span class="n">current_index</span>
+            <span class="n">item_end</span> <span class="o">=</span> <span class="n">item_start</span> <span class="o">+</span> <span class="n">vector_size</span>
+            <span class="n">item_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">item_start</span><span class="p">:</span><span class="n">item_end</span><span class="p">]</span>
+            <span class="n">item_structured_tensor</span> <span class="o">=</span> <span class="n">StructuredTensor</span><span class="p">(</span><span class="n">item_tensor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">element_layout</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_indices</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Can not index a matrix with more than two indices&#39;</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">next_indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">item_structured_tensor</span>
+            <span class="k">return</span> <span class="n">item_structured_tensor</span><span class="o">.</span><span class="n">item</span><span class="p">(</span><span class="o">*</span><span class="n">next_indices</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;Can only index vector, matrices or arrays&#39;</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_direct_if_possible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="s1">&#39;StructuredTensor&#39;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="s1">&#39;StructuredTensor&#39;</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">GTensorMeta</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_structure</span> <span class="ow">or</span> <span class="n">s</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_array</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">tensor</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direct_if_possible</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_structure</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">is_vector</span><span class="p">(),</span> <span class="s1">&#39;Can not update field values for non-structure or non-vector&#39;</span>
+        <span class="c1"># if self._can_copy_direct:</span>
+        <span class="c1">#     offset, layout = self.layout.get_field_offset_and_layout(key)</span>
+        <span class="c1">#     if layout.aligned_size == layout.size or layout.is_vector():  # continuous in memory.</span>
+        <span class="c1">#         dst_ptr = self.base_tensor.data_ptr() + offset</span>
+        <span class="c1">#         value_is_tensor = isinstance(value, _torch.Tensor)</span>
+        <span class="c1">#         if value_is_tensor and value.device.type == &#39;cpu&#39;:</span>
+        <span class="c1">#             src_ptr = value.data_ptr()</span>
+        <span class="c1">#             _ctypes.memmove(dst_ptr, src_ptr, layout.size)</span>
+        <span class="c1">#             return</span>
+        <span class="c1">#         if not value_is_tensor:</span>
+        <span class="c1">#             c_value = layout.get_ctype()(value)</span>
+        <span class="c1">#             src_ptr = _ctypes.cast(_ctypes.pointer(c_value), _ctypes.c_void_p).value</span>
+        <span class="c1">#             _ctypes.memmove(dst_ptr, src_ptr, layout.size)</span>
+        <span class="c1">#             return</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direct_if_possible</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_fields</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">as_subclass</span><span class="p">(</span><span class="n">_torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)[:]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="c1"># offset, layout = self.layout.get_field_offset_and_layout(key)</span>
+        <span class="c1"># field_tensor = self.base_tensor[..., offset:offset + layout.size]</span>
+        <span class="c1"># if isinstance(value, _torch.Tensor):</span>
+        <span class="c1">#     ViewTensor.reinterpret(field_tensor, value.dtype)[:] = value</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     ViewTensor.reinterpret(field_tensor, layout.get_type())[:] = value</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;StructuredTensor&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direct_if_possible</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="o">*</span><span class="n">index</span><span class="p">))</span></div>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Ludwic Leonard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
