@@ -5,6 +5,22 @@ import typing as _typing
 
 
 def tensor_to_vec(t: _torch.Tensor) -> '_GTensorBase':
+    """
+    Converts a tensor to a vector in vulky.
+
+    Example
+    -------
+    >>> t = torch.randn(100, 100, 3)
+    >>> v = tensor_to_vec(t)   # v is a vec3
+
+    Note
+    ----
+    The memory is shared. No copy is performed.
+
+    Returns
+    -------
+    The vector type is determined by the last dimension of the tensor.
+    """
     assert len(t.shape) >= 1
     assert t.dtype == _torch.float32 or t.dtype == _torch.int32
     vec_shape = tuple(t.shape[-1:])
@@ -27,6 +43,22 @@ def tensor_to_vec(t: _torch.Tensor) -> '_GTensorBase':
 
 
 def tensor_to_mat(t: _torch.Tensor) -> '_GTensorBase':
+    """
+    Converts a tensor to a matrix in vulky.
+
+    Example
+    -------
+    >>> t = torch.randn(100, 100, 3, 4)
+    >>> m = tensor_to_matrix(t)   # m is a mat3x4
+
+    Note
+    ----
+    The memory is shared. No copy is performed.
+
+    Returns
+    -------
+    The matrix type is determined by the last two dimensions of the tensor.
+    """
     assert len(t.shape) >= 2
     assert t.dtype == _torch.float32
     mat_shape = tuple(t.shape[-2:])
@@ -46,6 +78,13 @@ def tensor_to_mat(t: _torch.Tensor) -> '_GTensorBase':
 def tensor_to_gtensor_if_possible(t: _torch.Tensor, dimension: int) -> _typing.Union[_torch.Tensor, '_GTensorBase']:
     """
     Tool method to convert a torch tensor into a graphic tensor or scalar
+
+    Example
+    -------
+    >>> t = torch.randn(4, 4, 3)
+    >>> s = tensor_to_gtensor_if_possible(t, 0)  # s is the same tensor
+    >>> v = tensor_to_gtensor_if_possible(t, 1)  # v is a vec3
+    >>> m = tensor_to_gtensor_if_possible(t, 2)  # m is a mat4x3
     """
     assert dimension >= 0
     if dimension == 0 or dimension > 2:

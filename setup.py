@@ -20,8 +20,7 @@ setup(
         "cuda-python",
         "PyOpenGL",
         "glfw",
-        "imgui",
-        "requests"
+        "imgui"
     ],
     extras_requires={
         "gui": [

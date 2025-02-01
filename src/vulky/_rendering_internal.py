@@ -131,35 +131,75 @@ def compile_shader_sources(directory='.', force_all: bool = False):
 
 
 class Resource(object):
+    """
+    Base class of all vulky resources.
+    """
     def __init__(self, device, w_resource: _internal.ResourceWrapper):
         self.w_resource = w_resource
         self.device = device
 
     @lazy_constant
-    def is_buffer(self):
+    def is_buffer(self) -> bool:
+        """
+        Gets if the resource is a buffer.
+        """
         return self.w_resource.resource_data.is_buffer
 
     @lazy_constant
-    def is_ads(self):
+    def is_ads(self) -> bool:
+        """
+        Gets if the resource is an acceleration data-structure.
+        """
         return self.w_resource.resource_data.is_ads
 
     @lazy_constant
-    def is_image(self):
+    def is_image(self) -> bool:
+        """
+        Gets if the resource is an image.
+        """
         return not self.w_resource.resource_data.is_buffer
 
     @lazy_constant
     def is_on_cpu(self):
+        """
+        Gets if the resource is located in host memory.
+        """
         return self.w_resource.resource_data.is_cpu
 
     @lazy_constant
     def is_on_gpu(self):
+        """
+        Gets if the resource is located in device memory.
+        """
         return self.w_resource.resource_data.is_gpu
 
     def clear(self) -> 'Resource':
+        """
+        Clears current resource with 0 values. This operation is costly.
+        Consider clearing the resources as part of a custom manager.
+
+        Returns
+        -------
+        Return the same object.
+        """
         self.w_resource.clear(self.device.w_device)
         return self
 
     def load(self, src_data):
+        """
+        Loads information from `src_data` if it is possible. Possibilities are:
+        If `src_data` is another Resource then Buffer-Buffer, Buffer-Image, Image-Buffer or Image-Image copy is performed.
+        If `src_data` is a list, then depending on the resource type list is cast to int or float.
+        If `src_data` is a tensor or numpy array data is copied as a buffer.
+        If `src_data` is another type, then conversion to numpy or torch is tried.
+
+        Note
+        ----
+        If current resource is an image (with potential subresources), `src_data` size should
+        match the linearized version of the image, not the real layout on GPU.
+        Byte size should match. Different image formats can not be copied with this method.
+        Use blit operation instead.
+        """
         if src_data is self:
             return self
         if isinstance(src_data, Resource):
@@ -168,6 +208,19 @@ class Resource(object):
         return self
 
     def save(self, dst_data):
+        """
+        Saves information to `dst_data` if it is possible. Possibilities are:
+        If `dst_data` is another Resource then Buffer-Buffer, Buffer-Image, Image-Buffer or Image-Image copy is performed.
+        If `dst_data` is a tensor or numpy array data is copied as a buffer.
+        If `dst_data` is another type, then conversion to numpy or torch is tried whenever memory is direct.
+
+        Note
+        ----
+        If current resource is an image (with potential subresources), `dst_data` size should
+        match the linearized version of the image, not the real layout on GPU.
+        Byte size should match. Different image formats can not be copied with this method.
+        Use blit operation instead.
+        """
         if dst_data is self:
             return self
         if isinstance(dst_data, Resource):
@@ -177,10 +230,16 @@ class Resource(object):
 
     @lazy_constant
     def cuda_ptr(self):
+        """
+        Gets the pointer of this resource in the memory exported to cuda.
+        """
         return self.w_resource.cuda_ptr
 
     @lazy_constant
     def device_ptr(self):
+        """
+        Gets the pointer of this resource in the device memory.
+        """
         return self.w_resource.device_ptr
 
     @lazy_constant
@@ -189,10 +248,30 @@ class Resource(object):
 
     @lazy_constant
     def size(self):
+        """
+        Gets the size in bytes of this resource.
+        In case of images the size is the linearized size.
+        """
         raise Exception('Not implemented')
 
 
 class ObjectBufferAccessor:
+    """
+    Auxiliar class to access resource mapped memory efficiently through dot notation
+    and indexing.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> b = vk.object_buffer(vk.Layout.from_structure(
+    >>>     light_position=vk.vec3,
+    >>>     light_intensity=vk.vec3,
+    >>> ))
+    >>> with b as data:
+    >>>     # data is an object buffer accessor
+    >>>     data.light_position = vk.vec3(0.0, 3.0, 0.0)
+    >>>     data.light_intensity = vk.vec3(1.0, 1.0, 0.0)
+    """
     _rdv_memory: memoryview = None      # memory of the whole object
     _rdv_layout: Layout = None      # layout for the whole object
     _rdv_fields: dict = None      # gets precomputed accessors, tensors or references
@@ -316,7 +395,7 @@ class ObjectBufferAccessor:
 
 class Buffer(Resource):
     """
-    Represents a continuous memory on the device
+    Represents a continuous memory on the device.
     """
     def __init__(self, device: 'DeviceManager', w_buffer: _internal.ResourceWrapper):
         super().__init__(device, w_buffer)
@@ -330,6 +409,16 @@ class Buffer(Resource):
     #     return self.w_resource.slice_buffer(offset, size).as_tensor(dtype)
 
     def slice(self, offset: int, size: int):
+        """
+        Gets a new buffer referring to the region from `offset`, taking `size` bytes.
+
+        Example
+        -------
+        >>> import vulky as vk
+        >>> b = vk.buffer(4000, vk.BufferUsage.STORAGE, vk.MemoryLocation.GPU)
+        >>> b.slice(0, 500*4).load([0.1]*500)
+        >>> b.slice(500*4, 500*4).load([0.2]*500)
+        """
         return Buffer(self.device, self.w_resource.slice_buffer(offset, size))
 
     @lazy_constant
@@ -350,6 +439,20 @@ class Buffer(Resource):
 
 
 class ObjectBuffer(Buffer):
+    """
+    Buffer used to represent single objects.
+    The buffer is automatically mapped if is on CPU.
+    If the buffer is on GPU the memory must be updated via `update_gpu`.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> b = vk.object_buffer(vk.Layout.from_structure(P=vk.vec3, L=float), memory=vk.MemoryLocation.GPU)
+    >>> with b as map:
+    >>>     map.P = vk.vec3(0.0, 1.0, 0.0)
+    >>>     map.L = 0.5
+    >>> b.update_gpu()
+    """
     def __init__(self, device: 'DeviceManager', w_buffer: _internal.ResourceWrapper, layout: Layout):
         super(ObjectBuffer, self).__init__(device, w_buffer)
         assert layout.aligned_size == w_buffer.size
@@ -371,6 +474,9 @@ class ObjectBuffer(Buffer):
 
 
 class StructuredBufferAccess:
+    """
+    Auxiliary class to access structured buffers.
+    """
     def __init__(self, memory: memoryview, structure_stride: int, offset: int, structure_layout: Layout):
         object.__setattr__(self, '_rdv_memory', memory)  # All buffer memory
         object.__setattr__(self, '_rdv_layout', structure_layout)  # the layout of a single element structure
@@ -453,12 +559,36 @@ class StructuredBufferAccess:
 
 
 class StructuredBuffer(Buffer):
+    """
+    Buffer used to represent structured arrays.
+    Buffer can be mapped in mode `in`, `out` or `inout`.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> b = vk.structured_buffer(5, dict(P=vk.vec3, L=float), memory=vk.MemoryLocation.GPU)
+    >>> with b.map('in') as map:
+    >>>     map.P = vk.vec3(0.0, 1.0, 0.0)
+    >>>     map.L = 0.5
+    """
     def __init__(self, device: 'DeviceManager', w_buffer: _internal.ResourceWrapper, layout: Layout):
         assert w_buffer.size % layout.aligned_size == 0
         super(StructuredBuffer, self).__init__(device, w_buffer)
         self.layout = layout
 
     def map(self, mode: _typing.Literal['in', 'out', 'inout'], clear: bool = False):
+        """
+        Creates a context to map the buffer in a specific mode.
+
+        Parameters
+        ----------
+        mode: str
+            If 'in' the buffer is updated on the gpu after exit the context.
+            If 'out' the buffer is updated on the cpu before entering the context.
+            If 'inout' the buffer is updated on the cpu before entering the context and then back to the gpu.
+        clear: bool
+            Only applies if mode is 'in'. Clears all the buffer before entering the context.
+        """
         assert not clear or mode == 'in', 'Can only clear when map in'
         _self: StructuredBuffer = self
         if self.w_resource.resource_data.is_gpu:
@@ -656,6 +786,7 @@ class Image(Resource):
     def as_readonly(self):
         return Image(self.device, self.w_resource.as_readonly(), self.layout)
 
+    @lazy_constant
     def size(self):
         return self.w_resource.size
 
@@ -794,7 +925,7 @@ class RTProgram:
 
 
 class DescriptorSet:
-    def __init__(self, w_ds: 'DescriptorSetWrapper', layout_reference_names: _typing.Dict[str, _typing.Tuple[int, int]]):
+    def __init__(self, w_ds: _internal.DescriptorSetWrapper, layout_reference_names: _typing.Dict[str, _typing.Tuple[int, int]]):
         self.w_ds = w_ds
         self.layout_reference_name = layout_reference_names
 
@@ -802,6 +933,9 @@ class DescriptorSet:
         """
         Updates the descriptors for bindings in the descriptor set.
         Notice that grouping bindings updates in a single call might lead to better performance.
+
+        Example
+        -------
         >>> pipeline : Pipeline = ...
         >>> pipeline.layout(set=0, binding=0, transforms=DescriptorType.UNIFORM_BUFFER)
         >>> pipeline.layout(set=0, binding=1, environment=DescriptorType.SAMPLED_IMAGE)
@@ -2137,7 +2271,7 @@ class NoneDeviceManager(DeviceManager):
         return self._raise_access_error()
 
     def release(self):
-        return self._raise_access_error()
+        pass
 
     def load_technique(self, technique):
         return self._raise_access_error()
@@ -2162,6 +2296,19 @@ __ACTIVE_DEVICE__: DeviceManager = NoneDeviceManager()
 
 
 def device_manager(new_device: _typing.Optional[DeviceManager] = None) -> DeviceManager:
+    """
+    Gets or sets the active device used in vulky.
+
+    Parameters
+    ----------
+    new_device : Optional[DeviceManager]
+        The device manager to be set as active. Use None if it is only require querying the currently active device.
+
+    Returns
+    -------
+    DeviceManager
+        The current active device.
+    """
     global __ACTIVE_DEVICE__
     if new_device is not None:
         __ACTIVE_DEVICE__ = new_device
@@ -2172,7 +2319,32 @@ def create_device(*, device: int = 0, debug: bool = False, set_active: bool = Tr
     """
     Creates a device manager. This is the core of vulkan graphics call.
     This method automatically sets created device as active, further actions will use it.
-    To change to other devices use device method. e.g: device_manager(other_device)
+    To change to other devices use device_manager method. e.g: device_manager(other_device)
+
+    Parameters
+    ----------
+
+    device: int
+        The index of the physical device used to create vulkan device object.
+        Default is `0`
+    debug: bool
+        Sets if the vulkan device will include debug layers.
+        Default is `False`
+    set_active: bool
+        Sets if the created device should be set as active.
+        Default is `True`
+
+    Returns
+    -------
+    DeviceManager
+        The created device.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> vk.create_device()
+    >>> # Do some rendering here in the GPU0
+    >>> vk.quit()
     """
     state = _internal.DeviceWrapper(
         device_index=device,
@@ -2192,9 +2364,7 @@ def quit():
     and properly shutdown vulkan objects
     """
     global __ACTIVE_DEVICE__
-    if __ACTIVE_DEVICE__ is not None:
-        __ACTIVE_DEVICE__.release()
-    __ACTIVE_DEVICE__ = None
+    __ACTIVE_DEVICE__.release()
     import gc
     gc.collect()
 
@@ -2237,6 +2407,30 @@ def asint32(v: int):
 
 # @_check_active_device
 def window(width: int, height: int, format: Format = Format.VEC4) -> Window:
+    """
+    Creates a window with specific client size and a format for the background image.
+
+    Parameters
+    ----------
+    width : int
+        Defines the width in pixels of the window client area
+    height: int
+        Defines the height in pixels of the window client area
+    format: Format
+        Defines the type of the background image for the window. If used `Format.PRESENTER`
+        the gamma correction is applied automatically.
+
+    Returns
+    -------
+        The window object already shown.
+
+    Example
+    -------
+    >>> window = vk.window(512, 512, vk.Format.VEC4)
+    >>> while not window.is_closed:
+    >>>     # Place some imgui commands here
+    >>>     window.tensor().copy_(torch.rand(512,512,4))  # copies a random tensor to the background
+    """
     return __ACTIVE_DEVICE__.create_window(width, height, format)
 
 # @_check_active_device
@@ -2251,6 +2445,12 @@ def tensor_like(t: _torch.Tensor) -> _torch.Tensor:
     """
     Creates a tensor in gpu vulkan memory using another tensor as reference.
     This tensor grants a zero_copy access from vulkan when used.
+
+    Example
+    -------
+    >>> t = vk.tensor_like(torch.rand(2, 3))
+    >>> print(t)
+    tensor([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], device='cuda')
     """
     return __ACTIVE_DEVICE__.create_tensor_like(t)
 
@@ -2259,12 +2459,27 @@ def tensor(*shape, dtype: dtype = _torch.float32) -> _torch.Tensor:
     """
     Creates a tensor using a specific shape and type with compatible memory with vulkan, cupy and numpy tensors.
     The underlying buffer is created with possible usage to transfer to/from, storage binding and gpu addressing.
+
+    Example
+    -------
+    >>> t = vk.tensor(2, 3)
+    >>> print(t)
+    tensor([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], device='cuda')
     """
     return __ACTIVE_DEVICE__.create_tensor(*shape, dtype=dtype)
     # return __ACTIVE_DEVICE__.create_tensor_buffer(*shape, dtype=dtype, memory=memory, clear=clear).as_tensor()
 
 # @_check_active_device
 def tensor_copy(t: _torch.Tensor) -> ViewTensor:
+    """
+    Creates a clone of a tensor in a memory that is compatible with current vulkan device.
+
+    Example
+    -------
+    >>> t = torch.randn(2, 3)
+    >>> t_vk = vk.tensor_copy(t)
+    >>> print(t)
+    """
     vk_t = tensor(*t.shape, dtype=t.dtype)
     vk_t.copy_(t)
     return vk_t
@@ -2273,6 +2488,13 @@ def tensor_copy(t: _torch.Tensor) -> ViewTensor:
 def pipeline_raytracing() -> RaytracingPipeline:
     """
     Creates a Pipeline to manage the setup of a raytracing pipeline, resources, include and other attributes.
+
+    Example
+    -------
+    >>> pipeline = vk.pipeline_raytracing()
+    >>> with pipeline.shader_stages(vk.ShaderStage.RT_GENERATION):
+    >>>     pipeline.load_shader_from_source(...)
+    >>> pipeline.close()
     """
     return __ACTIVE_DEVICE__.create_raytracing_pipeline()
 
@@ -2280,6 +2502,14 @@ def pipeline_raytracing() -> RaytracingPipeline:
 def pipeline_graphics() -> GraphicsPipeline:
     """
     Creates a Pipeline to manage the setup of a graphics pipeline, resources, include and other attributes.
+
+    Example
+    -------
+    >>> pipeline = vk.pipeline_graphics()
+    >>> pipeline.attach(0, render_target=vk.Format.UINT_RGBA)
+    >>> with pipeline.shader_stages(vk.ShaderStage.VERTEX):
+    >>>     pipeline.load_shader_from_source(...)
+    >>> pipeline.close()
     """
     return __ACTIVE_DEVICE__.create_graphics_pipeline()
 
@@ -2287,6 +2517,12 @@ def pipeline_graphics() -> GraphicsPipeline:
 def pipeline_compute() -> Pipeline:
     """
     Creates a Pipeline to manage the setup of a compute pipeline, resources, include and other attributes.
+
+    Example
+    -------
+    >>> pipeline = vk.pipeline_compute()
+    >>> pipeline.load_shader_from_source(...)
+    >>> pipeline.close()
     """
     return __ACTIVE_DEVICE__.create_compute_pipeline()
 
@@ -2379,6 +2615,18 @@ def image_3D(image_format: Format, width: int, height: int, depth: int, mips : i
 def external_sync():
     """
     Must be used if a tensor bound to a pipeline depends on some external computation, e.g. CUDA.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> # ... initialization
+    >>> b = vk.object_buffer(vk.Layout.from_structure(
+    >>>     ptr=torch.int64  # Ptrs in vulkan are identified with int64 type of torch
+    >>> ))
+    >>> t = torch.sigmoid(torch.randn(3, 5, device='cuda'))
+    >>> vk.external_sync()   # this guarantees that cuda already finished computing tensor content.
+    >>> with b:
+    >>>     b.ptr = vk.wrap_gpu(t, 'in')
     """
     _internal.syncronize_external_computation()
 
@@ -2548,6 +2796,15 @@ def compute_manager() -> ComputeManager:
     Gets a compute manager object that can be used to populate with compute commands.
     Using this object as a context will flush automatically the command list at the end.
     Creating an object and freeze allows to submit several times after creation.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> # ... device and pipeline creation
+    >>> with vk.compute_manager() as man:
+    >>>     man.set_pipeline(my_compute_pipeline)
+    >>>     man.update_sets(0)
+    >>>     man.dispatch_threads_1D(1024*1024)
     """
     return __ACTIVE_DEVICE__.get_compute()
 
@@ -2557,6 +2814,13 @@ def copy_manager() -> CopyManager:
     Gets a copy manager object that can be used to populate with transfer commands.
     Using this object as a context will flush automatically the command list at the end.
     Creating an object and freeze allows to submit several times after creation.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> # ... device and resources creation
+    >>> with vk.copy_manager() as man:
+    >>>     man.copy(resource_src, resource_dst)
     """
     return __ACTIVE_DEVICE__.get_copy()
 
@@ -2566,6 +2830,16 @@ def graphics_manager() -> GraphicsManager:
     Gets a graphics manager object that can be used to populate with graphics commands.
     Using this object as a context will flush automatically the command list at the end.
     Creating an object and freeze allows to submit several times after creation.
+    Example
+    -------
+    >>> import vulky as vk
+    >>> # ... device, pipeline, buffers, framebuffers creation
+    >>> with vk.graphics_manager() as man:
+    >>>     man.set_pipeline(my_graphics_pipeline)
+    >>>     man.update_sets(0)
+    >>>     man.set_framebuffer(framebuffer)
+    >>>     man.bind_vertex_buffer(0, vb)
+    >>>     man.dispatch_primitives(6)
     """
     return __ACTIVE_DEVICE__.get_graphics()
 
@@ -2582,6 +2856,13 @@ def raytracing_manager() -> RaytracingManager:
 def submit(man: CommandManager, wait: bool = True):
     """
     Allows to submit the command list save in a manager using freeze.
+
+    Example
+    -------
+    >>> man = vk.compute_manager()
+    >>> # fill command list
+    >>> man.freeze()  # can be submitted several times to GPU
+    >>> vk.submit(man)
     """
     __ACTIVE_DEVICE__.submit(man, wait)
 
@@ -2612,6 +2893,11 @@ def allow_cross_threading():
 def set_debug_name(name: str):
     """
     Sets the name for the next resource to be created.
+
+    Example
+    -------
+    >>> vk.set_debug_name('my_photons')
+    >>> photon_map = vk.buffer(...)  # during debug prints, this buffer name is my_photons
     """
     __ACTIVE_DEVICE__.set_debug_name(name)
 
@@ -2620,6 +2906,17 @@ def wrap_gpu(t: _typing.Any, mode: _typing.Literal['in', 'out', 'inout'] = 'in')
     """
     Wraps an object to be accessible from/to the GPU depending on the mode.
     Returned object can be assigned to fields of type int64_t and use as reference buffers.
+
+    Example
+    -------
+    >>> import vulky as vk
+    >>> # ... initialization
+    >>> b = vk.object_buffer(vk.Layout.from_structure(
+    >>>     ptr=torch.int64  # Ptrs in vulkan are identified with int64 type of torch
+    >>> ))
+    >>> t = torch.zeros(3, 5, device='cuda')
+    >>> with b:
+    >>>     b.ptr = vk.wrap_gpu(t, 'inout')
     """
     return __ACTIVE_DEVICE__.wrap_gpu(t, mode)
 

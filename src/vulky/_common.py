@@ -505,6 +505,23 @@ class Layout:
         - arrays with a list in the form [<type>, size]
         - structures with a dict in the form { field_name : field_type, ... }
         - scalars with the types from _torch.dtype or int, float, complex.
+
+        Example
+        -------
+        >>> my_vertex_layout = Layout.from_description(
+        >>>     LayoutAlignment.SCALAR,
+        >>>     dict(
+        >>>         P=vec3,
+        >>>         N=vec3
+        >>>     )
+        >>> )
+        >>> my_ssbo_layout = Layout.from_description(
+        >>>     LayoutAlignment.STD430,
+        >>>     dict(
+        >>>         count=int,
+        >>>         data=[100, dict(P=vec3, C=vec4)]
+        >>>     )
+        >>> )
         """
         return {
             LayoutAlignment.COMPACT: Layout._build_layout_compact,
@@ -516,6 +533,10 @@ class Layout:
     def from_structure(mode: LayoutAlignment = LayoutAlignment.SCALAR, **fields):
         """
         Creates a layout for a structure.
+
+        Example
+        -------
+        >>> vertex_layout = Layout.from_structure(P=vec3, N=vec3)
         """
         return Layout.from_description(mode=mode, description={**fields})
 
