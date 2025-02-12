@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; vulky 1.0.0 documentation</title>
+  <title>Types &mdash; vulky 1.0.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="vulky - a pythonian vulkan facade" href="index.html" /> 
+    <link rel="prev" title="Usage" href="usage.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -42,18 +42,20 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Types</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.AABBCollection"><code class="docutils literal notranslate"><span class="pre">AABBCollection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.AABBCollection.__init__"><code class="docutils literal notranslate"><span class="pre">AABBCollection.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.AABBCollection.append"><code class="docutils literal notranslate"><span class="pre">AABBCollection.append()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.AABBCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">AABBCollection.get_collection_type()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#vulky.ADS"><code class="docutils literal notranslate"><span class="pre">ADS</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.ADS.__init__"><code class="docutils literal notranslate"><span class="pre">ADS.__init__()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#vulky.ADS"><code class="docutils literal notranslate"><span class="pre">ADS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.ADSNodeType"><code class="docutils literal notranslate"><span class="pre">ADSNodeType</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ADSNodeType.AABB"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.AABB</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ADSNodeType.INSTANCE"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.INSTANCE</span></code></a></li>
@@ -79,7 +81,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Buffer"><code class="docutils literal notranslate"><span class="pre">Buffer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Buffer.__init__"><code class="docutils literal notranslate"><span class="pre">Buffer.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Buffer.memory"><code class="docutils literal notranslate"><span class="pre">Buffer.memory</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Buffer.size"><code class="docutils literal notranslate"><span class="pre">Buffer.size</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Buffer.slice"><code class="docutils literal notranslate"><span class="pre">Buffer.slice()</span></code></a></li>
@@ -98,7 +99,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.CommandManager"><code class="docutils literal notranslate"><span class="pre">CommandManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.CommandManager.__init__"><code class="docutils literal notranslate"><span class="pre">CommandManager.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.CommandManager.freeze"><code class="docutils literal notranslate"><span class="pre">CommandManager.freeze()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.CommandManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">CommandManager.get_queue_required()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.CommandManager.image_barrier"><code class="docutils literal notranslate"><span class="pre">CommandManager.image_barrier()</span></code></a></li>
@@ -120,7 +120,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.ComputeManager"><code class="docutils literal notranslate"><span class="pre">ComputeManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.ComputeManager.__init__"><code class="docutils literal notranslate"><span class="pre">ComputeManager.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ComputeManager.bind"><code class="docutils literal notranslate"><span class="pre">ComputeManager.bind()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ComputeManager.clear_buffer"><code class="docutils literal notranslate"><span class="pre">ComputeManager.clear_buffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ComputeManager.clear_color"><code class="docutils literal notranslate"><span class="pre">ComputeManager.clear_color()</span></code></a></li>
@@ -136,20 +135,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.CopyManager"><code class="docutils literal notranslate"><span class="pre">CopyManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.CopyManager.__init__"><code class="docutils literal notranslate"><span class="pre">CopyManager.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.CopyManager.copy"><code class="docutils literal notranslate"><span class="pre">CopyManager.copy()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.CopyManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">CopyManager.get_queue_required()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.DescriptorSet"><code class="docutils literal notranslate"><span class="pre">DescriptorSet</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.DescriptorSet.__init__"><code class="docutils literal notranslate"><span class="pre">DescriptorSet.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.DescriptorSet.update"><code class="docutils literal notranslate"><span class="pre">DescriptorSet.update()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#vulky.DescriptorSetCollection"><code class="docutils literal notranslate"><span class="pre">DescriptorSetCollection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.DescriptorSetCollection.__init__"><code class="docutils literal notranslate"><span class="pre">DescriptorSetCollection.__init__()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#vulky.DescriptorSetCollection"><code class="docutils literal notranslate"><span class="pre">DescriptorSetCollection</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.DescriptorType"><code class="docutils literal notranslate"><span class="pre">DescriptorType</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.DescriptorType.COMBINED_IMAGE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.COMBINED_IMAGE</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.DescriptorType.NONE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.NONE</span></code></a></li>
@@ -193,7 +187,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.FrameBuffer"><code class="docutils literal notranslate"><span class="pre">FrameBuffer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.GPUPtr"><code class="docutils literal notranslate"><span class="pre">GPUPtr</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.GPUPtr.__init__"><code class="docutils literal notranslate"><span class="pre">GPUPtr.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GPUPtr.flush"><code class="docutils literal notranslate"><span class="pre">GPUPtr.flush()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GPUPtr.invalidate"><code class="docutils literal notranslate"><span class="pre">GPUPtr.invalidate()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GPUPtr.mark_as_dirty"><code class="docutils literal notranslate"><span class="pre">GPUPtr.mark_as_dirty()</span></code></a></li>
@@ -202,12 +195,10 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.GTensorMeta"><code class="docutils literal notranslate"><span class="pre">GTensorMeta</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.GeometryCollection"><code class="docutils literal notranslate"><span class="pre">GeometryCollection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.GeometryCollection.__init__"><code class="docutils literal notranslate"><span class="pre">GeometryCollection.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GeometryCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">GeometryCollection.get_collection_type()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.GraphicsManager"><code class="docutils literal notranslate"><span class="pre">GraphicsManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsManager.__init__"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsManager.bind_index_buffer"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.bind_index_buffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsManager.bind_vertex_buffer"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.bind_vertex_buffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsManager.blit_image"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.blit_image()</span></code></a></li>
@@ -218,7 +209,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.GraphicsPipeline"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsPipeline.__init__"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsPipeline.attach"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.attach()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsPipeline.create_framebuffer"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.create_framebuffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.GraphicsPipeline.vertex"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.vertex()</span></code></a></li>
@@ -226,7 +216,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Image"><code class="docutils literal notranslate"><span class="pre">Image</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Image.__init__"><code class="docutils literal notranslate"><span class="pre">Image.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Image.as_readonly"><code class="docutils literal notranslate"><span class="pre">Image.as_readonly()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Image.compute_dimension"><code class="docutils literal notranslate"><span class="pre">Image.compute_dimension()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Image.element_size"><code class="docutils literal notranslate"><span class="pre">Image.element_size()</span></code></a></li>
@@ -259,7 +248,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Layout"><code class="docutils literal notranslate"><span class="pre">Layout</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Layout.__init__"><code class="docutils literal notranslate"><span class="pre">Layout.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Layout.fix_shape"><code class="docutils literal notranslate"><span class="pre">Layout.fix_shape()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Layout.from_aabb"><code class="docutils literal notranslate"><span class="pre">Layout.from_aabb()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Layout.from_description"><code class="docutils literal notranslate"><span class="pre">Layout.from_description()</span></code></a></li>
@@ -291,17 +279,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.ObjectBuffer"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.ObjectBuffer.__init__"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ObjectBuffer.update_gpu"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer.update_gpu()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.ObjectBufferAccessor"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.ObjectBufferAccessor.__init__"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ObjectBufferAccessor.references"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor.references()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Pipeline.__init__"><code class="docutils literal notranslate"><span class="pre">Pipeline.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Pipeline.close"><code class="docutils literal notranslate"><span class="pre">Pipeline.close()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Pipeline.create_descriptor_set_collection"><code class="docutils literal notranslate"><span class="pre">Pipeline.create_descriptor_set_collection()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Pipeline.is_closed"><code class="docutils literal notranslate"><span class="pre">Pipeline.is_closed()</span></code></a></li>
@@ -333,7 +318,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.RTProgram"><code class="docutils literal notranslate"><span class="pre">RTProgram</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.RTProgram.__init__"><code class="docutils literal notranslate"><span class="pre">RTProgram.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RTProgram.active_raygen_slice"><code class="docutils literal notranslate"><span class="pre">RTProgram.active_raygen_slice()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RTProgram.select_generation"><code class="docutils literal notranslate"><span class="pre">RTProgram.select_generation()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RTProgram.set_callable"><code class="docutils literal notranslate"><span class="pre">RTProgram.set_callable()</span></code></a></li>
@@ -343,7 +327,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.RaytracingManager"><code class="docutils literal notranslate"><span class="pre">RaytracingManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingManager.__init__"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingManager.build_ads"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.build_ads()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingManager.dispatch_rays"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.dispatch_rays()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.get_queue_required()</span></code></a></li>
@@ -351,7 +334,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.RaytracingPipeline"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingPipeline.__init__"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingPipeline.create_rt_callable_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_callable_group()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingPipeline.create_rt_gen_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_gen_group()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.RaytracingPipeline.create_rt_hit_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_hit_group()</span></code></a></li>
@@ -361,7 +343,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Resource"><code class="docutils literal notranslate"><span class="pre">Resource</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Resource.__init__"><code class="docutils literal notranslate"><span class="pre">Resource.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Resource.clear"><code class="docutils literal notranslate"><span class="pre">Resource.clear()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Resource.cpu_ptr"><code class="docutils literal notranslate"><span class="pre">Resource.cpu_ptr</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Resource.cuda_ptr"><code class="docutils literal notranslate"><span class="pre">Resource.cuda_ptr</span></code></a></li>
@@ -393,17 +374,14 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.StructuredBuffer"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredBuffer.__init__"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredBuffer.map"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer.map()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.StructuredBufferAccess"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredBufferAccess.__init__"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredBufferAccess.build_accessor"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess.build_accessor()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.StructuredTensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredTensor.__init__"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredTensor.create"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.create()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredTensor.create_compatible_tensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.create_compatible_tensor()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.StructuredTensor.get_field"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.get_field()</span></code></a></li>
@@ -416,13 +394,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.TriangleCollection"><code class="docutils literal notranslate"><span class="pre">TriangleCollection</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.TriangleCollection.__init__"><code class="docutils literal notranslate"><span class="pre">TriangleCollection.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.TriangleCollection.append"><code class="docutils literal notranslate"><span class="pre">TriangleCollection.append()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.TriangleCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">TriangleCollection.get_collection_type()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.ViewTensor"><code class="docutils literal notranslate"><span class="pre">ViewTensor</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.ViewTensor.__init__"><code class="docutils literal notranslate"><span class="pre">ViewTensor.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ViewTensor.detach"><code class="docutils literal notranslate"><span class="pre">ViewTensor.detach()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ViewTensor.from_blob"><code class="docutils literal notranslate"><span class="pre">ViewTensor.from_blob()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.ViewTensor.reinterpret"><code class="docutils literal notranslate"><span class="pre">ViewTensor.reinterpret()</span></code></a></li>
@@ -430,11 +406,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#vulky.Window"><code class="docutils literal notranslate"><span class="pre">Window</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Window.ClientContext"><code class="docutils literal notranslate"><span class="pre">Window.ClientContext</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#vulky.Window.ClientContext.__init__"><code class="docutils literal notranslate"><span class="pre">Window.ClientContext.__init__()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#vulky.Window.__init__"><code class="docutils literal notranslate"><span class="pre">Window.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vulky.Window.ClientContext"><code class="docutils literal notranslate"><span class="pre">Window.ClientContext</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Window.buffer"><code class="docutils literal notranslate"><span class="pre">Window.buffer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Window.fps"><code class="docutils literal notranslate"><span class="pre">Window.fps</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vulky.Window.image"><code class="docutils literal notranslate"><span class="pre">Window.image()</span></code></a></li>
@@ -580,7 +552,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">API Reference</li>
+      <li class="breadcrumb-item active">Types</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/vulky.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -591,16 +563,11 @@
            <div itemprop="articleBody">
              
   <section id="module-vulky">
-<span id="api-reference"></span><h1>API Reference<a class="headerlink" href="#module-vulky" title="Link to this heading"></a></h1>
+<span id="types"></span><h1>Types<a class="headerlink" href="#module-vulky" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="vulky.AABBCollection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">AABBCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.AABBCollection" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.GeometryCollection" title="vulky._rendering_internal.GeometryCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeometryCollection</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.AABBCollection.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.AABBCollection.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.AABBCollection.append">
 <span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aabb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.AABBCollection.append" title="Link to this definition"></a></dt>
@@ -617,11 +584,6 @@
 <dt class="sig sig-object py" id="vulky.ADS">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">ADS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scratch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ranges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ADS" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><code class="xref py py-class docutils literal notranslate"><span class="pre">Resource</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.ADS.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scratch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ranges</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance_buffer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ADS.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -740,11 +702,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">Buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Buffer" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><code class="xref py py-class docutils literal notranslate"><span class="pre">Resource</span></code></a></p>
 <p>Represents a continuous memory on the device.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Buffer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Buffer.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="vulky.Buffer.memory">
 <span class="sig-name descname"><span class="pre">memory</span></span><a class="headerlink" href="#vulky.Buffer.memory" title="Link to this definition"></a></dt>
@@ -835,11 +792,6 @@
 <dt class="sig sig-object py" id="vulky.CommandManager">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">CommandManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CommandManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.CommandManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CommandManager.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.CommandManager.freeze">
 <span class="sig-name descname"><span class="pre">freeze</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CommandManager.freeze" title="Link to this definition"></a></dt>
@@ -938,11 +890,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">ComputeManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ComputeManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.CopyManager" title="vulky._rendering_internal.CopyManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">CopyManager</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.ComputeManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ComputeManager.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.ComputeManager.bind">
 <span class="sig-name descname"><span class="pre">bind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.DescriptorSet" title="vulky._rendering_internal.DescriptorSet"><span class="pre">DescriptorSet</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ComputeManager.bind" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1009,11 +956,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">CopyManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CopyManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.CommandManager" title="vulky._rendering_internal.CommandManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommandManager</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.CopyManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CopyManager.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.CopyManager.copy">
 <span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_resource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_resource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.CopyManager.copy" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1029,11 +971,6 @@
 <dt class="sig sig-object py" id="vulky.DescriptorSet">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">DescriptorSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DescriptorSetWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_reference_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.DescriptorSet" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.DescriptorSet.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_ds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DescriptorSetWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_reference_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.DescriptorSet.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.DescriptorSet.update">
 <span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">bindings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><span class="pre">Resource</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><span class="pre">Resource</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><span class="pre">Resource</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">SamplerWrapper</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.DescriptorSet.update" title="Link to this definition"></a></dt>
@@ -1061,11 +998,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <dt class="sig sig-object py" id="vulky.DescriptorSetCollection">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">DescriptorSetCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_dsc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DescriptorSetCollectionWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_reference_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.DescriptorSetCollection" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.DescriptorSetCollection.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_dsc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DescriptorSetCollectionWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout_reference_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.DescriptorSetCollection.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -1270,11 +1202,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">GPUPtr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device_ptr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_direct</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GPUPtr" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.GPUPtr.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device_ptr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_direct</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GPUPtr.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.GPUPtr.flush">
 <span class="sig-name descname"><span class="pre">flush</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GPUPtr.flush" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1307,11 +1234,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">GeometryCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GeometryCollection" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.GeometryCollection.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GeometryCollection.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.GeometryCollection.get_collection_type">
 <span class="sig-name descname"><span class="pre">get_collection_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#vulky.ADSNodeType" title="vulky._enums.ADSNodeType"><span class="pre">ADSNodeType</span></a></span></span><a class="headerlink" href="#vulky.GeometryCollection.get_collection_type" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1322,11 +1244,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <dt class="sig sig-object py" id="vulky.GraphicsManager">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">GraphicsManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.ComputeManager" title="vulky._rendering_internal.ComputeManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">ComputeManager</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.GraphicsManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsManager.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.GraphicsManager.bind_index_buffer">
 <span class="sig-name descname"><span class="pre">bind_index_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsManager.bind_index_buffer" title="Link to this definition"></a></dt>
@@ -1369,11 +1286,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">GraphicsPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsPipeline" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.Pipeline" title="vulky._rendering_internal.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.GraphicsPipeline.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsPipeline.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.GraphicsPipeline.attach">
 <span class="sig-name descname"><span class="pre">attach</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">slot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">attach_declaration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Format" title="vulky._enums.Format"><span class="pre">Format</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.GraphicsPipeline.attach" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1400,11 +1312,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">Image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">texel_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Image" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><code class="xref py py-class docutils literal notranslate"><span class="pre">Resource</span></code></a></p>
 <p>TODO: NOT IDEAL DESIGN</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Image.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_image</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">texel_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Image.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.Image.as_readonly">
 <span class="sig-name descname"><span class="pre">as_readonly</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Image.as_readonly" title="Link to this definition"></a></dt>
@@ -1547,11 +1454,6 @@ Notice that grouping bindings updates in a single call might lead to better perf
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">Layout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declaration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array_stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix_stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Layout" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Represents a specific layout of fields and arrays in memory with alignment rules.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Layout.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">declaration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array_stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix_stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Layout.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.Layout.fix_shape">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fix_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Layout.fix_shape" title="Link to this definition"></a></dt>
@@ -1731,11 +1633,6 @@ If the buffer is on GPU the memory must be updated via <cite>update_gpu</cite>.<
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.ObjectBuffer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ObjectBuffer.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.ObjectBuffer.update_gpu">
 <span class="sig-name descname"><span class="pre">update_gpu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ObjectBuffer.update_gpu" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1761,11 +1658,6 @@ and indexing.</p>
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.ObjectBufferAccessor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">memoryview</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ObjectBufferAccessor.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.ObjectBufferAccessor.references">
 <span class="sig-name descname"><span class="pre">references</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">set</span></span></span><a class="headerlink" href="#vulky.ObjectBufferAccessor.references" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1776,11 +1668,6 @@ and indexing.</p>
 <dt class="sig sig-object py" id="vulky.Pipeline">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">Pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Pipeline" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Pipeline.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Pipeline.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.Pipeline.close">
 <span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Pipeline.close" title="Link to this definition"></a></dt>
@@ -1935,11 +1822,6 @@ presentation or not.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">RTProgram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Pipeline" title="vulky._rendering_internal.Pipeline"><span class="pre">Pipeline</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_shader_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">miss_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hit_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callable_offset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RTProgram" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.RTProgram.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Pipeline" title="vulky._rendering_internal.Pipeline"><span class="pre">Pipeline</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_shader_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">miss_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hit_offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callable_offset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RTProgram.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.RTProgram.active_raygen_slice">
 <span class="sig-name descname"><span class="pre">active_raygen_slice</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RTProgram.active_raygen_slice" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -1976,11 +1858,6 @@ presentation or not.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">RaytracingManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.GraphicsManager" title="vulky._rendering_internal.GraphicsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">GraphicsManager</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.RaytracingManager.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_cmdList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CommandBufferWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingManager.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.RaytracingManager.build_ads">
 <span class="sig-name descname"><span class="pre">build_ads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.ADS" title="vulky._rendering_internal.ADS"><span class="pre">ADS</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">scratch_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingManager.build_ads" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -2006,11 +1883,6 @@ presentation or not.</p>
 <dt class="sig sig-object py" id="vulky.RaytracingPipeline">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">RaytracingPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingPipeline" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.Pipeline" title="vulky._rendering_internal.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.RaytracingPipeline.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w_pipeline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PipelineWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingPipeline.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.RaytracingPipeline.create_rt_callable_group">
 <span class="sig-name descname"><span class="pre">create_rt_callable_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callable_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.RaytracingPipeline.create_rt_callable_group" title="Link to this definition"></a></dt>
@@ -2048,11 +1920,6 @@ presentation or not.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">Resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Resource" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Base class of all vulky resources.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Resource.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Resource.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.Resource.clear">
 <span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#vulky.Resource" title="vulky._rendering_internal.Resource"><span class="pre">Resource</span></a></span></span><a class="headerlink" href="#vulky.Resource.clear" title="Link to this definition"></a></dt>
@@ -2245,11 +2112,6 @@ Buffer can be mapped in mode <cite>in</cite>, <cite>out</cite> or <cite>inout</c
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.StructuredBuffer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ResourceWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredBuffer.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.StructuredBuffer.map">
 <span class="sig-name descname"><span class="pre">map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'in'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'out'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'inout'</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredBuffer.map" title="Link to this definition"></a></dt>
 <dd><p>Creates a context to map the buffer in a specific mode.</p>
@@ -2273,11 +2135,6 @@ If ‘inout’ the buffer is updated on the cpu before entering the context and 
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Auxiliary class to access structured buffers.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.StructuredBufferAccess.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">memoryview</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">structure_stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">structure_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredBufferAccess.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.StructuredBufferAccess.build_accessor">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">build_accessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">memoryview</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredBufferAccess.build_accessor" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -2289,11 +2146,6 @@ If ‘inout’ the buffer is updated on the cpu before entering the context and 
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">StructuredTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredTensor" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Allows to access the memory of a tensor assuming a specific layout.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.StructuredTensor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_tensor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">element_layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.StructuredTensor.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.StructuredTensor.create">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Layout" title="vulky._common.Layout"><span class="pre">Layout</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#vulky.StructuredTensor" title="vulky._common.StructuredTensor"><span class="pre">StructuredTensor</span></a></span></span><a class="headerlink" href="#vulky.StructuredTensor.create" title="Link to this definition"></a></dt>
@@ -2350,11 +2202,6 @@ For vectors and matrices a GTensor is returned. If out tensor is provided, copy 
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">TriangleCollection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.TriangleCollection" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#vulky.GeometryCollection" title="vulky._rendering_internal.GeometryCollection"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeometryCollection</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="vulky.TriangleCollection.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceWrapper</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.TriangleCollection.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="vulky.TriangleCollection.append">
 <span class="sig-name descname"><span class="pre">append</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">indices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.TriangleCollection.append" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -2370,11 +2217,6 @@ For vectors and matrices a GTensor is returned. If out tensor is provided, copy 
 <dt class="sig sig-object py" id="vulky.ViewTensor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">vulky.</span></span><span class="sig-name descname"><span class="pre">ViewTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ViewTensor" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.ViewTensor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ViewTensor.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.ViewTensor.detach">
 <span class="sig-name descname"><span class="pre">detach</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#vulky.ViewTensor.detach" title="Link to this definition"></a></dt>
@@ -2558,17 +2400,7 @@ program will cause undefined behavior.</p>
 <dt class="sig sig-object py" id="vulky.Window.ClientContext">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ClientContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Window" title="vulky._rendering_internal.Window"><span class="pre">Window</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Image" title="vulky._rendering_internal.Image"><span class="pre">Image</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">man</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.GraphicsManager" title="vulky._rendering_internal.GraphicsManager"><span class="pre">GraphicsManager</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Window.ClientContext" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Window.ClientContext.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Window" title="vulky._rendering_internal.Window"><span class="pre">Window</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Image" title="vulky._rendering_internal.Image"><span class="pre">Image</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#vulky.Buffer" title="vulky._rendering_internal.Buffer"><span class="pre">Buffer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">man</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.GraphicsManager" title="vulky._rendering_internal.GraphicsManager"><span class="pre">GraphicsManager</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Window.ClientContext.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="vulky.Window.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DeviceManager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">WindowWrapper</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#vulky.Format" title="vulky._enums.Format"><span class="pre">Format</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#vulky.Window.__init__" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="vulky.Window.buffer">
@@ -3396,7 +3228,7 @@ Returned object can be assigned to fields of type int64_t and use as reference b
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="vulky - a pythonian vulkan facade" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

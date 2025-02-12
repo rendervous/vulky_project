@@ -1336,9 +1336,12 @@ class RaytracingManager(GraphicsManager):
 
 class Caps:
     ray_tracing = False
+    ray_query = False
+    atom_float = False
     zero_copy_buffer_map = False
     zero_copy_torch_map = False
     cooperative_matrices = False
+
 
 
 # class GPUWrapping:
@@ -1966,6 +1969,8 @@ class DeviceManager:
         self.w_device = w_device
         self.__caps.cooperative_matrices = w_device.support_cooperative_matrices
         self.__caps.ray_tracing = w_device.support_raytracing
+        self.__caps.ray_query = w_device.support_raytracing_query
+        self.__caps.atom_float = w_device.support_atomic_float_add
         self.__caps.zero_copy_buffer_map = w_device.support_buffer_map
         self.__caps.zero_copy_torch_map = w_device.support_torch_map
 
@@ -2169,7 +2174,8 @@ class NoneDeviceManager(DeviceManager):
         return self._raise_access_error()
 
     def __bind__(self, w_device: _internal.DeviceWrapper):
-        return self._raise_access_error()
+        pass
+        # return self._raise_access_error()
 
     def __del__(self):
         pass

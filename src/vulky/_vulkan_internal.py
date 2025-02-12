@@ -2818,7 +2818,6 @@ class DeviceWrapper:
         extensions = [
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             "VK_KHR_buffer_device_address",
-            "VK_EXT_shader_atomic_float",
             "VK_KHR_shader_non_semantic_info",
             # "GLSL_EXT_ray_tracing",
             # "GLSL_EXT_ray_query",
@@ -2826,6 +2825,11 @@ class DeviceWrapper:
             # "SPV_KHR_ray_tracing",
             # "SPV_KHR_ray_query"
         ]
+
+        if self.support_atomic_float_add:
+            extensions += [
+                "VK_EXT_shader_atomic_float",
+            ]
 
         if os.name == 'nt':
             extensions += [

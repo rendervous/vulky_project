@@ -10,9 +10,15 @@ Welcome to vulky documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: Getting started
 
    installation.rst
    usage.rst
+
+.. toctree::
+   :maxdepth: 3
+   :caption: API Reference
+
    vulky.rst
 
 

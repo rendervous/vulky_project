@@ -42,10 +42,14 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="vulky.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="vulky.html">Types</a></li>
 </ul>
 
         </div>
@@ -76,58 +80,384 @@
 <h1>vulky - a pythonian vulkan facade<a class="headerlink" href="#vulky-a-pythonian-vulkan-facade" title="Link to this heading"></a></h1>
 <p>Welcome to vulky documentation</p>
 <div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
-<li class="toctree-l1"><a class="reference internal" href="vulky.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.AABBCollection"><code class="docutils literal notranslate"><span class="pre">AABBCollection</span></code></a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="vulky.html">Types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.AABBCollection"><code class="docutils literal notranslate"><span class="pre">AABBCollection</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AABBCollection.append"><code class="docutils literal notranslate"><span class="pre">AABBCollection.append()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AABBCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">AABBCollection.get_collection_type()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ADS"><code class="docutils literal notranslate"><span class="pre">ADS</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ADSNodeType"><code class="docutils literal notranslate"><span class="pre">ADSNodeType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.AddressMode"><code class="docutils literal notranslate"><span class="pre">AddressMode</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.BorderColor"><code class="docutils literal notranslate"><span class="pre">BorderColor</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Buffer"><code class="docutils literal notranslate"><span class="pre">Buffer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.BufferUsage"><code class="docutils literal notranslate"><span class="pre">BufferUsage</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CommandManager"><code class="docutils literal notranslate"><span class="pre">CommandManager</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CompareOp"><code class="docutils literal notranslate"><span class="pre">CompareOp</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ComputeManager"><code class="docutils literal notranslate"><span class="pre">ComputeManager</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CopyManager"><code class="docutils literal notranslate"><span class="pre">CopyManager</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.DescriptorSet"><code class="docutils literal notranslate"><span class="pre">DescriptorSet</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ADSNodeType"><code class="docutils literal notranslate"><span class="pre">ADSNodeType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ADSNodeType.AABB"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.AABB</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ADSNodeType.INSTANCE"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.INSTANCE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ADSNodeType.NONE"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ADSNodeType.TRIANGLES"><code class="docutils literal notranslate"><span class="pre">ADSNodeType.TRIANGLES</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.AddressMode"><code class="docutils literal notranslate"><span class="pre">AddressMode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AddressMode.BORDER"><code class="docutils literal notranslate"><span class="pre">AddressMode.BORDER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AddressMode.CLAMP_EDGE"><code class="docutils literal notranslate"><span class="pre">AddressMode.CLAMP_EDGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AddressMode.NONE"><code class="docutils literal notranslate"><span class="pre">AddressMode.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.AddressMode.REPEAT"><code class="docutils literal notranslate"><span class="pre">AddressMode.REPEAT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.BorderColor"><code class="docutils literal notranslate"><span class="pre">BorderColor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.NONE"><code class="docutils literal notranslate"><span class="pre">BorderColor.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.OPAQUE_BLACK_FLOAT"><code class="docutils literal notranslate"><span class="pre">BorderColor.OPAQUE_BLACK_FLOAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.OPAQUE_BLACK_INT"><code class="docutils literal notranslate"><span class="pre">BorderColor.OPAQUE_BLACK_INT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.OPAQUE_WHITE_FLOAT"><code class="docutils literal notranslate"><span class="pre">BorderColor.OPAQUE_WHITE_FLOAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.OPAQUE_WHITE_INT"><code class="docutils literal notranslate"><span class="pre">BorderColor.OPAQUE_WHITE_INT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.TRANSPARENT_BLACK_FLOAT"><code class="docutils literal notranslate"><span class="pre">BorderColor.TRANSPARENT_BLACK_FLOAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BorderColor.TRANSPARENT_BLACK_INT"><code class="docutils literal notranslate"><span class="pre">BorderColor.TRANSPARENT_BLACK_INT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Buffer"><code class="docutils literal notranslate"><span class="pre">Buffer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Buffer.memory"><code class="docutils literal notranslate"><span class="pre">Buffer.memory</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Buffer.size"><code class="docutils literal notranslate"><span class="pre">Buffer.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Buffer.slice"><code class="docutils literal notranslate"><span class="pre">Buffer.slice()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.BufferUsage"><code class="docutils literal notranslate"><span class="pre">BufferUsage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.INDEX"><code class="docutils literal notranslate"><span class="pre">BufferUsage.INDEX</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.NONE"><code class="docutils literal notranslate"><span class="pre">BufferUsage.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.RAYTRACING_ADS"><code class="docutils literal notranslate"><span class="pre">BufferUsage.RAYTRACING_ADS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.RAYTRACING_RESOURCE"><code class="docutils literal notranslate"><span class="pre">BufferUsage.RAYTRACING_RESOURCE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.SHADER_TABLE"><code class="docutils literal notranslate"><span class="pre">BufferUsage.SHADER_TABLE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.STAGING"><code class="docutils literal notranslate"><span class="pre">BufferUsage.STAGING</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.STORAGE"><code class="docutils literal notranslate"><span class="pre">BufferUsage.STORAGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.UNIFORM"><code class="docutils literal notranslate"><span class="pre">BufferUsage.UNIFORM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.BufferUsage.VERTEX"><code class="docutils literal notranslate"><span class="pre">BufferUsage.VERTEX</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CommandManager"><code class="docutils literal notranslate"><span class="pre">CommandManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.freeze"><code class="docutils literal notranslate"><span class="pre">CommandManager.freeze()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">CommandManager.get_queue_required()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.image_barrier"><code class="docutils literal notranslate"><span class="pre">CommandManager.image_barrier()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.is_closed"><code class="docutils literal notranslate"><span class="pre">CommandManager.is_closed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.is_frozen"><code class="docutils literal notranslate"><span class="pre">CommandManager.is_frozen()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CommandManager.use"><code class="docutils literal notranslate"><span class="pre">CommandManager.use()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CompareOp"><code class="docutils literal notranslate"><span class="pre">CompareOp</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.ALWAYS"><code class="docutils literal notranslate"><span class="pre">CompareOp.ALWAYS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.EQUAL"><code class="docutils literal notranslate"><span class="pre">CompareOp.EQUAL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.GREATER"><code class="docutils literal notranslate"><span class="pre">CompareOp.GREATER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.GREATER_OR_EQUAL"><code class="docutils literal notranslate"><span class="pre">CompareOp.GREATER_OR_EQUAL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.LESS"><code class="docutils literal notranslate"><span class="pre">CompareOp.LESS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.LESS_OR_EQUAL"><code class="docutils literal notranslate"><span class="pre">CompareOp.LESS_OR_EQUAL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.NEVER"><code class="docutils literal notranslate"><span class="pre">CompareOp.NEVER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.NONE"><code class="docutils literal notranslate"><span class="pre">CompareOp.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CompareOp.NOT_EQUAL"><code class="docutils literal notranslate"><span class="pre">CompareOp.NOT_EQUAL</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ComputeManager"><code class="docutils literal notranslate"><span class="pre">ComputeManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.bind"><code class="docutils literal notranslate"><span class="pre">ComputeManager.bind()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.clear_buffer"><code class="docutils literal notranslate"><span class="pre">ComputeManager.clear_buffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.clear_color"><code class="docutils literal notranslate"><span class="pre">ComputeManager.clear_color()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.clear_depth_stencil"><code class="docutils literal notranslate"><span class="pre">ComputeManager.clear_depth_stencil()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.dispatch_groups"><code class="docutils literal notranslate"><span class="pre">ComputeManager.dispatch_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.dispatch_threads"><code class="docutils literal notranslate"><span class="pre">ComputeManager.dispatch_threads()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.dispatch_threads_1D"><code class="docutils literal notranslate"><span class="pre">ComputeManager.dispatch_threads_1D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.dispatch_threads_2D"><code class="docutils literal notranslate"><span class="pre">ComputeManager.dispatch_threads_2D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">ComputeManager.get_queue_required()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.set_pipeline"><code class="docutils literal notranslate"><span class="pre">ComputeManager.set_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.update_constants"><code class="docutils literal notranslate"><span class="pre">ComputeManager.update_constants()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ComputeManager.update_sets"><code class="docutils literal notranslate"><span class="pre">ComputeManager.update_sets()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.CopyManager"><code class="docutils literal notranslate"><span class="pre">CopyManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CopyManager.copy"><code class="docutils literal notranslate"><span class="pre">CopyManager.copy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.CopyManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">CopyManager.get_queue_required()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.DescriptorSet"><code class="docutils literal notranslate"><span class="pre">DescriptorSet</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorSet.update"><code class="docutils literal notranslate"><span class="pre">DescriptorSet.update()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.DescriptorSetCollection"><code class="docutils literal notranslate"><span class="pre">DescriptorSetCollection</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.DescriptorType"><code class="docutils literal notranslate"><span class="pre">DescriptorType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Filter"><code class="docutils literal notranslate"><span class="pre">Filter</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Format"><code class="docutils literal notranslate"><span class="pre">Format</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.DescriptorType"><code class="docutils literal notranslate"><span class="pre">DescriptorType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.COMBINED_IMAGE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.COMBINED_IMAGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.NONE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.SAMPLED_IMAGE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.SAMPLED_IMAGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.SAMPLER"><code class="docutils literal notranslate"><span class="pre">DescriptorType.SAMPLER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.SCENE_ADS"><code class="docutils literal notranslate"><span class="pre">DescriptorType.SCENE_ADS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.STORAGE_BUFFER"><code class="docutils literal notranslate"><span class="pre">DescriptorType.STORAGE_BUFFER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.STORAGE_IMAGE"><code class="docutils literal notranslate"><span class="pre">DescriptorType.STORAGE_IMAGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.DescriptorType.UNIFORM_BUFFER"><code class="docutils literal notranslate"><span class="pre">DescriptorType.UNIFORM_BUFFER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Filter"><code class="docutils literal notranslate"><span class="pre">Filter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Filter.LINEAR"><code class="docutils literal notranslate"><span class="pre">Filter.LINEAR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Filter.NONE"><code class="docutils literal notranslate"><span class="pre">Filter.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Filter.POINT"><code class="docutils literal notranslate"><span class="pre">Filter.POINT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Format"><code class="docutils literal notranslate"><span class="pre">Format</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.DEPTH_STENCIL"><code class="docutils literal notranslate"><span class="pre">Format.DEPTH_STENCIL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.FLOAT"><code class="docutils literal notranslate"><span class="pre">Format.FLOAT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.INT"><code class="docutils literal notranslate"><span class="pre">Format.INT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.IVEC2"><code class="docutils literal notranslate"><span class="pre">Format.IVEC2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.IVEC3"><code class="docutils literal notranslate"><span class="pre">Format.IVEC3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.IVEC4"><code class="docutils literal notranslate"><span class="pre">Format.IVEC4</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.NONE"><code class="docutils literal notranslate"><span class="pre">Format.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.PRESENTER"><code class="docutils literal notranslate"><span class="pre">Format.PRESENTER</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT"><code class="docutils literal notranslate"><span class="pre">Format.UINT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_BGRA_STD"><code class="docutils literal notranslate"><span class="pre">Format.UINT_BGRA_STD</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_BGRA_UNORM"><code class="docutils literal notranslate"><span class="pre">Format.UINT_BGRA_UNORM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_RGB"><code class="docutils literal notranslate"><span class="pre">Format.UINT_RGB</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_RGBA"><code class="docutils literal notranslate"><span class="pre">Format.UINT_RGBA</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_RGBA_STD"><code class="docutils literal notranslate"><span class="pre">Format.UINT_RGBA_STD</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UINT_RGBA_UNORM"><code class="docutils literal notranslate"><span class="pre">Format.UINT_RGBA_UNORM</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UVEC2"><code class="docutils literal notranslate"><span class="pre">Format.UVEC2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UVEC3"><code class="docutils literal notranslate"><span class="pre">Format.UVEC3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.UVEC4"><code class="docutils literal notranslate"><span class="pre">Format.UVEC4</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.VEC2"><code class="docutils literal notranslate"><span class="pre">Format.VEC2</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.VEC3"><code class="docutils literal notranslate"><span class="pre">Format.VEC3</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Format.VEC4"><code class="docutils literal notranslate"><span class="pre">Format.VEC4</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.FrameBuffer"><code class="docutils literal notranslate"><span class="pre">FrameBuffer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GPUPtr"><code class="docutils literal notranslate"><span class="pre">GPUPtr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GPUPtr"><code class="docutils literal notranslate"><span class="pre">GPUPtr</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GPUPtr.flush"><code class="docutils literal notranslate"><span class="pre">GPUPtr.flush()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GPUPtr.invalidate"><code class="docutils literal notranslate"><span class="pre">GPUPtr.invalidate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GPUPtr.mark_as_dirty"><code class="docutils literal notranslate"><span class="pre">GPUPtr.mark_as_dirty()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GPUPtr.update_mode"><code class="docutils literal notranslate"><span class="pre">GPUPtr.update_mode()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GTensorMeta"><code class="docutils literal notranslate"><span class="pre">GTensorMeta</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GeometryCollection"><code class="docutils literal notranslate"><span class="pre">GeometryCollection</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GraphicsManager"><code class="docutils literal notranslate"><span class="pre">GraphicsManager</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Image"><code class="docutils literal notranslate"><span class="pre">Image</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ImageType"><code class="docutils literal notranslate"><span class="pre">ImageType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ImageUsage"><code class="docutils literal notranslate"><span class="pre">ImageUsage</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Layout"><code class="docutils literal notranslate"><span class="pre">Layout</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.LayoutAlignment"><code class="docutils literal notranslate"><span class="pre">LayoutAlignment</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.MemoryLocation"><code class="docutils literal notranslate"><span class="pre">MemoryLocation</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.MipMapMode"><code class="docutils literal notranslate"><span class="pre">MipMapMode</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ObjectBuffer"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ObjectBufferAccessor"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.PipelineType"><code class="docutils literal notranslate"><span class="pre">PipelineType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.PresenterMode"><code class="docutils literal notranslate"><span class="pre">PresenterMode</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.QueueType"><code class="docutils literal notranslate"><span class="pre">QueueType</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RTProgram"><code class="docutils literal notranslate"><span class="pre">RTProgram</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RaytracingManager"><code class="docutils literal notranslate"><span class="pre">RaytracingManager</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Resource"><code class="docutils literal notranslate"><span class="pre">Resource</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GeometryCollection"><code class="docutils literal notranslate"><span class="pre">GeometryCollection</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GeometryCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">GeometryCollection.get_collection_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GraphicsManager"><code class="docutils literal notranslate"><span class="pre">GraphicsManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.bind_index_buffer"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.bind_index_buffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.bind_vertex_buffer"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.bind_vertex_buffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.blit_image"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.blit_image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.dispatch_indexed_primitives"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.dispatch_indexed_primitives()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.dispatch_primitives"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.dispatch_primitives()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.get_queue_required()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsManager.set_framebuffer"><code class="docutils literal notranslate"><span class="pre">GraphicsManager.set_framebuffer()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline.attach"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.attach()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline.create_framebuffer"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.create_framebuffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline.vertex"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.vertex()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.GraphicsPipeline.vertex_binding"><code class="docutils literal notranslate"><span class="pre">GraphicsPipeline.vertex_binding()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Image"><code class="docutils literal notranslate"><span class="pre">Image</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.as_readonly"><code class="docutils literal notranslate"><span class="pre">Image.as_readonly()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.compute_dimension"><code class="docutils literal notranslate"><span class="pre">Image.compute_dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.element_size"><code class="docutils literal notranslate"><span class="pre">Image.element_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.get_array_count"><code class="docutils literal notranslate"><span class="pre">Image.get_array_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.get_image_dimension"><code class="docutils literal notranslate"><span class="pre">Image.get_image_dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.get_mip_count"><code class="docutils literal notranslate"><span class="pre">Image.get_mip_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.numel"><code class="docutils literal notranslate"><span class="pre">Image.numel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.size"><code class="docutils literal notranslate"><span class="pre">Image.size</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.slice_array"><code class="docutils literal notranslate"><span class="pre">Image.slice_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.slice_mips"><code class="docutils literal notranslate"><span class="pre">Image.slice_mips()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.subresource"><code class="docutils literal notranslate"><span class="pre">Image.subresource()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Image.subresource_footprint"><code class="docutils literal notranslate"><span class="pre">Image.subresource_footprint()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ImageType"><code class="docutils literal notranslate"><span class="pre">ImageType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageType.NONE"><code class="docutils literal notranslate"><span class="pre">ImageType.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageType.TEXTURE_1D"><code class="docutils literal notranslate"><span class="pre">ImageType.TEXTURE_1D</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageType.TEXTURE_2D"><code class="docutils literal notranslate"><span class="pre">ImageType.TEXTURE_2D</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageType.TEXTURE_3D"><code class="docutils literal notranslate"><span class="pre">ImageType.TEXTURE_3D</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ImageUsage"><code class="docutils literal notranslate"><span class="pre">ImageUsage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.ANY"><code class="docutils literal notranslate"><span class="pre">ImageUsage.ANY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.DEPTH_STENCIL"><code class="docutils literal notranslate"><span class="pre">ImageUsage.DEPTH_STENCIL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.NONE"><code class="docutils literal notranslate"><span class="pre">ImageUsage.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.RENDER_TARGET"><code class="docutils literal notranslate"><span class="pre">ImageUsage.RENDER_TARGET</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.SAMPLED"><code class="docutils literal notranslate"><span class="pre">ImageUsage.SAMPLED</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.STORAGE"><code class="docutils literal notranslate"><span class="pre">ImageUsage.STORAGE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ImageUsage.TRANSFER"><code class="docutils literal notranslate"><span class="pre">ImageUsage.TRANSFER</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Layout"><code class="docutils literal notranslate"><span class="pre">Layout</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.fix_shape"><code class="docutils literal notranslate"><span class="pre">Layout.fix_shape()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_aabb"><code class="docutils literal notranslate"><span class="pre">Layout.from_aabb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_description"><code class="docutils literal notranslate"><span class="pre">Layout.from_description()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_format"><code class="docutils literal notranslate"><span class="pre">Layout.from_format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_instance"><code class="docutils literal notranslate"><span class="pre">Layout.from_instance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_instance2"><code class="docutils literal notranslate"><span class="pre">Layout.from_instance2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.from_structure"><code class="docutils literal notranslate"><span class="pre">Layout.from_structure()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.is_scalar_type"><code class="docutils literal notranslate"><span class="pre">Layout.is_scalar_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.scalar_size"><code class="docutils literal notranslate"><span class="pre">Layout.scalar_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Layout.set_24bit_from_int"><code class="docutils literal notranslate"><span class="pre">Layout.set_24bit_from_int()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.LayoutAlignment"><code class="docutils literal notranslate"><span class="pre">LayoutAlignment</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.LayoutAlignment.COMPACT"><code class="docutils literal notranslate"><span class="pre">LayoutAlignment.COMPACT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.LayoutAlignment.SCALAR"><code class="docutils literal notranslate"><span class="pre">LayoutAlignment.SCALAR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.LayoutAlignment.STD430"><code class="docutils literal notranslate"><span class="pre">LayoutAlignment.STD430</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.MemoryLocation"><code class="docutils literal notranslate"><span class="pre">MemoryLocation</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MemoryLocation.CPU"><code class="docutils literal notranslate"><span class="pre">MemoryLocation.CPU</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MemoryLocation.GPU"><code class="docutils literal notranslate"><span class="pre">MemoryLocation.GPU</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MemoryLocation.NONE"><code class="docutils literal notranslate"><span class="pre">MemoryLocation.NONE</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.MipMapMode"><code class="docutils literal notranslate"><span class="pre">MipMapMode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MipMapMode.LINEAR"><code class="docutils literal notranslate"><span class="pre">MipMapMode.LINEAR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MipMapMode.NONE"><code class="docutils literal notranslate"><span class="pre">MipMapMode.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.MipMapMode.POINT"><code class="docutils literal notranslate"><span class="pre">MipMapMode.POINT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ObjectBuffer"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ObjectBuffer.update_gpu"><code class="docutils literal notranslate"><span class="pre">ObjectBuffer.update_gpu()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ObjectBufferAccessor"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ObjectBufferAccessor.references"><code class="docutils literal notranslate"><span class="pre">ObjectBufferAccessor.references()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.close"><code class="docutils literal notranslate"><span class="pre">Pipeline.close()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.create_descriptor_set_collection"><code class="docutils literal notranslate"><span class="pre">Pipeline.create_descriptor_set_collection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.is_closed"><code class="docutils literal notranslate"><span class="pre">Pipeline.is_closed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.layout"><code class="docutils literal notranslate"><span class="pre">Pipeline.layout()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.load_shader"><code class="docutils literal notranslate"><span class="pre">Pipeline.load_shader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.load_shader_from_source"><code class="docutils literal notranslate"><span class="pre">Pipeline.load_shader_from_source()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Pipeline.shader_stages"><code class="docutils literal notranslate"><span class="pre">Pipeline.shader_stages()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.PipelineType"><code class="docutils literal notranslate"><span class="pre">PipelineType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PipelineType.COMPUTE"><code class="docutils literal notranslate"><span class="pre">PipelineType.COMPUTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PipelineType.GRAPHICS"><code class="docutils literal notranslate"><span class="pre">PipelineType.GRAPHICS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PipelineType.NONE"><code class="docutils literal notranslate"><span class="pre">PipelineType.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PipelineType.RAYTRACING"><code class="docutils literal notranslate"><span class="pre">PipelineType.RAYTRACING</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.PresenterMode"><code class="docutils literal notranslate"><span class="pre">PresenterMode</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PresenterMode.NONE"><code class="docutils literal notranslate"><span class="pre">PresenterMode.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PresenterMode.OFFLINE"><code class="docutils literal notranslate"><span class="pre">PresenterMode.OFFLINE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.PresenterMode.WINDOW"><code class="docutils literal notranslate"><span class="pre">PresenterMode.WINDOW</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.QueueType"><code class="docutils literal notranslate"><span class="pre">QueueType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.QueueType.COMPUTE"><code class="docutils literal notranslate"><span class="pre">QueueType.COMPUTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.QueueType.COPY"><code class="docutils literal notranslate"><span class="pre">QueueType.COPY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.QueueType.GRAPHICS"><code class="docutils literal notranslate"><span class="pre">QueueType.GRAPHICS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.QueueType.NONE"><code class="docutils literal notranslate"><span class="pre">QueueType.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.QueueType.RAYTRACING"><code class="docutils literal notranslate"><span class="pre">QueueType.RAYTRACING</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RTProgram"><code class="docutils literal notranslate"><span class="pre">RTProgram</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.active_raygen_slice"><code class="docutils literal notranslate"><span class="pre">RTProgram.active_raygen_slice()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.select_generation"><code class="docutils literal notranslate"><span class="pre">RTProgram.select_generation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.set_callable"><code class="docutils literal notranslate"><span class="pre">RTProgram.set_callable()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.set_generation"><code class="docutils literal notranslate"><span class="pre">RTProgram.set_generation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.set_hit_group"><code class="docutils literal notranslate"><span class="pre">RTProgram.set_hit_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RTProgram.set_miss"><code class="docutils literal notranslate"><span class="pre">RTProgram.set_miss()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RaytracingManager"><code class="docutils literal notranslate"><span class="pre">RaytracingManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingManager.build_ads"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.build_ads()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingManager.dispatch_rays"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.dispatch_rays()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingManager.get_queue_required"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.get_queue_required()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingManager.update_ads"><code class="docutils literal notranslate"><span class="pre">RaytracingManager.update_ads()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.create_rt_callable_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_callable_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.create_rt_gen_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_gen_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.create_rt_hit_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_hit_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.create_rt_miss_group"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_miss_group()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.create_rt_program"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.create_rt_program()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.RaytracingPipeline.stack_size"><code class="docutils literal notranslate"><span class="pre">RaytracingPipeline.stack_size()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Resource"><code class="docutils literal notranslate"><span class="pre">Resource</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.clear"><code class="docutils literal notranslate"><span class="pre">Resource.clear()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.cpu_ptr"><code class="docutils literal notranslate"><span class="pre">Resource.cpu_ptr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.cuda_ptr"><code class="docutils literal notranslate"><span class="pre">Resource.cuda_ptr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.device_ptr"><code class="docutils literal notranslate"><span class="pre">Resource.device_ptr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.is_ads"><code class="docutils literal notranslate"><span class="pre">Resource.is_ads</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.is_buffer"><code class="docutils literal notranslate"><span class="pre">Resource.is_buffer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.is_image"><code class="docutils literal notranslate"><span class="pre">Resource.is_image</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.is_on_cpu"><code class="docutils literal notranslate"><span class="pre">Resource.is_on_cpu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.is_on_gpu"><code class="docutils literal notranslate"><span class="pre">Resource.is_on_gpu</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.load"><code class="docutils literal notranslate"><span class="pre">Resource.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.save"><code class="docutils literal notranslate"><span class="pre">Resource.save()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Resource.size"><code class="docutils literal notranslate"><span class="pre">Resource.size</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Sampler"><code class="docutils literal notranslate"><span class="pre">Sampler</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ShaderHandler"><code class="docutils literal notranslate"><span class="pre">ShaderHandler</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ShaderStage"><code class="docutils literal notranslate"><span class="pre">ShaderStage</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredBuffer"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredBufferAccess"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredTensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.TriangleCollection"><code class="docutils literal notranslate"><span class="pre">TriangleCollection</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ViewTensor"><code class="docutils literal notranslate"><span class="pre">ViewTensor</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Window"><code class="docutils literal notranslate"><span class="pre">Window</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ShaderStage"><code class="docutils literal notranslate"><span class="pre">ShaderStage</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.COMPUTE"><code class="docutils literal notranslate"><span class="pre">ShaderStage.COMPUTE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.FRAGMENT"><code class="docutils literal notranslate"><span class="pre">ShaderStage.FRAGMENT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.GEOMETRY"><code class="docutils literal notranslate"><span class="pre">ShaderStage.GEOMETRY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.NONE"><code class="docutils literal notranslate"><span class="pre">ShaderStage.NONE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_ANY_HIT"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_ANY_HIT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_CALLABLE"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_CALLABLE</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_CLOSEST_HIT"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_CLOSEST_HIT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_GENERATION"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_GENERATION</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_INTERSECTION_HIT"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_INTERSECTION_HIT</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.RT_MISS"><code class="docutils literal notranslate"><span class="pre">ShaderStage.RT_MISS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ShaderStage.VERTEX"><code class="docutils literal notranslate"><span class="pre">ShaderStage.VERTEX</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredBuffer"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredBuffer.map"><code class="docutils literal notranslate"><span class="pre">StructuredBuffer.map()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredBufferAccess"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredBufferAccess.build_accessor"><code class="docutils literal notranslate"><span class="pre">StructuredBufferAccess.build_accessor()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.StructuredTensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.create"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.create_compatible_tensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.create_compatible_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.get_field"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.get_field()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.get_item"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.get_item()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.numpy"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.numpy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.read"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.read()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.structure_shape"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.structure_shape()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.tensor"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.StructuredTensor.write"><code class="docutils literal notranslate"><span class="pre">StructuredTensor.write()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.TriangleCollection"><code class="docutils literal notranslate"><span class="pre">TriangleCollection</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.TriangleCollection.append"><code class="docutils literal notranslate"><span class="pre">TriangleCollection.append()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.TriangleCollection.get_collection_type"><code class="docutils literal notranslate"><span class="pre">TriangleCollection.get_collection_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ViewTensor"><code class="docutils literal notranslate"><span class="pre">ViewTensor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ViewTensor.detach"><code class="docutils literal notranslate"><span class="pre">ViewTensor.detach()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ViewTensor.from_blob"><code class="docutils literal notranslate"><span class="pre">ViewTensor.from_blob()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ViewTensor.reinterpret"><code class="docutils literal notranslate"><span class="pre">ViewTensor.reinterpret()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.ViewTensor.view"><code class="docutils literal notranslate"><span class="pre">ViewTensor.view()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.Window"><code class="docutils literal notranslate"><span class="pre">Window</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.ClientContext"><code class="docutils literal notranslate"><span class="pre">Window.ClientContext</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.buffer"><code class="docutils literal notranslate"><span class="pre">Window.buffer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.fps"><code class="docutils literal notranslate"><span class="pre">Window.fps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.image"><code class="docutils literal notranslate"><span class="pre">Window.image()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.is_closed"><code class="docutils literal notranslate"><span class="pre">Window.is_closed</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.label_text"><code class="docutils literal notranslate"><span class="pre">Window.label_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.render_target"><code class="docutils literal notranslate"><span class="pre">Window.render_target()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.show_tensor"><code class="docutils literal notranslate"><span class="pre">Window.show_tensor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.spf"><code class="docutils literal notranslate"><span class="pre">Window.spf</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.Window.tensor"><code class="docutils literal notranslate"><span class="pre">Window.tensor()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.aabb_collection"><code class="docutils literal notranslate"><span class="pre">aabb_collection()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ads_model"><code class="docutils literal notranslate"><span class="pre">ads_model()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.ads_scene"><code class="docutils literal notranslate"><span class="pre">ads_scene()</span></code></a></li>
@@ -156,11 +486,51 @@
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.load_image"><code class="docutils literal notranslate"><span class="pre">load_image()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.load_texture"><code class="docutils literal notranslate"><span class="pre">load_texture()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.load_video"><code class="docutils literal notranslate"><span class="pre">load_video()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat2"><code class="docutils literal notranslate"><span class="pre">mat2</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat3"><code class="docutils literal notranslate"><span class="pre">mat3</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat3x4"><code class="docutils literal notranslate"><span class="pre">mat3x4</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat4"><code class="docutils literal notranslate"><span class="pre">mat4</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat4x3"><code class="docutils literal notranslate"><span class="pre">mat4x3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat2"><code class="docutils literal notranslate"><span class="pre">mat2</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat2.dimension"><code class="docutils literal notranslate"><span class="pre">mat2.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat2.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">mat2.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat2.tensor_shape"><code class="docutils literal notranslate"><span class="pre">mat2.tensor_shape</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat3"><code class="docutils literal notranslate"><span class="pre">mat3</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.dimension"><code class="docutils literal notranslate"><span class="pre">mat3.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.euler_rotation"><code class="docutils literal notranslate"><span class="pre">mat3.euler_rotation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.inverse"><code class="docutils literal notranslate"><span class="pre">mat3.inverse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.quaternion_rotation"><code class="docutils literal notranslate"><span class="pre">mat3.quaternion_rotation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.rotation"><code class="docutils literal notranslate"><span class="pre">mat3.rotation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.scale"><code class="docutils literal notranslate"><span class="pre">mat3.scale()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">mat3.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3.tensor_shape"><code class="docutils literal notranslate"><span class="pre">mat3.tensor_shape</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat3x4"><code class="docutils literal notranslate"><span class="pre">mat3x4</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3x4.composite"><code class="docutils literal notranslate"><span class="pre">mat3x4.composite()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3x4.dimension"><code class="docutils literal notranslate"><span class="pre">mat3x4.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3x4.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">mat3x4.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3x4.tensor_shape"><code class="docutils literal notranslate"><span class="pre">mat3x4.tensor_shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat3x4.transposed"><code class="docutils literal notranslate"><span class="pre">mat3x4.transposed()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat4"><code class="docutils literal notranslate"><span class="pre">mat4</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.dimension"><code class="docutils literal notranslate"><span class="pre">mat4.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.inv_look_at"><code class="docutils literal notranslate"><span class="pre">mat4.inv_look_at()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.inverse"><code class="docutils literal notranslate"><span class="pre">mat4.inverse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.look_at"><code class="docutils literal notranslate"><span class="pre">mat4.look_at()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.perspective"><code class="docutils literal notranslate"><span class="pre">mat4.perspective()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">mat4.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.tensor_shape"><code class="docutils literal notranslate"><span class="pre">mat4.tensor_shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4.trs"><code class="docutils literal notranslate"><span class="pre">mat4.trs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.mat4x3"><code class="docutils literal notranslate"><span class="pre">mat4x3</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.composite"><code class="docutils literal notranslate"><span class="pre">mat4x3.composite()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.dimension"><code class="docutils literal notranslate"><span class="pre">mat4x3.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">mat4x3.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.tensor_shape"><code class="docutils literal notranslate"><span class="pre">mat4x3.tensor_shape</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.transposed"><code class="docutils literal notranslate"><span class="pre">mat4x3.transposed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.mat4x3.trs"><code class="docutils literal notranslate"><span class="pre">mat4x3.trs()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.pipeline_compute"><code class="docutils literal notranslate"><span class="pre">pipeline_compute()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.pipeline_graphics"><code class="docutils literal notranslate"><span class="pre">pipeline_graphics()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.pipeline_raytracing"><code class="docutils literal notranslate"><span class="pre">pipeline_raytracing()</span></code></a></li>
@@ -182,9 +552,25 @@
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.tensor_to_mat"><code class="docutils literal notranslate"><span class="pre">tensor_to_mat()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.tensor_to_vec"><code class="docutils literal notranslate"><span class="pre">tensor_to_vec()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.triangle_collection"><code class="docutils literal notranslate"><span class="pre">triangle_collection()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec2"><code class="docutils literal notranslate"><span class="pre">vec2</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec3"><code class="docutils literal notranslate"><span class="pre">vec3</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec4"><code class="docutils literal notranslate"><span class="pre">vec4</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec2"><code class="docutils literal notranslate"><span class="pre">vec2</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec2.dimension"><code class="docutils literal notranslate"><span class="pre">vec2.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec2.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">vec2.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec2.tensor_shape"><code class="docutils literal notranslate"><span class="pre">vec2.tensor_shape</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec3"><code class="docutils literal notranslate"><span class="pre">vec3</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec3.cross"><code class="docutils literal notranslate"><span class="pre">vec3.cross()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec3.dimension"><code class="docutils literal notranslate"><span class="pre">vec3.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec3.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">vec3.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec3.tensor_shape"><code class="docutils literal notranslate"><span class="pre">vec3.tensor_shape</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vec4"><code class="docutils literal notranslate"><span class="pre">vec4</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec4.dimension"><code class="docutils literal notranslate"><span class="pre">vec4.dimension</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec4.tensor_dtype"><code class="docutils literal notranslate"><span class="pre">vec4.tensor_dtype</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="vulky.html#vulky.vec4.tensor_shape"><code class="docutils literal notranslate"><span class="pre">vec4.tensor_shape</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.vertex_buffer"><code class="docutils literal notranslate"><span class="pre">vertex_buffer()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.window"><code class="docutils literal notranslate"><span class="pre">window()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="vulky.html#vulky.wrap_gpu"><code class="docutils literal notranslate"><span class="pre">wrap_gpu()</span></code></a></li>
