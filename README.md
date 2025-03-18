@@ -1,37 +1,37 @@
-<img src="/docs/images/vulky_logo.png" alt="drawing" width="300px"/>
+<img src="vulky_logo.png" alt="drawing" width="300px"/>
 
 <table>
 <tr>
 <td>
-<img src="/docs/images/teaser1.jpg" width="100px"/>
+<img src="./examples/teaser1.jpg" width="100px"/>
 </td>
 <td>
-<img src="/docs/images/teaser2.webp" width="100px"/>
+<img src="./examples/teaser2.webp" width="100px"/>
 </td>
 <td>
-<img src="/docs/images/teaser3.webp" width="100px"/>
-</td>
-</tr>
-<tr>
-<td>
-<img src="/docs/images/teaser4.jpg" width="100px"/>
-</td>
-<td>
-<img src="/docs/images/teaser5.webp" width="100px"/>
-</td>
-<td>
-<img src="/docs/images/teaser6.jpg" width="100px"/>
+<img src="./examples/teaser3.webp" width="100px"/>
 </td>
 </tr>
 <tr>
 <td>
-<img src="/docs/images/teaser7.webp" width="100px"/>
+<img src="./examples/teaser4.jpg" width="100px"/>
 </td>
 <td>
-<img src="/docs/images/teaser8.webp" width="100px"/>
+<img src="./examples/teaser5.webp" width="100px"/>
 </td>
 <td>
-<img src="/docs/images/teaser9.webp" width="100px"/>
+<img src="./examples/teaser6.jpg" width="100px"/>
+</td>
+</tr>
+<tr>
+<td>
+<img src="./examples/teaser7.webp" width="100px"/>
+</td>
+<td>
+<img src="./examples/teaser8.webp" width="100px"/>
+</td>
+<td>
+<img src="./examples/teaser9.webp" width="100px"/>
 </td>
 </tr>
 </table>
@@ -44,7 +44,7 @@ with little overhead.
 <tr> 
 <td>
     <a href="/examples/e01_create_and_destroy_device.ipynb">
-    <img src="/docs/images/teaser1.jpg" alt="drawing" width="200px"/>
+    <img src="./examples/teaser1.jpg" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -56,7 +56,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e02_basic_compute.ipynb">
-    <img src="/docs/images/teaser2.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser2.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -68,7 +68,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e03_basic_rasterization.ipynb">
-    <img src="/docs/images/teaser3.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser3.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -81,7 +81,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e04_vertex_buffers.ipynb">
-    <img src="/docs/images/teaser4.jpg" alt="drawing" width="200px"/>
+    <img src="./examples/teaser4.jpg" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -94,7 +94,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e05_obj_viewer.ipynb">
-    <img src="/docs/images/teaser5.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser5.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -107,7 +107,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e06_texture_mapping.ipynb">
-    <img src="/docs/images/teaser6.jpg" alt="drawing" width="200px"/>
+    <img src="./examples/teaser6.jpg" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -120,7 +120,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e07_basic_raytracing.ipynb">
-    <img src="/docs/images/teaser7.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser7.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -133,7 +133,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e08_shadow_cast.ipynb">
-    <img src="/docs/images/teaser8.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser8.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
@@ -146,7 +146,7 @@ with little overhead.
 <tr>
 <td>
     <a href="/examples/e09_whitted_raytracing.ipynb">
-    <img src="/docs/images/teaser9.webp" alt="drawing" width="200px"/>
+    <img src="./examples/teaser9.webp" alt="drawing" width="200px"/>
     </a>
 </td>
 <td>
