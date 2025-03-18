@@ -1,3 +1,5 @@
+import os
+
 try:
     import imgui
     __GUI_AVAILABLE__ = True
@@ -19,14 +21,26 @@ import numpy as _np
 
 __TRACE_WRAP__ = False
 
+__REPORTS__ = 0
+
+
+try:
+    os.removedirs('./vk_compiling_reports')
+except:
+    pass
+
+
 def compile_shader_source(code, stage, include_dirs):
     import subprocess
     import os
+    with open("last_code.comp", 'w') as f:
+        f.write(code)
+
     idirs = " ".join(" -I\"" + d + "\" " for d in include_dirs)
     if os.name == 'nt':  # Windows
         p = subprocess.Popen(
             os.path.expandvars(
-                '%VULKAN_SDK%/Bin/glslangValidator.exe --stdin -r -Os -V --target-env vulkan1.2 ').replace("\\", "/")
+                '%VULKAN_SDK%/Bin/glslangValidator.exe -Od --stdin -r -V --target-env vulkan1.3 ').replace("\\", "/")
             + f'-S {stage} {idirs}', stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
         outs, errs = p.communicate(code.encode('utf-8'))
@@ -35,9 +49,9 @@ def compile_shader_source(code, stage, include_dirs):
         import shlex
         p = subprocess.Popen(
             shlex.split(
-                os.path.expandvars('/usr/bin/glslangValidator --stdin -r -V --target-env vulkan1.3 ').replace("\\",
+                os.path.expandvars('/usr/bin/glslangValidator -Od --stdin -r -V --target-env vulkan1.3 ').replace("\\",
                                                                                                       "/")
-                + f'-S {stage} {idirs}'), stdin=subprocess.PIPE
+                + f'-S {stage} {idirs}'), stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
         outs, errs = p.communicate(code.encode('utf-8'))
     perr = p.wait()
@@ -46,6 +60,46 @@ def compile_shader_source(code, stage, include_dirs):
         print("[ERROR] Compilation failed")
         print(outs)
         raise RuntimeError(f"Cannot compile {numbered_code}")
+
+    # if os.name == 'nt':
+    #     p = subprocess.Popen(
+    #         os.path.expandvars(
+    #             f'%VULKAN_SDK%/Bin/spirv-opt.exe {stage}.spv --O --scalar-block-layout --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv').replace("\\", "/"))
+    # else:
+    #     import shlex
+    #     p = subprocess.Popen(
+    #         shlex.split(
+    #             os.path.expandvars(f'/usr/bin/spirv-opt {stage}.spv --O --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv --scalar-block-layout').replace("\\", "/"))
+    #     )
+
+    if os.name == 'nt':
+        p = subprocess.Popen(
+            os.path.expandvars(
+                f'%VULKAN_SDK%/Bin/spirv-opt.exe {stage}.spv --scalar-block-layout -o {stage}_opt.spv').replace("\\", "/"))
+    else:
+        import shlex
+        p = subprocess.Popen(
+            shlex.split(
+                os.path.expandvars(f'/usr/bin/spirv-opt {stage}.spv --scalar-block-layout -o {stage}_opt.spv').replace("\\", "/"))
+        )
+
+    perr = p.wait()
+    if perr != 0:
+        print("[ERROR] Optimization failed")
+        raise RuntimeError(f"Cannot optimize")
+
+    # if os.name == 'nt':
+    #     p = subprocess.Popen(
+    #         os.path.expandvars(
+    #             f'%VULKAN_SDK%/Bin/spirv-dis.exe {stage}_opt.spv').replace("\\", "/"))
+    # else:
+    #     import shlex
+    #     p = subprocess.Popen(
+    #         shlex.split(
+    #             os.path.expandvars(f'/usr/bin/spirv-dis {stage}_opt.spv').replace("\\", "/"))
+    #     )
+    # p.wait()
+
     with open(f'{stage}.spv', 'rb') as f:
         binary_output = f.read(-1)
     # print(code)
@@ -74,7 +128,7 @@ def compile_shader_source_file(filename, stage, binary_file_name, include_dirs=[
         )
     if p.wait() != 0:
         raise RuntimeError(f"Cannot compile {filename}")
-    # print(f'[INFO] Compiled... {filename}')
+    print(f'[INFO] Compiled... {filename}')
 
 
 __HEADER_LAST_MODIFIED_TIME__ = dict()

@@ -57,14 +57,14 @@ class Volumes:
     @classmethod
     @property
     def disney_cloud(cls):
-        return _torch.load(__DATASETS_PATH__ + "/vulky_data/disney_reduced.pt", map_location=_torch.device('cpu'))
+        return _torch.load(__DATASETS_PATH__ + "/vulky_data/disney_reduced.pt", map_location=_torch.device('cpu'), weights_only=True)
 
 
 class Images:
     @classmethod
     @property
     def environment_example(cls):
-        return _torch.load(__DATASETS_PATH__ + "/vulky_data/environment_0.pt", map_location=_torch.device('cpu'))
+        return _torch.load(__DATASETS_PATH__ + "/vulky_data/environment_0.pt", map_location=_torch.device('cpu'), weights_only=True)
 
 
 class Textures:
