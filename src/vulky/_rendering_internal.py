@@ -40,7 +40,7 @@ def compile_shader_source(code, stage, include_dirs):
     if os.name == 'nt':  # Windows
         p = subprocess.Popen(
             os.path.expandvars(
-                '%VULKAN_SDK%/Bin/glslangValidator.exe -Os --stdin -r -V --target-env vulkan1.3 ').replace("\\", "/")
+                '%VULKAN_SDK%/Bin/glslangValidator.exe --stdin -r -V --target-env vulkan1.3 ').replace("\\", "/")
             + f'-S {stage} {idirs}', stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
         outs, errs = p.communicate(code.encode('utf-8'))
@@ -49,7 +49,7 @@ def compile_shader_source(code, stage, include_dirs):
         import shlex
         p = subprocess.Popen(
             shlex.split(
-                os.path.expandvars('/usr/bin/glslangValidator -Os --stdin -r -V --target-env vulkan1.3 ').replace("\\",
+                os.path.expandvars('/usr/bin/glslangValidator --stdin -r -V --target-env vulkan1.3 ').replace("\\",
                                                                                                       "/")
                 + f'-S {stage} {idirs}'), stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
@@ -114,7 +114,7 @@ def compile_shader_source_file(filename, stage, binary_file_name, include_dirs=[
     if os.name == 'nt':  # Windows
         p = subprocess.Popen(
             os.path.expandvars(
-                '%VULKAN_SDK%/Bin/glslangValidator.exe -Os -r -V --target-env vulkan1.3 ').replace("\\", "/")
+                '%VULKAN_SDK%/Bin/glslangValidator.exe -r -V --target-env vulkan1.3 ').replace("\\", "/")
             + f'-S {stage} {idirs} \"{filename}\" -o \"{binary_file_name}\"'
         )
     else:  # Assuming Linux
@@ -122,7 +122,7 @@ def compile_shader_source_file(filename, stage, binary_file_name, include_dirs=[
         import shlex
         p = subprocess.Popen(
             shlex.split(
-                os.path.expandvars('/usr/bin/glslangValidator -Os -r -V --target-env vulkan1.3 ').replace("\\",
+                os.path.expandvars('/usr/bin/glslangValidator -r -V --target-env vulkan1.3 ').replace("\\",
                                                                                                       "/")
                 + f'-S {stage} {idirs} \"{filename}\" -o \"{binary_file_name}\"')
         )
