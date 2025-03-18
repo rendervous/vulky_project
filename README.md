@@ -1,44 +1,10 @@
 <img src="vulky_logo.png" alt="drawing" width="300px"/>
 
-<table>
-<tr>
-<td>
-<img src="./examples/teaser1.jpg" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser2.webp" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser3.webp" width="100px"/>
-</td>
-</tr>
-<tr>
-<td>
-<img src="./examples/teaser4.jpg" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser5.webp" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser6.jpg" width="100px"/>
-</td>
-</tr>
-<tr>
-<td>
-<img src="./examples/teaser7.webp" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser8.webp" width="100px"/>
-</td>
-<td>
-<img src="./examples/teaser9.webp" width="100px"/>
-</td>
-</tr>
-</table>
-
 Examples showing *vulky* and how to create rendering applications in few lines of code.
 Vulky exposes a simplified view of Vulkan API, but at the same time is compact, elegant and
-with little overhead.
+with little overhead. 
+
+[Go to Vulky documentation here.](https://rendervous.github.io/vulky_project/)
 
 <table>
 <tr> 
