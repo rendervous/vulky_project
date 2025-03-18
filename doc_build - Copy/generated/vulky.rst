@@ -1,6 +1,0 @@
-﻿vulky
-=====
-
-.. automodule:: vulky
-
-   
