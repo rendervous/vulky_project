@@ -431,15 +431,15 @@ class mat3(_GTensorBase):
         m = _torch.cat(
             [
                 cos_theta + ux ** 2 * (1 - cos_theta),
-                ux * uy * (1 - cos_theta) - uz * sin_theta,
-                ux * uz * (1 - cos_theta) + uy * sin_theta,
+                ux * uy * (1 - cos_theta) + uz * sin_theta,
+                ux * uz * (1 - cos_theta) - uy * sin_theta,
 
-                uy * ux * (1 - cos_theta) + uz * sin_theta,
+                uy * ux * (1 - cos_theta) - uz * sin_theta,
                 cos_theta + uy ** 2 * (1 - cos_theta),
-                uy * uz * (1 - cos_theta) - ux * sin_theta,
+                uy * uz * (1 - cos_theta) + ux * sin_theta,
 
-                uz * ux * (1 - cos_theta) - uy * sin_theta,
-                uz * uy * (1 - cos_theta) + ux * sin_theta,
+                uz * ux * (1 - cos_theta) + uy * sin_theta,
+                uz * uy * (1 - cos_theta) - ux * sin_theta,
                 cos_theta + uz ** 2 * (1 - cos_theta)
             ], dim=-1
         )
@@ -486,7 +486,10 @@ class mat3(_GTensorBase):
         )
 
     def inverse(self):
-        return mat4(_torch.linalg.inv(self))
+        return mat3(_torch.linalg.inv(self).contiguous())
+
+    def transposed(self):
+        return mat3(self.transpose(dim0=-1, dim1=-2).contiguous())
 
 
 class mat3x4(_GTensorBase):
@@ -542,15 +545,15 @@ class mat4x3(_GTensorBase):
         m = _torch.cat(
             [
                 cos_theta + ux ** 2 * (1 - cos_theta),
-                ux * uy * (1 - cos_theta) - uz * sin_theta,
-                ux * uz * (1 - cos_theta) + uy * sin_theta,
+                ux * uy * (1 - cos_theta) + uz * sin_theta,
+                ux * uz * (1 - cos_theta) - uy * sin_theta,
 
-                uy * ux * (1 - cos_theta) + uz * sin_theta,
+                uy * ux * (1 - cos_theta) - uz * sin_theta,
                 cos_theta + uy ** 2 * (1 - cos_theta),
-                uy * uz * (1 - cos_theta) - ux * sin_theta,
+                uy * uz * (1 - cos_theta) + ux * sin_theta,
 
-                uz * ux * (1 - cos_theta) - uy * sin_theta,
-                uz * uy * (1 - cos_theta) + ux * sin_theta,
+                uz * ux * (1 - cos_theta) + uy * sin_theta,
+                uz * uy * (1 - cos_theta) - ux * sin_theta,
                 cos_theta + uz ** 2 * (1 - cos_theta),
 
                 offset
@@ -577,15 +580,15 @@ class mat4x3(_GTensorBase):
 
 class mat4(_GTensorBase):
     @staticmethod
-    def inv_look_at(ori: vec3, dir: vec3, nor: vec3):
+    def inv_look_at(ori: vec3, target: vec3, up: vec3):
         ori, dir, nor = broadcast_args_to_max_batch(
             (ori, (3,)),
-            (dir, (3,)),
-            (nor, (3,))
+            (target, (3,)),
+            (up, (3,))
         )
         dev = ori.device
-        zaxis = dir
-        xaxis = vec3.normalize(vec3.cross(nor, zaxis))
+        zaxis = vec3.normalize(target - ori)
+        xaxis = vec3.normalize(vec3.cross(up, zaxis))
         yaxis = vec3.cross(zaxis, xaxis)
         exp_xaxis = _torch.cat([xaxis, _torch.zeros(*xaxis.shape[:-1], 1).to(dev)], dim=-1).unsqueeze(-2)
         exp_yaxis = _torch.cat([yaxis, _torch.zeros(*xaxis.shape[:-1], 1).to(dev)], dim=-1).unsqueeze(-2)
@@ -595,6 +598,9 @@ class mat4(_GTensorBase):
 
     @staticmethod
     def look_at(ori: vec3, target: vec3, up: vec3):
+        """
+        Return a view transformation matrix. Matrices are LH and row_major.
+        """
         ori, target, up = broadcast_args_to_max_batch(
             (ori, (3,)),
             (target, (3,)),
@@ -613,14 +619,45 @@ class mat4(_GTensorBase):
             yaxis, ty,
             zaxis, tz,
             zeros, zeros, zeros, ones
-                   ], dim=-1).view(*ori.shape[:-1], 4,4).transpose(dim0=-1, dim1=-2))
+                   ], dim=-1).view(*ori.shape[:-1], 4,4).transpose(dim0=-1,dim1=-2)).contiguous()
+
+    # @staticmethod
+    # def perspective(
+    #         fov: _typing.Union[float, _torch.Tensor]=_np.pi/4,
+    #         aspect: _typing.Union[float, _torch.Tensor]=1.0,
+    #         znear: _typing.Union[float, _torch.Tensor] = 0.001,
+    #         zfar: _typing.Union[float, _torch.Tensor] = 100):
+    #     all_floats = all(not isinstance(a, _torch.Tensor) for a in [fov, aspect, znear, zfar])
+    #     if all_floats:
+    #         fov = _torch.tensor([fov])
+    #     fov, aspect, znear, zfar = broadcast_args_to_max_batch(
+    #         (fov, (1,)),
+    #         (aspect, (1,)),
+    #         (znear, (1,)),
+    #         (zfar, (1,))
+    #     )
+    #
+    #     h = 1/_torch.tan(fov*0.5)
+    #     w = h * aspect
+    #     zeros = _torch.zeros_like(fov)
+    #     ones = _torch.ones_like(fov)
+    #     P = _torch.cat([
+    #         w, zeros, zeros, zeros,
+    #         zeros, h, zeros, zeros,
+    #         zeros, zeros, zfar/(zfar - znear), ones,
+    #         zeros, zeros, -znear*zfar/(zfar - znear), zeros
+    #     ], dim=-1).view(*fov.shape[:-1], 4, 4)
+    #     return mat4(P)
 
     @staticmethod
     def perspective(
-            fov: _typing.Union[float, _torch.Tensor]=_np.pi/4,
-            aspect: _typing.Union[float, _torch.Tensor]=1.0,
+            fov: _typing.Union[float, _torch.Tensor] = _np.pi / 4,
+            aspect: _typing.Union[float, _torch.Tensor] = 1.0,
             znear: _typing.Union[float, _torch.Tensor] = 0.001,
             zfar: _typing.Union[float, _torch.Tensor] = 100):
+        """
+        Returns a perspective transformation matrix. Matrices are LH and row_major.
+        """
         all_floats = all(not isinstance(a, _torch.Tensor) for a in [fov, aspect, znear, zfar])
         if all_floats:
             fov = _torch.tensor([fov])
@@ -631,16 +668,16 @@ class mat4(_GTensorBase):
             (zfar, (1,))
         )
 
-        h = 1/_torch.tan(fov*0.5)
-        w = h * aspect
+        h = 1 / _torch.tan(fov * 0.5)
+        w = h / aspect
         zeros = _torch.zeros_like(fov)
         ones = _torch.ones_like(fov)
         P = _torch.cat([
             w, zeros, zeros, zeros,
             zeros, h, zeros, zeros,
-            zeros, zeros, zfar/(zfar - znear), ones,
-            zeros, zeros, -znear*zfar/(zfar - znear), zeros
-        ], dim=-1).view(*fov.shape[:-1], 4, 4)
+            zeros, zeros, -zfar / (znear - zfar), ones,
+            zeros, zeros, zfar * znear / (znear - zfar), zeros
+        ], dim=-1).view(*fov.shape[:-1], 4, 4).contiguous() #.transpose(dim0=-1, dim1=-2)
         return mat4(P)
 
     def inverse(self):
@@ -670,17 +707,17 @@ class mat4(_GTensorBase):
         m = _torch.cat(
             [
                 cos_theta + ux ** 2 * (1 - cos_theta),
-                ux * uy * (1 - cos_theta) - uz * sin_theta,
-                ux * uz * (1 - cos_theta) + uy * sin_theta,
+                ux * uy * (1 - cos_theta) + uz * sin_theta,
+                ux * uz * (1 - cos_theta) - uy * sin_theta,
                 zeros,
 
-                uy * ux * (1 - cos_theta) + uz * sin_theta,
+                uy * ux * (1 - cos_theta) - uz * sin_theta,
                 cos_theta + uy ** 2 * (1 - cos_theta),
-                uy * uz * (1 - cos_theta) - ux * sin_theta,
+                uy * uz * (1 - cos_theta) + ux * sin_theta,
                 zeros,
 
-                uz * ux * (1 - cos_theta) - uy * sin_theta,
-                uz * uy * (1 - cos_theta) + ux * sin_theta,
+                uz * ux * (1 - cos_theta) + uy * sin_theta,
+                uz * uy * (1 - cos_theta) - ux * sin_theta,
                 cos_theta + uz ** 2 * (1 - cos_theta),
                 zeros,
 
@@ -689,7 +726,7 @@ class mat4(_GTensorBase):
             ], dim=-1
         ).view(*offset.shape[:-1], 4, 4)
         T = s @ m
-        return mat4(T)
+        return mat4(T.contiguous())
 
 
 def broadcast_args_to_max_batch(*args):

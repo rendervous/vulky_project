@@ -1165,6 +1165,7 @@ class PipelineWrapper:
                 VK_SHADER_STAGE_MISS_BIT_KHR,
                 VK_SHADER_STAGE_CALLABLE_BIT_KHR
             ]
+        self._number_of_viewports = 1
         self._saved_stages = []
         self.active_stage = 0  # vulkan flag bit for active stages
         self._set_active_vk_stages(self.__valid_stages)
@@ -1210,6 +1211,9 @@ class PipelineWrapper:
     @trace_destroying
     def __del__(self):
         self._vk_destroy()
+
+    def set_viewport_count(self, viewports: int):
+        self._number_of_viewports = viewports
 
     def _set_active_vk_stages(self, vk_stages: _typing.List[int]):
         st = 0
@@ -1487,7 +1491,7 @@ class PipelineWrapper:
                                                                          frontFace=VK_FRONT_FACE_COUNTER_CLOCKWISE
                                                                      ),
                                                                      pViewportState=VkPipelineViewportStateCreateInfo(
-                                                                         viewportCount=1,
+                                                                         viewportCount=self._number_of_viewports,
                                                                          scissorCount=1,
                                                                      ),
                                                                      pDynamicState=VkPipelineDynamicStateCreateInfo(
@@ -2196,7 +2200,7 @@ class CommandBufferWrapper:
         vkCmdSetViewport(
             self.vk_cmdList,
             0, 1,
-            [VkViewport(0.0, framebuffer.height, framebuffer.width, -framebuffer.height, 0.0, 1.0)]
+            [VkViewport(0.0, 0.0, framebuffer.width, framebuffer.height, 0.0, 1.0)]
         )
         vkCmdSetScissor(
             self.vk_cmdList,
@@ -2204,6 +2208,15 @@ class CommandBufferWrapper:
             [VkRect2D(VkOffset2D(0.0, 0.0), VkExtent2D(framebuffer.width, framebuffer.height))]
         )
         self.current_render_pass = framebuffer
+
+    def set_viewport(self, x0: float, y0: float, width: float, height: float, min_z: float = 0.0, max_z: float = 1.0, viewport_index: int = 0):
+        assert self.current_pipeline is not None
+        assert viewport_index < self.current_pipeline._number_of_viewports
+        vkCmdSetViewport(
+            self.vk_cmdList,
+            viewport_index, 1,
+            [VkViewport(float(x0), float(y0), float(width), float(height), float(min_z), float(max_z))]
+        )
 
     def update_constants(self, **fields):
         assert self.current_pipeline is not None, 'A Pipeline Object must be set first.'
@@ -2506,7 +2519,7 @@ class CommandPoolWrapper:
             vkQueueSubmit(self.vk_queue, 1,
                           self.single_submit_info_ptr
                           , self.submit_fence[self.submit_index])
-            vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(1e13))
+            vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(1e15))
             # vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(3e13))
             # self.submit_index = (self.submit_index + 1) % 128
             if self.submit_index == 127:
@@ -2725,7 +2738,7 @@ class DeviceWrapper:
         # Create a presentable render target
         rt_present = self.create_image(
             ImageType.TEXTURE_2D,
-            Format.PRESENTER,
+            Format.VEC4,
             False,
             (width, height, 1),
             1, 1,
@@ -2759,7 +2772,7 @@ class DeviceWrapper:
         # Creates the opengl texture sharing the memory of vulkan texture
         opengl_rt = self._create_opengl_texture_from_vk(rt_present.resource_data)
         import OpenGL.GL as GL
-        # GL.glEnable(GL.GL_FRAMEBUFFER_SRGB)
+        GL.glDisable(GL.GL_FRAMEBUFFER_SRGB)
 
         _self = self
 

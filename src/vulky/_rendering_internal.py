@@ -1336,6 +1336,10 @@ class GraphicsManager(ComputeManager):
     def set_framebuffer(self, framebuffer: FrameBuffer):
         self.w_cmdList.set_framebuffer(framebuffer)
 
+    def set_viewport(self, x0: float, y0: float, width: float, height: float, min_z: float = 0.0, max_z: float = 1.0,
+                     viewport_index: int = 0):
+        self.w_cmdList.set_viewport(x0, y0, width, height, min_z, max_z, viewport_index)
+
     @classmethod
     def get_queue_required(cls) -> int:
         return QueueType.GRAPHICS
@@ -1690,7 +1694,7 @@ class Window:
         self._stats_fps = 0
         self._stats_spf = 0
         self._last_time_enter  = 0
-        self._rt_present = Image(self.device, w_window.render_target, Layout.from_format(Format.PRESENTER))
+        self._rt_present = Image(self.device, w_window.render_target, Layout.from_format(Format.VEC4))
         self._image = device.create_image(image_type=ImageType.TEXTURE_2D, is_cube=False, image_format=format,
                             width=w_window.width, height=w_window.height, depth=1, mips=1, layers=1,
                             usage=ImageUsage.TRANSFER, memory=MemoryLocation.GPU)
@@ -1808,7 +1812,7 @@ layout(buffer_reference, scalar, buffer_reference_align=4) buffer float_ptr { fl
 vec4 compute_color(vec2 c)
 {
     int px = clamp(int(c.x * width), 0, width - 1);
-    int py = clamp(int((1 - c.y) * height), 0, height - 1);
+    int py = clamp(int(c.y * height), 0, height - 1);
     int pixel_offset = py * width + px;
     int byte_offset = pixel_offset * components * 4;
     vec4 color = vec4(1.0);

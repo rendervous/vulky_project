@@ -256,6 +256,17 @@ def save_video(t: _torch.Tensor, filename: str, fps: int = 20, **kwargs):
     torchvision.io.write_video(filename, t, fps, codec, options=kwargs)
 
 
+def notebook_show(filename: str):
+    from IPython.display import HTML, clear_output, display
+    import time
+    if filename.endswith('.webp'):
+        html = f"<img src='{filename}?{time.perf_counter()}' type='image/webp'>"
+        clear_output(wait=False)
+        display(HTML(html))
+    else:
+        raise NotImplemented("Not supported")
+
+
 def load_image(filename: str, with_alpha: bool = True) -> _torch.Tensor:
     import torchvision
     if with_alpha:
@@ -282,3 +293,27 @@ def load_video(filename: str):
     import torchvision.io
     return torchvision.io.read_video(filename)
 
+
+def _load_float_data_3D_from_xyz(path) -> _torch.Tensor:
+    import struct
+    with open(path, 'rb') as f:
+        width, height, depth = struct.unpack('iii', f.read(4 * 3))
+        resx, resy, resz = struct.unpack('ddd', f.read(8 * 3))
+        buffer = _torch.zeros(depth, height, width, 1)
+        data = buffer.numpy()
+        for x in range(width):
+            for y in range(height):
+                data[:, y, x, 0] = struct.unpack('f' * depth, f.read(4 * depth))
+    return buffer
+
+
+def load_volume(path: str) -> _torch.Tensor:
+    # if path.endswith('.raw'):
+    #     return _load_float_data_3D_from_raw(path)
+    if path.endswith('.xyz'):
+        return _load_float_data_3D_from_xyz(path)
+    # elif path.endswith('.cvol'):
+    #     return _load_float_data_3D_from_cvol(path)
+    # elif path.endswith('.vol'):
+    #     return _load_float_data_3D_from_vol(path)
+    raise Exception('Not format allowed')

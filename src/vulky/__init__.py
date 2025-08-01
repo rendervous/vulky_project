@@ -31,6 +31,7 @@ __all__ = [
     "load_image",
     "load_video",
     "load_texture",
+    "load_volume",
     "save_image",
     "save_video",
     "wrap_gpu",
