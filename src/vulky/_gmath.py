@@ -254,12 +254,14 @@ class _GTensorBase(_torch.Tensor, metaclass=GTensorMeta):
         return tensor_to_gtensor_if_possible((a*b).sum(-1, keepdim=True), dimension=0)
 
     @classmethod
-    def normalize(cls, v):
+    def normalize(cls, v, eps: float = 0.0):
         """
         Computes the normalized version of v.
         """
         assert cls.dimension == 1
-        return v / _torch.sqrt(cls.dot(v, v))
+        if eps == 0.0:
+            return v / _torch.sqrt(cls.dot(v, v))
+        return v / (_torch.sqrt(cls.dot(v, v)) + eps)
 
     @classmethod
     def rand(cls, *shape: int, device: _torch.device = _torch.device('cpu')):
@@ -595,6 +597,18 @@ class mat4(_GTensorBase):
         exp_zaxis = _torch.cat([zaxis, _torch.zeros(*xaxis.shape[:-1], 1).to(dev)], dim=-1).unsqueeze(-2)
         exp_ori = _torch.cat([ori, _torch.ones(*xaxis.shape[:-1], 1).to(dev)], dim=-1).unsqueeze(-2)
         return mat4(_torch.cat([exp_xaxis, exp_yaxis, exp_zaxis, exp_ori], dim=-2))
+
+    @staticmethod
+    def from_poses(camera_poses: _torch.Tensor) -> 'mat4':
+        """
+        Return a view transformation for each camera pose.
+        """
+        batch_shape = camera_poses.shape[:-1]
+        camera_poses = camera_poses.view(-1, 9)  # linearize
+        views = []
+        for c in camera_poses:
+            views.append(mat4.look_at(c[0:3], c[0:3]+c[3:6], c[6:9]))
+        return mat4(_torch.stack(views, dim=0).view(*batch_shape, 4, 4))
 
     @staticmethod
     def look_at(ori: vec3, target: vec3, up: vec3):

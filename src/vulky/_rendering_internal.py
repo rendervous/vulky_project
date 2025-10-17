@@ -33,8 +33,8 @@ except:
 def compile_shader_source(code, stage, include_dirs):
     import subprocess
     import os
-    with open("last_code.comp", 'w') as f:
-        f.write(code)
+    # with open("last_code.comp", 'w') as f:
+    #     f.write(code)
 
     idirs = " ".join(" -I\"" + d + "\" " for d in include_dirs)
     if os.name == 'nt':  # Windows
@@ -334,6 +334,7 @@ class ObjectBufferAccessor:
         object.__setattr__(self, '_rdv_memory', memory)
         object.__setattr__(self, '_rdv_layout', layout)
         object.__setattr__(self, '_rdv_fields', dict())
+        object.__setattr__(self, '_rdv_references', None)
         self._build()
 
     def _collect_references(self, s: set):
@@ -350,8 +351,12 @@ class ObjectBufferAccessor:
                 v._collect_references(s)
 
     def references(self) -> set:
+        cached_references = object.__getattribute__(self, '_rdv_references')
+        if cached_references is not None:
+            return cached_references
         s = set()
         self._collect_references(s)
+        object.__setattr__(self, '_rdv_references', s)
         return s
 
     def _build(self):
@@ -406,6 +411,7 @@ class ObjectBufferAccessor:
                 if value is None:
                     field_memory.cast('Q')[0] = 0
                     self._rdv_fields[key] = None  # save reference as a cached value
+                    object.__setattr__(self, '_rdv_references', None)
                     return
                 if isinstance(value, int):
                     field_memory.cast('Q')[0] = value
@@ -414,6 +420,7 @@ class ObjectBufferAccessor:
                 assert isinstance(value, GPUPtr), 'Invalid type, bind a GPUPtr object'
                 field_memory.cast('Q')[0] = value.device_ptr
                 self._rdv_fields[key] = value
+                object.__setattr__(self, '_rdv_references', None)
                 return
             field_memory.cast(field_layout.scalar_format)[0] = value
             self._rdv_fields[key] = value  # update cached value
@@ -1649,8 +1656,11 @@ class _GPUWrappingManager:
                     return w
         if self.hashed_wraps[entry] is None:
             self.hashed_wraps[entry] = weakref.WeakSet()
-        import gc
-        gc.collect()
+        import psutil
+        mem = psutil.virtual_memory()
+        if mem.percent > 80:
+            import gc
+            gc.collect()
         v = self.device().create_tensor(*t.shape, dtype=t.dtype)
         w = WrappedTensorPtr(obj, t, v, mode)
         if __TRACE_WRAP__:
@@ -1702,7 +1712,7 @@ class Window:
                                             BufferUsage.STORAGE, MemoryLocation.GPU)
         self._staging = self._buffer if self._buffer.w_resource.support_direct_tensor_map else \
                             device.create_buffer(w_window.width * w_window.height * Layout.from_format(format).aligned_size,
-                                            BufferUsage.STAGING, MemoryLocation.CPU)
+                                            BufferUsage.STAGING, MemoryLocation.GPU)
         self._tensor = self._staging.w_resource.as_tensor(_torch.float32).view(w_window.height, w_window.width, -1)
         # create managers for Tensor->Present, Buffer->Present, Image->Present
 
