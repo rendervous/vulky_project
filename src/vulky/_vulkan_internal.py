@@ -1,4 +1,6 @@
+import ctypes
 import enum as _enum
+
 from ._vulkan_memory_allocator import *
 from ._common import *
 import torch as _torch
@@ -103,7 +105,7 @@ __FORMAT_2_VK__ = [
 __MEMORY_LOCATION_2_VK__ = [
     0,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT # | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 ]
 
 
@@ -541,13 +543,12 @@ class ResourceData:
             return
         if src.is_buffer and not dst.is_buffer:
             regions = get_buffer_image_regions(src, src_slice, dst, dst_slice)
-            # dst.add_barrier(vk_cmdList, dst_slice, ResourceState(
-            #     vk_access=VK_ACCESS_TRANSFER_WRITE_BIT,
-            #     vk_stage=VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-            #     vk_layout=VK_IMAGE_LAYOUT_GENERAL
-            # ))
             vkCmdCopyBufferToImage(vk_cmdList, src.vk_resource, dst.vk_resource, VK_IMAGE_LAYOUT_GENERAL, len(regions),
                                    regions)
+            if dst.vk_description.usage & VK_IMAGE_USAGE_SAMPLED_BIT == VK_IMAGE_USAGE_SAMPLED_BIT:
+                dst.add_barrier(vk_cmdList, dst_slice,
+                                oldLayout=VK_IMAGE_LAYOUT_GENERAL,
+                                newLayout=VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
             return
         if not src.is_buffer and dst.is_buffer:
             regions = get_buffer_image_regions(dst, dst_slice, src, src_slice)
@@ -783,11 +784,14 @@ class ResourceWrapper:
         return self
 
     def _load_from_torch(self, w_device: 'DeviceWrapper', t: _torch.Tensor) -> 'ResourceWrapper':
-        if self.support_direct_tensor_map:
-            self_tensor = self.as_tensor(t.dtype).view(t.shape)
-            self_tensor.copy_(t)
+        # if self.support_direct_tensor_map:
+        #     self_tensor = self.as_tensor(t.dtype).view(t.shape)
+        #     self_tensor.copy_(t)
+        # else:
+        if self.resource_data.is_buffer:
+            self.resource_data.as_tensor(t.dtype, self.current_slice['offset'], self.current_slice['size']).view(t.shape).copy_(t)
         else:
-            staging_memory = MemoryLocation.GPU if t.device.type == 'cuda' and self.resource_data.w_memory.support_direct_tensor_map else MemoryLocation.CPU
+            staging_memory = MemoryLocation.CPU # MemoryLocation.GPU if t.device.type == 'cuda' and self.resource_data.w_memory.support_direct_tensor_map else MemoryLocation.CPU
             staging = w_device.create_buffer(self.size, BufferUsage.STAGING, staging_memory)
             staging.load(w_device, t)
             self.load(w_device, staging)
@@ -972,19 +976,21 @@ class DescriptorSetWrapper:
         )
 
     def _resolve_image_descriptor(self, image: _typing.Union[ResourceWrapper, None], sampler: _typing.Union[SamplerWrapper, None]):
-        if image is None:
-            return ResourceWrapper.image_null_descriptor()
+        # if image is None:
+        #     return ResourceWrapper.image_null_descriptor()
         return VkDescriptorImageInfo(
             sampler=sampler.vk_sampler if sampler is not None else None,
-            imageView=image.view,
+            imageView=image.view if image is not None else None,
             imageLayout=VK_IMAGE_LAYOUT_GENERAL
         )
 
-    def update(self, bindings: _typing.Dict[int, _typing.Union['ResourceWrapper', tuple['ResourceWrapper','SamplerWrapper'], _typing.List['ResourceWrapper'], _typing.List[_typing.Tuple['ResourceWrapper','SamplerWrapper']], None]]):
+    def update(self, bindings: _typing.Dict[int, _typing.Union['ResourceWrapper', tuple['ResourceWrapper','SamplerWrapper'], _typing.List['ResourceWrapper'], _typing.List[_typing.Tuple['ResourceWrapper','SamplerWrapper']], None]], start_index: int = 0):
         writes = []
         for binding, resource in bindings.items():
             if not isinstance(resource, list):
                 resource = [resource]
+            if len(resource) == 0:
+                continue  # skip empty array bindings
             descriptor_type = self.descriptor_types[binding]
             imageInfo = None
             bufferInfo = None
@@ -1006,7 +1012,7 @@ class DescriptorSetWrapper:
                 pNext=next_ads,
                 dstSet=self.descriptor_set_handle,
                 dstBinding=binding,
-                dstArrayElement=0,
+                dstArrayElement=start_index,
                 descriptorCount=len(resource), # if next_ads is None else 0,
                 descriptorType=descriptor_type,
                 pBufferInfo=bufferInfo,
@@ -1041,6 +1047,7 @@ class DescriptorSetCollectionWrapper:
 
         # counting descriptors by type
         counting_by_type = {
+            VK_DESCRIPTOR_TYPE_SAMPLER: 1,
             VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE: 1,
             VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: 1,
             VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: 1,
@@ -2463,15 +2470,35 @@ class CommandPoolWrapper:
         self.cmdLists = []
         self.queue_index = queue_index
         self.cmdList_array = ffi.new('struct VkCommandBuffer_T*[1]')
-        self.submit_fence = ffi.new('struct VkFence_T*[128]')
-        for i in range(128):
-            vkCreateFence(self.vk_device, VkFenceCreateInfo(), None, self.submit_fence[i:i+1])
-        self.submit_index = 0
-        self.single_submit_info = VkSubmitInfo(
-            commandBufferCount=1,
-            pCommandBuffers=self.cmdList_array
+        self.submit_semaphore = ffi.new('struct VkSemaphore_T*[1]')
+        sem_type = VkSemaphoreTypeCreateInfo(
+            semaphoreType=VK_SEMAPHORE_TYPE_TIMELINE,
+            initialValue=0
         )
+        self.timeline_counter = ffi.new("uint64_t*", 1)
+        vkCreateSemaphore(self.vk_device, VkSemaphoreCreateInfo(pNext=sem_type), None, self.submit_semaphore)
+        # self.submit_fence = ffi.new('struct VkFence_T*[128]')
+        # for i in range(128):
+        #     vkCreateFence(self.vk_device, VkFenceCreateInfo(), None, self.submit_fence[i:i+1])
+        # self.submit_index = 0
+        sem_submit = VkTimelineSemaphoreSubmitInfo(
+            signalSemaphoreValueCount=1,
+            pSignalSemaphoreValues=self.timeline_counter
+        )
+        self.single_submit_info = VkSubmitInfo(
+            pNext=sem_submit,
+            commandBufferCount=1,
+            pCommandBuffers=self.cmdList_array,
+            signalSemaphoreCount=1,
+            pSignalSemaphores=self.submit_semaphore
+        )
+        self.waiting_info = VkSemaphoreWaitInfo(
+                semaphoreCount=1,
+                pSemaphores=self.submit_semaphore,
+                pValues=self.timeline_counter
+            )
         self.single_submit_info_ptr = ffi.addressof(self.single_submit_info)
+        self.vkWaitSemaphores = vkGetDeviceProcAddr(self.vk_device, 'vkWaitSemaphoresKHR')
 
     def _vk_destroy(self):
         if self.device is None:
@@ -2480,8 +2507,9 @@ class CommandPoolWrapper:
             vkFreeCommandBuffers(self.vk_device, self.vk_pool, len(self.reusable), self.reusable)
         if self.vk_pool:
             vkDestroyCommandPool(self.vk_device, self.vk_pool, None)
-        for i in range(128):
-            vkDestroyFence(self.vk_device, self.submit_fence[i], None)
+        vkDestroySemaphore(self.vk_device, self.submit_semaphore[0], None)
+        # for i in range(128):
+        #     vkDestroyFence(self.vk_device, self.submit_fence[i], None)
         self.attached = []  # attached CommandBufferWrapper can be automatically flushed
         self.reusable = []  # commandlists have been submitted and finished that can be reused
         self.cmdLists = []
@@ -2518,15 +2546,17 @@ class CommandPoolWrapper:
         if wait_for_completation:
             vkQueueSubmit(self.vk_queue, 1,
                           self.single_submit_info_ptr
-                          , self.submit_fence[self.submit_index])
-            vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(1e15))
+                          , None)
+            self.vkWaitSemaphores(self.vk_device, self.waiting_info, int(1e15))
+            self.timeline_counter[0] += 1  # next time wait for next signal value
+            # vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(1e15))
             # vkWaitForFences(self.vk_device, 1, self.submit_fence[self.submit_index:self.submit_index+1], True, int(3e13))
             # self.submit_index = (self.submit_index + 1) % 128
-            if self.submit_index == 127:
-                self.submit_index = 0
-                vkResetFences(self.vk_device, 128, self.submit_fence)
-            else:
-                self.submit_index += 1
+            # if self.submit_index == 127:
+            #     self.submit_index = 0
+            #     vkResetFences(self.vk_device, 128, self.submit_fence)
+            # else:
+            #     self.submit_index += 1
             # vkQueueWaitIdle(self.vk_queue)
         else:
             vkQueueSubmit(self.vk_queue, 1,
@@ -2832,6 +2862,7 @@ class DeviceWrapper:
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
             "VK_KHR_buffer_device_address",
             "VK_KHR_shader_non_semantic_info",
+            "VK_KHR_timeline_semaphore"
             # "GLSL_EXT_ray_tracing",
             # "GLSL_EXT_ray_query",
             # "GLSL_EXT_ray_flags_primitive_culling",
@@ -2941,6 +2972,7 @@ class DeviceWrapper:
             descriptorBindingUniformTexelBufferUpdateAfterBind=True,
             descriptorBindingUpdateUnusedWhilePending=True,
             descriptorBindingSampledImageUpdateAfterBind=True,
+            timelineSemaphore=True,
             # shaderFloat16=True,
             # shaderSubgroupExtendedTypes=True,
             # vulkanMemoryModel=True,
@@ -3120,7 +3152,8 @@ class DeviceWrapper:
         feat_ads = VkPhysicalDeviceAccelerationStructureFeaturesKHR(pNext=feat_rob)
         feat_qrt = VkPhysicalDeviceRayQueryFeaturesKHR(pNext=feat_ads)
         feat_address = VkPhysicalDeviceBufferDeviceAddressFeatures(pNext=feat_qrt)
-        self.__physical_device_features2 = VkPhysicalDeviceFeatures2(pNext=feat_address)
+        feat_sem = VkPhysicalDeviceTimelineSemaphoreFeatures(pNext=feat_address, timelineSemaphore=True)
+        self.__physical_device_features2 = VkPhysicalDeviceFeatures2(pNext=feat_sem)
         vkGetPhysicalDeviceFeatures2 = vkGetInstanceProcAddr(self.__instance, 'vkGetPhysicalDeviceFeatures2KHR')
         vkGetPhysicalDeviceFeatures2(self.__physical_device, self.__physical_device_features2)
 
@@ -3129,7 +3162,8 @@ class DeviceWrapper:
         ads_prop=VkPhysicalDeviceAccelerationStructurePropertiesKHR(pNext=coop_prop)
         rt_prop = VkPhysicalDeviceRayTracingPipelinePropertiesKHR(pNext=ads_prop)
         vk12_prop = VkPhysicalDeviceVulkan12Properties(pNext=rt_prop)
-        prop = VkPhysicalDeviceProperties2(pNext=vk12_prop)
+        sem_prop = VkPhysicalDeviceTimelineSemaphoreProperties(pNext=vk12_prop)
+        prop = VkPhysicalDeviceProperties2(pNext=sem_prop)
         self.vkGetPhysicalDeviceProperties2(self.__physical_device, prop)
         self._vk12_prop = vk12_prop
         self._rt_prop = rt_prop
@@ -3355,6 +3389,7 @@ class DeviceWrapper:
         elif geometry_type == VK_GEOMETRY_TYPE_AABBS_KHR:
             aabbs = element_description
             data = VkAccelerationStructureGeometryKHR(
+                flags=0,
                 geometryType=geometry_type,
                 geometry=VkAccelerationStructureGeometryDataKHR(
                 aabbs=VkAccelerationStructureGeometryAabbsDataKHR(
@@ -3365,6 +3400,7 @@ class DeviceWrapper:
         else:
             instances = element_description
             data = VkAccelerationStructureGeometryKHR(
+                flags=0,
                 geometryType=geometry_type,
                 geometry=VkAccelerationStructureGeometryDataKHR(
                 instances=VkAccelerationStructureGeometryInstancesDataKHR(

@@ -1,5 +1,7 @@
 # from typing import Optional, Dict, Tuple, Literal, Union, List, TypeVar, Hashable
 import ctypes as _ctypes
+from functools import cached_property
+
 import torch as _torch
 import typing as _typing
 import numpy as _np
@@ -129,6 +131,10 @@ class ViewTensor(_torch.Tensor):
         super(ViewTensor, self).__init__()
         self.memory_owner = None
 
+    @cached_property
+    def device_ptr(self):
+        return self.memory_owner.cuda_to_device_ptr(self.data_ptr())
+
     def __deepcopy__(self, memodict={}):
         t = super(ViewTensor, self).__deepcopy__(memodict)
         t.memory_owner = self.memory_owner
@@ -137,8 +143,9 @@ class ViewTensor(_torch.Tensor):
     def __getitem__(self, item):
         t = super(ViewTensor, self).__getitem__(item)
         if isinstance(t, _torch.Tensor):
-            t = ViewTensor(t)
-            t.memory_owner = self.memory_owner
+            if t.is_contiguous():
+                t = ViewTensor(t)
+                t.memory_owner = self.memory_owner
         return t
 
     def detach(self):
@@ -151,11 +158,25 @@ class ViewTensor(_torch.Tensor):
         t.memory_owner = self.memory_owner
         return t
 
+    def squeeze(self, *args, **kwargs) -> 'ViewTensor':
+        t = ViewTensor(super(ViewTensor, self).squeeze(*args, **kwargs))
+        t.memory_owner = self.memory_owner
+        return t
+
+    def unsqueeze(self, *args, **kwargs) -> 'ViewTensor':
+        t = ViewTensor(super(ViewTensor, self).unsqueeze(*args, **kwargs))
+        t.memory_owner = self.memory_owner
+        return t
+
+
     __torch_function__ = _torch._C._disabled_torch_function_impl
 
     @staticmethod
     def from_blob(ptr: int, shape: _typing.Union[_typing.Tuple[int], _typing.List[int]], dtype: _torch.dtype, device: _torch.device, *, strides: _typing.Union[_typing.Tuple[int], _typing.List[int], None] = None, owner: object = None) -> 'ViewTensor':
-        if device.type == 'cpu':
+        if device.type == 'cuda':
+            data = wrap_cuda_ptr(ptr, shape, dtype, strides=strides)
+            v = ViewTensor(_torch.as_tensor(data, dtype=dtype, device=device))
+        elif device.type == 'cpu':
             nptype = {
                 _torch.int: _np.int32,
                 _torch.float: _np.float32,
@@ -165,9 +186,6 @@ class ViewTensor(_torch.Tensor):
             # wrap as cpu pointer
             data = _np.array(wrap_cpu_ptr(ptr, shape, dtype, strides=strides), dtype=nptype, copy=False)
             v = ViewTensor(_torch.from_numpy(data))
-        elif device.type == 'cuda':
-            data = wrap_cuda_ptr(ptr, shape, dtype, strides=strides)
-            v = ViewTensor(_torch.as_tensor(data, dtype=dtype, device=device))
         else:
             raise Exception("Not supported tensor device")
         v.memory_owner = owner
@@ -263,6 +281,7 @@ class Layout:
             }[declaration]
         except:
             self.scalar_format = 'B'
+        self.is_reference = self.scalar_format == 'Q'
 
     @staticmethod
     def fix_shape(shape, total):
@@ -400,8 +419,8 @@ class Layout:
             array_type = type[1]
             element_layout = Layout._build_layout_compact(array_type)
             return Layout._create_array_layout(
-                type, array_len*element_layout.size, 1,
-                element_layout, element_layout.size)
+                type, array_len*element_layout.aligned_size, 1,
+                element_layout, element_layout.aligned_size)
         if isinstance(type, dict):
             offset = 0
             fields = dict()
@@ -433,7 +452,7 @@ class Layout:
             array_len = type[0]
             array_type = type[1]
             element_layout = Layout._build_layout_scalar(array_type)
-            array_stride = Layout._align_size(element_layout.size, element_layout.alignment)
+            array_stride = Layout._align_size(element_layout.aligned_size, element_layout.alignment)
             return Layout._create_array_layout(type,
                                                array_len * array_stride,
                                                element_layout.alignment, element_layout,
@@ -477,7 +496,7 @@ class Layout:
             array_len = type[0]
             array_type = type[1]
             element_layout = Layout._build_layout_std430(array_type)
-            array_stride = Layout._align_size(element_layout.size, element_layout.alignment)
+            array_stride = Layout._align_size(element_layout.aligned_size, element_layout.alignment)
             return Layout._create_array_layout(type,
                                                array_len * array_stride,
                                                element_layout.alignment, element_layout,

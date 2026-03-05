@@ -1,14 +1,20 @@
+import os as _os
+
 from ._vulkan import *
 import ctypes as _ctypes
 import torch as _torch
 from ._common import ViewTensor, Layout, lazy_constant
+
+__DEBUG__ = _os.environ.get('VULKY_DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
 __SHOW_ALLOCATE_AND_FREES__ = False
 
 __CUDA_DEVICE__ = _torch.device('cuda:0')
 __CPU_DEVICE__ = _torch.device('cpu')
 __TORCH_DEVICE__ = __CUDA_DEVICE__ if _torch.cuda.is_available() else __CPU_DEVICE__
-
+"""
+Gets the closest memory to the vulkan device, prefering GPU memory if available
+"""
 
 def str_memory_size(size):
     if size < 1024:
@@ -68,10 +74,11 @@ class _Block:
 
 
 def _level_index_of(size):
-    import math
-    if size <= 1:
-        return int(size)
-    return int(math.log2(size) + 1)
+    return int(size).bit_length()
+    # import math
+    # if size <= 1:
+    #     return int(size)
+    # return int(math.log2(size) + 1)
 
 
 def _align(x: int, alignment):
@@ -89,7 +96,7 @@ class Allocator:
         self._free_blocks = [set() for s in range(_level_index_of(capacity)+1)]  # for specific size gives a list of free blocks
         self._occupied_blocks = {}  # offset to node
         self._free_blocks[-1].add(n_b)
-        self.locker = threading.Lock()
+        # self.locker = threading.Lock()
         self.used_memory = 0
 
     def not_core_path(self, line):
@@ -97,24 +104,30 @@ class Allocator:
 
     def malloc(self, size: int, alignment: int = 16) -> int:
         size = size + alignment - 1  # grant to find a suitable alignable offset
-        start_index = _level_index_of(size) + 1
-        with self.locker:
-            for l in range(start_index, len(self._free_blocks)):
-                if len(self._free_blocks[l]) > 0:  # Found a block
-                    node = self._free_blocks[l].pop()
-                    b : _Block = node.value
-                    assert b.size >= size, "Wrong implementation. Block was find in a level doesnt correspond with the size"
-                    new_free_block = _Block(b.offset+size, b.size-size, False, "Remain")
-                    b.size = size  #shrink block to allocated size
-                    b.occupied = True
-                    # b.stack_trace = "->".join(l for l in traceback.format_stack() if self.not_core_path(l))
-                    if new_free_block.size > 0: # left something free
-                        new_free_node = node.insert_after(new_free_block)
-                        self._free_blocks[_level_index_of(new_free_block.size)].add(new_free_node)
-                    aligned_offset = _align(b.offset, alignment)
-                    self._occupied_blocks[aligned_offset] = node
-                    self.used_memory += size
-                    return aligned_offset
+        start_index = _level_index_of(size) # + 1
+        # with self.locker:
+        for l in range(start_index, len(self._free_blocks)):
+            node = None
+            for n in self._free_blocks[l]:  # look for a compatible block
+                if n.value.size >= size:
+                    self._free_blocks[l].remove(n)
+                    node = n
+                    break
+            if node is None:  # No block found
+                continue
+            b : _Block = node.value
+            assert b.size >= size, "Wrong implementation. Block was find in a level doesnt correspond with the size"
+            new_free_block = _Block(b.offset+size, b.size-size, False, "Remain")
+            b.size = size  #shrink block to allocated size
+            b.occupied = True
+            # b.stack_trace = "->".join(l for l in traceback.format_stack() if self.not_core_path(l))
+            if new_free_block.size > 0: # left something free
+                new_free_node = node.insert_after(new_free_block)
+                self._free_blocks[_level_index_of(new_free_block.size)].add(new_free_node)
+            aligned_offset = _align(b.offset, alignment)
+            self._occupied_blocks[aligned_offset] = node
+            self.used_memory += size
+            return aligned_offset
         raise Exception("Out of Memory, can not fit the allocation size")
 
     def free(self, ptr: int):
@@ -326,7 +339,6 @@ class VulkanMemoryPage:
         self.memory_cpu_buffer[dst_offset:dst_offset + size] = src
 
     def destroy(self):
-        import os
         self.memory_as_tensor = None
         if self.vk_memory is None:
             return
@@ -335,7 +347,7 @@ class VulkanMemoryPage:
         if self.is_cpu:
             vkUnmapMemory(self.vk_device, self.vk_memory)
         if self.is_gpu:
-            if os.name == 'nt':
+            if _os.name == 'nt':
                 if self.memory_vk_handle is not None and ffi.NULL != self.memory_vk_handle:
                     _ctypes.windll.kernel32.CloseHandle(int(ffi.cast('long', self.memory_vk_handle)))
                     # win32api.CloseHandle(int(ffi.cast('long', vk_handle)))
@@ -411,7 +423,7 @@ class VulkanMemory:
         return self.offset
 
     def to_tensor(self, *shape: int, dtype: _torch.dtype) -> ViewTensor:
-        return ViewTensor.from_blob(self.cuda_ptr, shape, dtype, __TORCH_DEVICE__, owner=self)
+        return ViewTensor.from_blob(self.cuda_ptr, shape, dtype, __TORCH_DEVICE__ if not self.is_cpu else _torch.device('cpu'), owner=self)
 
     def as_tensor(self, dtype, offset, size):
         type_size = Layout.scalar_size(dtype)
@@ -457,7 +469,7 @@ class VulkanAllocator:
     def __init__(self, vk_device, memory_index: int, memory_properties):
         self.pages = []
         self.vk_device = vk_device
-        self.is_cpu = bool(memory_properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        self.is_cpu = bool(memory_properties & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
         self.is_gpu = bool(memory_properties & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
         self.is_gpu_dedicated = self.is_gpu and not self.is_cpu
         self.reserved_memory = 0
@@ -469,8 +481,9 @@ class VulkanAllocator:
         import math
         # Here a new page is required
         # 64MB minimum for host memory or 1GB minimum on the GPU
-        page_capacity = int(max(1 * 1024 ** 3, 2 ** int(math.log2(size + alignment) + 1)))
-        # print(f"[INFO] Creating page with {page_capacity // (1 << 20)}MB on {'CPU' if self.is_cpu else 'GPU'}")
+        page_capacity = int(max(2 * 1024 ** 3, 2 ** int(math.log2(size + alignment) + 1)))
+        if __DEBUG__:
+            print(f"[INFO] Creating page with {page_capacity // (1 << 20)}MB on {'CPU' if self.is_cpu else 'GPU'}")
         page = VulkanMemoryPage(self.vk_device, page_capacity, self.memory_index, self.is_cpu, self.is_gpu)
         self.reserved_memory += page_capacity
         self.pages.append(page)
@@ -539,7 +552,7 @@ class VulkanMemoryManager:
         mem_reqs = vkGetBufferMemoryRequirements(self.vk_device, tensor_buffer_prototype)
         vkDestroyBuffer(self.vk_device, tensor_buffer_prototype, None)
         self.tensor_gpu_index = self.__findMemoryType(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
-        self.tensor_cpu_index = self.__findMemoryType(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        self.tensor_cpu_index = self.__findMemoryType(mem_reqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
         if self.tensor_cpu_index not in self.allocators:
             self.allocators[self.tensor_cpu_index] = VulkanAllocator(self.vk_device, self.tensor_cpu_index, self.mem_properties.memoryTypes[self.tensor_cpu_index].propertyFlags)
         if self.tensor_gpu_index not in self.allocators:

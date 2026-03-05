@@ -1,4 +1,8 @@
 import os
+from typing import Any
+import time as _time
+
+import torch
 
 try:
     import imgui
@@ -33,8 +37,8 @@ except:
 def compile_shader_source(code, stage, include_dirs):
     import subprocess
     import os
-    # with open("last_code.comp", 'w') as f:
-    #     f.write(code)
+    with open("last_code.comp", 'w') as f:
+        f.write(code)
 
     idirs = " ".join(" -I\"" + d + "\" " for d in include_dirs)
     if os.name == 'nt':  # Windows
@@ -59,19 +63,24 @@ def compile_shader_source(code, stage, include_dirs):
         numbered_code = '\n'.join(f"{i+1}\t\t{l}" for i,l in enumerate(code.split('\n')))
         print("[ERROR] Compilation failed")
         print(outs)
+        print(errs)
         raise RuntimeError(f"Cannot compile {numbered_code}")
 
     # if os.name == 'nt':
     #     p = subprocess.Popen(
     #         os.path.expandvars(
-    #             f'%VULKAN_SDK%/Bin/spirv-opt.exe {stage}.spv --O --scalar-block-layout --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv').replace("\\", "/"))
+    #             f'%VULKAN_SDK%/Bin/spirv-opt.exe {stage}.spv --Os --scalar-block-layout --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv').replace("\\", "/"))
     # else:
     #     import shlex
     #     p = subprocess.Popen(
     #         shlex.split(
-    #             os.path.expandvars(f'/usr/bin/spirv-opt {stage}.spv --O --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv --scalar-block-layout').replace("\\", "/"))
+    #             os.path.expandvars(f'/usr/bin/spirv-opt {stage}.spv --Os --eliminate-local-single-block --eliminate-local-multi-store --inline-entry-points-exhaustive -o {stage}_opt.spv --scalar-block-layout').replace("\\", "/"))
     #     )
-
+    # perr = p.wait()
+    # if perr != 0:
+    #     print("[ERROR] Optimization failed")
+    #     raise RuntimeError(f"Cannot optimize")
+    #
     # if os.name == 'nt':
     #     p = subprocess.Popen(
     #         os.path.expandvars(
@@ -83,10 +92,7 @@ def compile_shader_source(code, stage, include_dirs):
     #             os.path.expandvars(f'/usr/bin/spirv-opt {stage}.spv --scalar-block-layout -o {stage}_opt.spv').replace("\\", "/"))
     #     )
     #
-    # perr = p.wait()
-    # if perr != 0:
-    #     print("[ERROR] Optimization failed")
-    #     raise RuntimeError(f"Cannot optimize")
+
 
     # if os.name == 'nt':
     #     p = subprocess.Popen(
@@ -329,11 +335,14 @@ class ObjectBufferAccessor:
     _rdv_memory: memoryview = None      # memory of the whole object
     _rdv_layout: Layout = None      # layout for the whole object
     _rdv_fields: dict = None      # gets precomputed accessors, tensors or references
+    _rdv_fields_memory: dict = None  # gets precomputed cast memory when fields are scalar
+    _rdv_references = None       # cached references
 
     def __init__(self, memory: memoryview, layout: Layout):
         object.__setattr__(self, '_rdv_memory', memory)
         object.__setattr__(self, '_rdv_layout', layout)
         object.__setattr__(self, '_rdv_fields', dict())
+        object.__setattr__(self, '_rdv_fields_memory', dict())
         object.__setattr__(self, '_rdv_references', None)
         self._build()
 
@@ -351,9 +360,8 @@ class ObjectBufferAccessor:
                 v._collect_references(s)
 
     def references(self) -> set:
-        cached_references = object.__getattribute__(self, '_rdv_references')
-        if cached_references is not None:
-            return cached_references
+        if self._rdv_references is not None:
+            return self._rdv_references
         s = set()
         self._collect_references(s)
         object.__setattr__(self, '_rdv_references', s)
@@ -376,13 +384,15 @@ class ObjectBufferAccessor:
             self._rdv_fields[item] = s
             return s
         if field_layout.is_scalar:
-            value = field_memory.cast(field_layout.scalar_format)[0]
+            field_memory = field_memory.cast(field_layout.scalar_format)
+            value = field_memory[0]
             if field_layout.scalar_format == 'Q':
                 assert value == 0, 'Can not build a reference from non-null memory info'
                 value = None  # Special None case for reference types
             self._rdv_fields[item] = value
+            self._rdv_fields_memory[item] = field_memory
             return value
-        t = _torch.frombuffer(field_memory, dtype=field_layout.element_layout.declaration)
+        t = _torch.frombuffer(field_memory, count=field_layout.aligned_size // field_layout.element_layout.aligned_size, dtype=field_layout.element_layout.declaration)
         tensor_type = field_layout.declaration
         if field_layout.is_vector:  # possible vec4 to vec3
             t = t[0:tensor_type.tensor_shape[0]]
@@ -392,66 +402,41 @@ class ObjectBufferAccessor:
         self._rdv_fields[item] = value
         return value
 
-    @staticmethod
-    def _equal_values(field_layout: Layout, v1: _typing.Any, v2: _typing.Any):
-        if field_layout.is_scalar:
-            if field_layout.scalar_format == 'Q':
-                return v1 is v2
-            return v1 == v2
-        return v1 is v2 # or _torch.all(v1 == v2).item()
+    def __getattr__(self, item):
+        # layout = object.__getattribute__(self, '_rdv_layout')
+        # assert self._rdv_layout.is_structure
+        return self._rdv_fields[item]
 
-    def _set_element(self, key, offset, field_layout, value):
-        assert not field_layout.is_structure and not field_layout.is_array
-        current_value = self._rdv_fields[key]
-        if ObjectBufferAccessor._equal_values(field_layout, current_value, value):
-            return
+    def _set_element(self, key, field_layout, value):
         if field_layout.is_scalar:
-            field_memory = self._rdv_memory[offset: offset + field_layout.aligned_size]
-            if field_layout.scalar_format == 'Q':  #reference type
-                if value is None:
-                    field_memory.cast('Q')[0] = 0
-                    self._rdv_fields[key] = None  # save reference as a cached value
-                    object.__setattr__(self, '_rdv_references', None)
-                    return
-                if isinstance(value, int):
-                    field_memory.cast('Q')[0] = value
-                    self._rdv_fields[key] = value  # save reference as a cached value
-                    return
-                assert isinstance(value, GPUPtr), 'Invalid type, bind a GPUPtr object'
-                field_memory.cast('Q')[0] = value.device_ptr
-                self._rdv_fields[key] = value
-                object.__setattr__(self, '_rdv_references', None)
-                return
-            field_memory.cast(field_layout.scalar_format)[0] = value
             self._rdv_fields[key] = value  # update cached value
+            field_memory = self._rdv_fields_memory[key] #  memory[offset: offset + field_layout.aligned_size]
+            if field_layout.is_reference:  # a reference type
+                object.__setattr__(self, '_rdv_references', None)  # clear cached references
+                field_memory[0] = value.device_ptr
+            else:
+                field_memory[0] = value
             return
         # else update tensor value
-        current_value[:] = value
-
-    def __getattr__(self, item):
-        assert self._rdv_layout.is_structure
-        if item in self._rdv_fields:
-            return self._rdv_fields[item]
-        raise AttributeError(item)
+        self._rdv_fields[key][:] = value
 
     def __setattr__(self, key, value):
-        assert self._rdv_layout.is_structure
-        offset, field_layout = self._rdv_layout.fields_layout[key]
-        self._set_element(key, offset, field_layout, value)
+        _, field_layout = self._rdv_layout.fields_layout[key]
+        self._set_element(key, field_layout, value)
 
     def __getitem__(self, item):
-        assert self._rdv_layout.is_array
+        if not item in self._rdv_fields:
+            raise IndexError()
         return self._rdv_fields[item]
 
     def __len__(self):
-        assert self._rdv_layout.is_array
+        if not self._rdv_layout.is_array:
+            return 0
         return self._rdv_layout.aligned_size // self._rdv_layout.array_stride
 
     def __setitem__(self, key, value):
-        assert self._rdv_layout.is_array
         field_layout = self._rdv_layout.element_layout
-        offset = key * field_layout.aligned_size
-        return self._set_element(key, offset, field_layout, value)
+        return self._set_element(key, field_layout, value)
 
 
 class Buffer(Resource):
@@ -492,11 +477,12 @@ class Buffer(Resource):
         return self.w_resource.bytes
 
     def __repr__(self):
-        if self.w_resource.resource_data.support_direct_tensor_map:
-            return repr(self.w_resource.as_tensor(_torch.uint8))
-        stag = self.device.create_buffer(min(4*32, self.size), BufferUsage.STAGING, MemoryLocation.CPU)
-        self.slice(0, stag.size).save(stag)
-        return repr(_np.asarray(stag.memory.cast('f')))
+        return f"buffer({self.size})"
+        # if self.w_resource.resource_data.support_direct_tensor_map:
+        #     return repr(self.w_resource.as_tensor(_torch.uint8))
+        # stag = self.device.create_buffer(min(4*32, self.size), BufferUsage.STAGING, MemoryLocation.CPU)
+        # self.slice(0, stag.size).save(stag)
+        # return repr(_np.asarray(stag.memory.cast('f')))
 
 
 class ObjectBuffer(Buffer):
@@ -538,12 +524,21 @@ class StructuredBufferAccess:
     """
     Auxiliary class to access structured buffers.
     """
+    _rdv_memory = None
+    _rdv_layout = None
+    _rdv_structure_stride = 0
+    _rdv_offset = 0
+    _rdv_fields = None
+
     def __init__(self, memory: memoryview, structure_stride: int, offset: int, structure_layout: Layout):
         object.__setattr__(self, '_rdv_memory', memory)  # All buffer memory
         object.__setattr__(self, '_rdv_layout', structure_layout)  # the layout of a single element structure
         object.__setattr__(self, '_rdv_structure_stride', structure_stride)  # the structure stride
         object.__setattr__(self, '_rdv_offset', offset)  # the offset for a specific element in the whole struct
         object.__setattr__(self, '_rdv_fields', dict())  #cached fields converted into tensors
+
+    def __repr__(self):
+        return f"StructureAccessor {self._rdv_memory}"
 
     @staticmethod
     def build_accessor(memory: memoryview, stride: int, offset: int, layout: Layout):
@@ -554,7 +549,7 @@ class StructuredBufferAccess:
         scalar_size = Layout.scalar_size(torch_dtype)
         element_offset = offset // scalar_size
         element_count = layout.aligned_size // scalar_size
-        t = _torch.frombuffer(memory, dtype=torch_dtype).view(-1, stride // scalar_size)[:, element_offset:element_offset + element_count]
+        t = _torch.frombuffer(memory, dtype=torch_dtype, count=memory.nbytes // scalar_size).view(-1, stride // scalar_size)[:, element_offset:element_offset + element_count]
         if layout.is_scalar:
             return t
         tensor_type = layout.declaration
@@ -604,16 +599,27 @@ class StructuredBufferAccess:
         offset, layout = self._rdv_layout.fields_layout[key]
         self._set_subelement(offset, layout, value)
 
+    def __len__(self):
+        if self._rdv_layout.is_array:
+            return self._rdv_layout.aligned_size // self._rdv_layout.element_layout.aligned_size
+        return 0
+
     def __getitem__(self, item):
-        assert self._rdv_layout.is_array
-        assert isinstance(item, int), 'Can not index with slice or anything else.'
+        if not self._rdv_layout.is_array:
+            raise IndexError("Not indexable here")
+        if not isinstance(item, int):
+            raise IndexError('Can not index with slice or anything else.')
         size = self._rdv_layout.element_layout.aligned_size
         offset = size * item
+        if offset >= self._rdv_layout.aligned_size:
+            raise IndexError('Index outside array')
         return self._get_subelement(offset, self._rdv_layout.element_layout)
 
     def __setitem__(self, key, value):
-        assert isinstance(key, int), 'Can not index with slice or anything else'
-        assert self._rdv_layout.is_array
+        if not self._rdv_layout.is_array:
+            raise IndexError("Not indexable here")
+        if not isinstance(key, int):
+            raise IndexError('Can not index with slice or anything else.')
         size = self._rdv_layout.element_layout.aligned_size
         offset = size * key
         return self._set_subelement(offset, self._rdv_layout.element_layout, value)
@@ -636,6 +642,8 @@ class StructuredBuffer(Buffer):
         assert w_buffer.size % layout.aligned_size == 0
         super(StructuredBuffer, self).__init__(device, w_buffer)
         self.layout = layout
+        if self.w_resource.resource_data.is_cpu:
+            self.accessor = StructuredBufferAccess(self.memory, self.layout.aligned_size, 0, self.layout)
 
     def map(self, mode: _typing.Literal['in', 'out', 'inout'], clear: bool = False):
         """
@@ -659,14 +667,19 @@ class StructuredBuffer(Buffer):
         if clear:
             staging.clear()
         class Context:
+            def __init__(self, b):
+                self.b = b
             def __enter__(self):
                 if mode == 'out' or mode == 'inout':
-                    _self.save(staging)
-                return StructuredBufferAccess(staging.memory, _self.layout.aligned_size, 0, _self.layout)
+                    self.b.save(staging)
+                return StructuredBufferAccess(staging.memory, self.b.layout.aligned_size, 0, self.b.layout)
             def __exit__(self, exc_type, exc_val, exc_tb):
                 if mode == 'in' or mode == 'inout':
-                    _self.load(staging)
-        return Context()
+                    self.b.load(staging)
+        return Context(self)
+
+    def direct_map(self):
+        return self.accessor
 
 
 # class ResourceAccess:
@@ -990,7 +1003,7 @@ class DescriptorSet:
         self.w_ds = w_ds
         self.layout_reference_name = layout_reference_names
 
-    def update(self, **bindings: _typing.Union['Resource', _typing.List['Resource'], _typing.Tuple['Resource', 'Sampler']]):
+    def update(self, array_start_index: int = 0, **bindings: _typing.Union['Resource', _typing.List['Resource'], _typing.Tuple['Resource', 'Sampler']]):
         """
         Updates the descriptors for bindings in the descriptor set.
         Notice that grouping bindings updates in a single call might lead to better performance.
@@ -1009,6 +1022,7 @@ class DescriptorSet:
         >>>     environment=my_environment_image
         >>> )
         """
+        assert array_start_index == 0 or len(bindings) <= 1, 'Can only specify array_start_index when updating a single binding'
         def convert_to_wrapped(r: _typing.Union['Resource', _typing.List['Resource'], _typing.Tuple['Resource', 'Sampler']]):
             if r is None:
                 return r
@@ -1016,14 +1030,14 @@ class DescriptorSet:
                 return (convert_to_wrapped(r[0]), r[1])  # sampler element in the tuple is already the wrapper version
             if isinstance(r, list):
                 return [convert_to_wrapped(a) for a in r]
-            return r.w_resource
+            return r.w_resource if not isinstance(r, Sampler) else r
         to_update = {}
         for k, v in bindings.items():
             assert k in self.layout_reference_name
             set, binding = self.layout_reference_name[k]
             assert set == self.w_ds.set
             to_update[binding] = convert_to_wrapped(v)
-        self.w_ds.update(to_update)
+        self.w_ds.update(to_update, start_index=array_start_index)
 
 
 class DescriptorSetCollection:
@@ -1035,6 +1049,8 @@ class DescriptorSetCollection:
         return len(self.w_dsc.desc_sets_wrappers)
 
     def __getitem__(self, item):
+        if not (isinstance(item, int) and item >= 0 and item < len(self.w_dsc.desc_sets_wrappers)):
+            raise IndexError()
         return DescriptorSet(self.w_dsc.desc_sets_wrappers[item], self.layout_reference_names)
 
 
@@ -1539,6 +1555,7 @@ class GPUPtr:
         self.device_ptr = device_ptr
         self.obj = obj
         self.is_direct = is_direct
+        self.references = 1
 
     def flush(self):
         raise NotImplementedError()
@@ -1549,8 +1566,18 @@ class GPUPtr:
     def mark_as_dirty(self):
         raise NotImplementedError()
 
-    def update_mode(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
-        raise NotImplementedError()
+    def add_usage(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
+        self.references += 1
+
+    def unwrap(self) -> _typing.Any:
+        assert self.references > 0, "Can not unwrap anymore"
+        self.mark_as_dirty()
+        self.invalidate()
+        self.references -= 1
+        obj = self.obj
+        if self.references == 0:
+            self.obj = None  # release reference to avoid hanging memory
+        return obj
 
 
 class DirectGPUPtr(GPUPtr):
@@ -1573,13 +1600,17 @@ class DirectGPUPtr(GPUPtr):
     def mark_as_dirty(self):
         pass
 
-    def update_mode(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
-        pass
+    def add_usage(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
+        return
+
+    def unwrap(self) -> _typing.Any:
+        return self.obj
 
 
 class WrappedTensorPtr(GPUPtr):
-    def __init__(self, obj: _typing.Any, t: _torch.Tensor, v: ViewTensor, mode: _typing.Literal['in', 'out', 'inout']):
+    def __init__(self, manager: '_GPUWrappingManager', obj: _typing.Any, t: _torch.Tensor, v: ViewTensor, mode: _typing.Literal['in', 'out', 'inout']):
         super(WrappedTensorPtr, self).__init__(v.memory_owner.device_ptr, obj, is_direct=False)
+        self.manager = manager
         self.cpu_tensor = t
         self.gpu_backend = v
         self.mode = mode
@@ -1590,17 +1621,21 @@ class WrappedTensorPtr(GPUPtr):
             self.gpu_version = t._version
         # self.mark_as_dirty()  # automatic assumed dirty after map since common use is to call invalidate after submit.
 
-    def update_mode(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
+    def unwrap(self) -> _typing.Any:
+        obj = super().unwrap()
+        if self.references == 0:
+            self.manager.release(self)
+            self.cpu_tensor = None
+            self.gpu_backend = None
+        return obj
+
+    def add_usage(self, additional_mode: _typing.Literal['in', 'out', 'inout']):
+        super().add_usage(additional_mode)
         if self.mode == additional_mode or self.mode == 'inout':
             return
         if additional_mode == 'in':
             self.flush()
         self.mode = 'inout'
-
-    # def __del__(self):
-    #     if self.mode == 'out' or self.mode == 'inout':
-    #         self.mark_as_dirty()
-    #         self.invalidate()
 
     def mark_as_dirty(self):
         if self.mode == 'out' or self.mode == 'inout':
@@ -1627,42 +1662,62 @@ class _GPUWrappingManager:
         import weakref
         self.device = weakref.ref(device)
         self.hashed_wraps : _typing.List[_typing.Optional[weakref.WeakSet]] = [None] * 10013
+        self.unused_tensors = { }
+
+    def release(self, w):
+        key = (w.gpu_backend.shape, w.gpu_backend.dtype)
+        if key not in self.unused_tensors:
+            self.unused_tensors[key] = []
+        self.unused_tensors[key].append(w.gpu_backend)
+        t = w.cpu_tensor
+        code = t.data_ptr() ^ t.numel()  # id(t)
+        entry = code % len(self.hashed_wraps)
+        if self.hashed_wraps[entry] is not None:
+            self.hashed_wraps[entry].remove(w)
 
     def wrap_gpu(self, t: _typing.Any, mode: _typing.Literal['in', 'out', 'inout']) -> GPUPtr:
         import os
         import weakref
-        import torch.cuda
         if t is None:
             return DirectGPUPtr.null()
         obj = t
         if hasattr(t, '__bindable__'):
             t = t.__bindable__
-        if isinstance(t, Buffer):
+        if hasattr(t, 'device_ptr'): # or isinstance(t, ViewTensor) and isinstance(t.memory_owner, VulkanMemory) or isinstance(t, Buffer):
             return DirectGPUPtr(t.device_ptr, obj)
-        if isinstance(t, ViewTensor) and isinstance(t.memory_owner, VulkanMemory):
-            return DirectGPUPtr(t.memory_owner.cuda_to_device_ptr(t.data_ptr()), obj)
+        if isinstance(t, int):
+            return DirectGPUPtr(t,  obj)
         assert isinstance(t, _torch.Tensor), f'Type {type(obj)} can not be wrapped on the GPU'
-        if os.name == 'nt' and _torch.cuda.is_available() and t.is_contiguous() and t.is_cuda:
-           return DirectGPUPtr(t.data_ptr(), t)
+        # if os.name == 'nt' and _torch.cuda.is_available() and t.is_contiguous() and t.is_cuda:
+        #    return DirectGPUPtr(t.data_ptr(), t)
         code = t.data_ptr() ^ t.numel() #id(t)
         entry = code % len(self.hashed_wraps)
         if self.hashed_wraps[entry] is not None:
             for w in self.hashed_wraps[entry]:
                 if w.obj.data_ptr() == t.data_ptr():
+                    assert w.obj.numel() == t.numel(), "Can not wrap concurrently two different sized views of the same memory."
                     if __TRACE_WRAP__:
                         print(f"[WARNING] Collision {t.shape} with mode {mode} from mode {w.mode}")
-                    w.update_mode(mode)
+                    w.add_usage(mode)
                     # w.flush()
                     return w
-        if self.hashed_wraps[entry] is None:
+        else:
             self.hashed_wraps[entry] = weakref.WeakSet()
-        import psutil
-        mem = psutil.virtual_memory()
-        if mem.percent > 80:
-            import gc
-            gc.collect()
-        v = self.device().create_tensor(*t.shape, dtype=t.dtype)
-        w = WrappedTensorPtr(obj, t, v, mode)
+
+        key = (t.shape, t.dtype)
+        if key in self.unused_tensors:
+            v = self.unused_tensors[key].pop()
+            if len(self.unused_tensors[key]) == 0:
+                del self.unused_tensors[key]
+        else:
+            import psutil
+            mem = psutil.virtual_memory()
+            if mem.percent > 80:
+                self.unused_tensors.clear()
+                import gc
+                gc.collect()
+            v = self.device().create_tensor(*t.shape, dtype=t.dtype)
+        w = WrappedTensorPtr(self, obj, t, v, mode)
         if __TRACE_WRAP__:
             print(f"[WARNING] wrapped tensor of {t.shape} elements")
         self.hashed_wraps[entry].add(w)
@@ -1700,6 +1755,8 @@ class Window:
 
     def __init__(self, device: 'DeviceManager', w_window: _internal.WindowWrapper, format: Format):
         self.w_window = w_window
+        self.width = w_window.width
+        self.height  = w_window.height
         self.device = device
         self._stats_fps = 0
         self._stats_spf = 0
@@ -1745,18 +1802,16 @@ class Window:
             self._timer = 0
 
         def __enter__(self):
-            import time
             self.w_window._begin_frame()
-            self._timer = time.perf_counter()
+            self._timer = _time.perf_counter()
             return self.map
 
         def __exit__(self, exc_type, exc_val, exc_tb):
-            import time
-            d = time.perf_counter() - self._timer
+            d = _time.perf_counter() - self._timer
             if self.man is not None:
                 submit(self.man)
             self.w_window._end_frame()
-            fps = 1000 if d <= 0.001 else 1 / d
+            fps = 10000 if d <= 0.0001 else 1 / d
             if self.window._stats_fps > 0:
                 self.window._stats_fps = self.window._stats_fps * 0.9 + fps * 0.1
                 self.window._stats_spf = self.window._stats_spf * 0.9 + d * 0.1
@@ -2085,7 +2140,7 @@ class DeviceManager:
     def create_object_buffer(self, element_description: _typing.Union[type, _torch.dtype, Layout, _typing.List, _typing.Dict],
                              usage: BufferUsage = BufferUsage.STORAGE, memory: MemoryLocation = MemoryLocation.GPU):
         if not isinstance(element_description, Layout):
-            element_description = Layout.from_description(element_description)
+            element_description = Layout.from_description(LayoutAlignment.STD430, element_description)
         size = element_description.aligned_size
         return ObjectBuffer(self, self.w_device.create_buffer(size, usage, memory), element_description)
 
@@ -2528,8 +2583,23 @@ def tensor_like(t: _torch.Tensor) -> _torch.Tensor:
     """
     return __ACTIVE_DEVICE__.create_tensor_like(t)
 
+
+def tensor_clone(t: _torch.Tensor) -> _torch.Tensor:
+    class VkTensorClone(_torch.autograd.Function):
+        @staticmethod
+        def forward(ctx: Any, *args: Any, **kwargs: Any) -> Any:
+            t, = args
+            vk_t = tensor(*t.shape, dtype=t.dtype)
+            ctx.input_device = t.device
+            vk_t.copy_(t)
+            return vk_t
+        @staticmethod
+        def backward(ctx: Any, *grad_outputs: Any) -> Any:
+            return tuple(g.to(ctx.input_device) for g in grad_outputs)
+    return VkTensorClone.apply(t)
+
 # @_check_active_device
-def tensor(*shape, dtype: dtype = _torch.float32) -> _torch.Tensor:
+def tensor(*shape, dtype: dtype = _torch.float32, requires_grad=False) -> _torch.Tensor:
     """
     Creates a tensor using a specific shape and type with compatible memory with vulkan, cupy and numpy tensors.
     The underlying buffer is created with possible usage to transfer to/from, storage binding and gpu addressing.
@@ -2540,8 +2610,29 @@ def tensor(*shape, dtype: dtype = _torch.float32) -> _torch.Tensor:
     >>> print(t)
     tensor([[0.0, 0.0, 0.0],[0.0, 0.0, 0.0]], device='cuda')
     """
-    return __ACTIVE_DEVICE__.create_tensor(*shape, dtype=dtype)
+    t = __ACTIVE_DEVICE__.create_tensor(*shape, dtype=dtype)
+    t.requires_grad_(requires_grad)
+    return t
     # return __ACTIVE_DEVICE__.create_tensor_buffer(*shape, dtype=dtype, memory=memory, clear=clear).as_tensor()
+
+
+def tensor_from(data, dtype=_torch.float):
+    t = _torch.tensor(data, dtype=dtype)
+    vk_t = tensor(*t.shape, dtype=t.dtype)
+    vk_t.copy_(t)
+    return vk_t
+
+
+def zeros(*shape, dtype: dtype = _torch.float32, requires_grad=False)-> _torch.Tensor:
+    t = tensor(*shape, dtype=dtype, requires_grad=requires_grad)
+    with torch.no_grad():
+        t.zero_()
+    return t
+
+def zeros_like(t: _torch.Tensor) -> _torch.Tensor:
+    t_vk = tensor_like(t)
+    t_vk.zero_()
+    return t_vk
 
 # @_check_active_device
 def tensor_copy(t: _torch.Tensor) -> ViewTensor:
